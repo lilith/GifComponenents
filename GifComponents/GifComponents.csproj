@@ -1,0 +1,88 @@
+﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{19D45270-91BE-4AD2-9F2E-84B3F792324F}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>GifComponents</RootNamespace>
+    <AssemblyName>GifComponents</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SourceAnalysisOverrideSettingsFile>I:\Documents and Settings\simon\Application Data\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Simon.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
+    <DocumentationFile>bin\Release\GifComponents.xml</DocumentationFile>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunCodeAnalysis>True</RunCodeAnalysis>
+    <CodeAnalysisRules>-Microsoft.Globalization#CA1303</CodeAnalysisRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Components\ApplicationExtension.cs" />
+    <Compile Include="Components\ColourTable.cs" />
+    <Compile Include="Components\DataBlock.cs" />
+    <Compile Include="Components\GifFrame.cs" />
+    <Compile Include="Components\GifHeader.cs" />
+    <Compile Include="Components\GraphicControlExtension.cs" />
+    <Compile Include="Components\ImageDescriptor.cs" />
+    <Compile Include="Components\LogicalScreenDescriptor.cs" />
+    <Compile Include="Components\NetscapeExtension.cs" />
+    <Compile Include="Components\TableBasedImageData.cs" />
+    <Compile Include="Enums\ColourTableStrategy.cs" />
+    <Compile Include="Enums\DisposalMethod.cs" />
+    <Compile Include="Enums\ErrorState.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tools\AnimatedGifEncoder.cs" />
+    <Compile Include="Tools\GifDecoder.cs" />
+    <Compile Include="Tools\LzwEncoder.cs" />
+    <Compile Include="Tools\NeuQuant.cs" />
+    <Compile Include="Tools\PixelAnalysis.cs" />
+    <Compile Include="Tools\Utils.cs" />
+    <Compile Include="Types\GifComponent.cs" />
+    <Compile Include="Types\GifComponentStatus.cs" />
+    <Compile Include="Types\IndexedPixels.cs" />
+    <Compile Include="Types\PackedFields.cs" />
+    <None Include="CPOL.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Components" />
+    <Folder Include="Enums" />
+    <Folder Include="Tools" />
+    <Folder Include="Types" />
+  </ItemGroup>
+</Project>

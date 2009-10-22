@@ -1,0 +1,48 @@
+﻿<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Fragment>
+		<DirectoryRef Id="TARGETDIR">
+			<Directory Id="ProgramFilesFolder" Name="PFiles">
+				<Directory Id="INSTALLDIR" Name="GifInspector">
+					<Component Id="LicenseRtf" 
+					           Guid="463CB361-65ED-419B-B039-7C87FBA48C43" 
+					           DiskId="1">
+						<File Id="LicenseFile" 
+						      Name="license.rtf" 
+						      Source="license.rtf"/>
+					</Component>
+					<Component Id="LicenseTxt" 
+					           Guid="465D0B5F-5F37-42F6-92D8-4AD47E5E1CCB"
+					           DiskId="1">
+						<File Id="LicenseTxt" 
+						      Name="license.txt"
+						      Source="..\GifInspector\license.txt"/>
+					</Component>
+					<Component Id="GifInspector" 
+					           Guid="DC74058F-3267-47FD-BC36-EA71F76EBB1A"
+					           DiskId="1">
+						<File Id="GifInspector" 
+						      Name="GifInspector.exe" 
+						      Source="..\GifInspector\bin\release\GifInspector.exe"/>
+					</Component>
+					<Component Id="GifComponents" 
+					           Guid="BA1252C1-6AB0-4422-92D1-7B7EF3F10836"
+					           DiskId="1">
+						<File Id="GifComponents" 
+						      Name="GifComponents.dll"
+						      Source="..\GifInspector\bin\release\GifComponents.dll"
+						      KeyPath="yes"
+						      Assembly=".net"/>
+					</Component>
+					<Component Id="AboutFormParameters" 
+					           Guid="9A2DBB5D-C387-4763-9755-1A165A1BD2F6"
+					           DiskId="1">
+						<File Id="AboutFormParameters" 
+						      Name="GifInspector.AboutFormParameters.xml"
+						      Source="..\GifInspector\GifInspector.AboutFormParameters.xml"/>
+					</Component>
+				</Directory>
+			</Directory>
+		</DirectoryRef>
+	</Fragment>
+</Wix>

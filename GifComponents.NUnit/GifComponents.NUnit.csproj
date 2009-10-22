@@ -1,0 +1,178 @@
+﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{A653992D-8BD7-4C44-AD6C-3ACC759AF954}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>GifComponents.NUnit</RootNamespace>
+    <AssemblyName>GifComponents.NUnit</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SourceAnalysisOverrideSettingsFile>I:\Documents and Settings\simon\Application Data\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
+    <DocumentationFile>bin\Debug\GifComponents.NUnit.xml</DocumentationFile>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunCodeAnalysis>True</RunCodeAnalysis>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Simon.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
+    <CodeAnalysisRules>-Microsoft.Globalization#CA1303</CodeAnalysisRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <ItemGroup>
+    <Reference Include="NUnit.Extensions" />
+    <Reference Include="nunit.framework" />
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Components\ApplicationExtensionTest.cs" />
+    <Compile Include="Components\ColourTableTest.cs" />
+    <Compile Include="Components\DataBlockTest.cs" />
+    <Compile Include="Components\GifFrameTest.cs" />
+    <Compile Include="Components\GifHeaderTest.cs" />
+    <Compile Include="Components\GraphicControlExtensionTest.cs" />
+    <Compile Include="Components\ImageDescriptorTest.cs" />
+    <Compile Include="Components\LogicalScreenDescriptorTest.cs" />
+    <Compile Include="Components\NetscapeExtensionTest.cs" />
+    <Compile Include="Components\TableBasedImageDataTest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tools\AnimatedGifEncoderTest.cs" />
+    <Compile Include="Tools\GifDecoderTest.cs" />
+    <Compile Include="Tools\LzwEncoderTest.cs" />
+    <Compile Include="Tools\NeuQuantTest.cs" />
+    <Compile Include="Tools\PixelAnalysisTest.cs" />
+    <Compile Include="Types\GifComponentStatusTest.cs" />
+    <Compile Include="Types\GifComponentTest.cs" />
+    <Compile Include="Types\IndexedPixelsTest.cs" />
+    <Compile Include="Types\PackedFieldsTest.cs" />
+    <Compile Include="WikipediaExample.cs" />
+    <None Include="images\bmp.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 10.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 11.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 12.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 13.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 14.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 15.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 16.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 17.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 18.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 19.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 4.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 5.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 6.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 7.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 8.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\globe\spinning globe better 200px transparent background.gif.frame 9.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\MinCodeSizeTooLarge.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\smiley.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\smiley.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\smiley.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\smiley.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\smiley.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\wikipedia example.bmp">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Components" />
+    <Folder Include="images" />
+    <Folder Include="images\globe" />
+    <Folder Include="images\smiley" />
+    <Folder Include="Types" />
+    <Folder Include="Tools" />
+    <ProjectReference Include="..\GifComponents\GifComponents.csproj">
+      <Project>{1C3A03CA-5E55-4CC4-9746-194A4188960A}</Project>
+      <Name>GifComponents</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
