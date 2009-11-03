@@ -21,12 +21,13 @@
 // http://en.wikipedia.org/wiki/GNU_General_Public_License
 #endregion
 using System;
-using NUnit.Framework;
-using NUnit.Extensions;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Globalization;
+using NUnit.Framework;
+using NUnit.Extensions;
 
 namespace GifComponents.NUnit
 {
@@ -310,15 +311,14 @@ namespace GifComponents.NUnit
 			string[] files = Directory.GetFiles( Directory.GetCurrentDirectory() );
 			foreach( string file in files )
 			{
-				if( string.Compare( Path.GetExtension( file ), 
-				                    ".gif",
-				                    true,
-				                    CultureInfo.InvariantCulture ) 
-				    != 0 )
+				if( file.EndsWith( ".gif" ) == false )
 				{
+					Debug.WriteLine( "GifDecoderTest.BadSignature" );
+					
 					_decoder = new GifDecoder( file );
-					Assert.IsTrue( _decoder.TestState( ErrorState.BadSignature ),
-					               _decoder.ErrorState.ToString() );
+					Assert.AreEqual( true, 
+					                 _decoder.TestState( ErrorState.BadSignature ),
+					                 file );
 				}
 			}
 		}
@@ -422,7 +422,7 @@ namespace GifComponents.NUnit
 			{
 				string frameFileName = baseFileName + ".frame " + f + ".bmp";
 				Bitmap expectedBitmap = new Bitmap( frameFileName );
-				Bitmap actualBitmap = _decoder.Frames[f].TheImage;
+				Bitmap actualBitmap = (Bitmap) _decoder.Frames[f].TheImage;
 				BitmapAssert.AreEqual( expectedBitmap, 
 				                       actualBitmap, 
 				                       "frame " + f );

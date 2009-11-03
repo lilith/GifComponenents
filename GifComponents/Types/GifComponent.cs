@@ -112,7 +112,9 @@ namespace GifComponents
 		/// Gets the status of this component, consisting of its error state
 		/// and any associated error message.
 		/// </summary>
-		[System.ComponentModel.Category( "Status" )]
+		[Category( "Status" )]
+		[Description( "Gets the status of this component, consisting of its " +
+		              "error state and any associated error message." )]
 		public GifComponentStatus ComponentStatus
 		{
 			get { return _status; }
@@ -121,11 +123,13 @@ namespace GifComponents
 		
 		#region ErrorState property
 		/// <summary>
-		/// Gets the member of the Gif.Components.ErrorState held within the 
-		/// ComponentStatus property.
+		/// Gets the member of the Gif.Components.ErrorState enumeration held 
+		/// within the ComponentStatus property.
 		/// </summary>
-		[System.ComponentModel.Browsable( false )]
-		[System.ComponentModel.Category( "Status" )]
+		[Browsable( false )]
+		[Category( "Status" )]
+		[Description( "Gets the member of the Gif.Components.ErrorState " +
+		              "enumeration held within the ComponentStatus property." )]
 		public ErrorState ErrorState
 		{
 			get { return _status.ErrorState; }
@@ -142,7 +146,9 @@ namespace GifComponents
 		/// current instance and performs a bitwise or of the ErrorStates of
 		/// the current instance and of any GifComponents within it.
 		/// </remarks>
-		[System.ComponentModel.Category( "Status" )]
+		[Category( "Status" )]
+		[Description( "Gets the combined error states of this component and " +
+		              "all its child components." )]
 		public ErrorState ConsolidatedState
 		{
 			get
@@ -228,8 +234,10 @@ namespace GifComponents
 		/// <summary>
 		/// Gets any error message associated with the component's error state.
 		/// </summary>
-		[System.ComponentModel.Browsable( false )]
-		[System.ComponentModel.Category( "Status" )]
+		[Browsable( false )]
+		[Category( "Status" )]
+		[Description( "Gets any error message associated with the component's " +
+		              "error state." )]
 		public string ErrorMessage
 		{
 			get { return _status.ErrorMessage; }

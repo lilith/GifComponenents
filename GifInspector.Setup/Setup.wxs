@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="*"
-		Name="GIF Inspector"
+		Name="GIF Components"
 		Language="1033"
 		Version="0.1.0.0"
 		UpgradeCode="6EB7F952-1A02-4C60-8214-2537A4C8EB42"
 		Manufacturer="Simon Bridewell">
-		<Package Description="Application for analysing GIF files"
+		<Package Description="Class library and applications for working with Graphics Interchange Format files"
 			InstallerVersion="200"
 			Compressed="yes"/>
 		<!--
@@ -19,14 +19,17 @@
 		<Directory Id="TARGETDIR" Name="SourceDir"/>
 		
 		<Feature Id="Complete"
-		         Title="GIF Inspector"
-		         Description="Application for analysing GIF files"
+		         Title="All components"
+		         Description="Installs the GifComponents library and the GifInspector and GifBuilder applications"
 		         Level="1">
 			<ComponentRef Id="LicenseRtf"/>
 			<ComponentRef Id="LicenseTxt"/>
 			<ComponentRef Id="GifInspector"/>
+			<ComponentRef Id="GifBuilder"/>
 			<ComponentRef Id="GifComponents"/>
-			<ComponentRef Id="AboutFormParameters"/>
+			<ComponentRef Id="CommonForms"/>
+			<ComponentRef Id="GifInspectorAboutFormParameters"/>
+			<ComponentRef Id="GifBuilderAboutFormParameters"/>
 		</Feature>
 		
 		<!-- 

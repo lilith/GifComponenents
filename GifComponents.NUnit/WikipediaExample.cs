@@ -551,10 +551,11 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		#region CheckBitmap method
-		internal static void CheckBitmap( Bitmap bitmap )
+		#region CheckImage method
+		internal static void CheckImage( Image image )
 		{
-			BitmapAssert.AreEqual( ExpectedBitmap, bitmap, "" );
+			Bitmap actual = (Bitmap) image;
+			BitmapAssert.AreEqual( ExpectedBitmap, actual );
 		}
 		#endregion
 		

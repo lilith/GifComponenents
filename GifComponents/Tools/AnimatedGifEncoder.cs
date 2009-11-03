@@ -22,10 +22,11 @@
 #endregion
 
 using System;
-using System.Drawing;
-using System.IO;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.ComponentModel;
 
 namespace GifComponents
 {
@@ -65,32 +66,15 @@ namespace GifComponents
 	{
 		#region declarations
 		/// <summary>
+		/// The frames which make up the animation/
+		/// </summary>
+		private Collection<GifFrame> _frames;
+		
+		/// <summary>
 		/// The ColourTableStrategy indicating whether a global colour table
 		/// or local colour tables should be used.
 		/// </summary>
 		private ColourTableStrategy _strategy;
-		
-		/// <summary>
-		/// The images which make up the frames of the animation.
-		/// </summary>
-		private Collection<Image> _frameImages;
-		
-		/// <summary>
-		/// The delay in hundredths of a second between showing one frame and 
-		/// the next.
-		/// </summary>
-		private Collection<int> _frameDelays;
-		
-		/// <summary>
-		/// Collection of flags indicating whether each frame expects the user 
-		/// to press a key before the animation continues.
-		/// </summary>
-		private Collection<bool> _framesExpectUserInput;
-		
-		/// <summary>
-		/// Collection of the positions of the frames within the logical screen.
-		/// </summary>
-		private Collection<Point> _framePositions;
 		
 		/// <summary>
 		/// Size, in pixels, of the animated GIF file.
@@ -105,12 +89,6 @@ namespace GifComponents
 		/// -1 to not repeat.
 		/// </summary>
 		private int _repeatCount;
-		
-		/// <summary>
-		/// All the pixels from all the frames which make up the image.
-		/// Used only when the ColourTableStrategy is UseGlobal.
-		/// </summary>
-		private Collection<byte> _pixels;
 		
 		private bool[] _usedEntry = new bool[256]; // active palette entries
 		
@@ -138,37 +116,76 @@ namespace GifComponents
 		/// </summary>
 		public AnimatedGifEncoder()
 		{
+			_frames = new Collection<GifFrame>();
 			_strategy = ColourTableStrategy.UseGlobal;
 			_quality = 10;
 			_logicalScreenSize = Size.Empty;
-			_framesExpectUserInput = new Collection<bool>();
-			_framePositions = new Collection<Point>();
-			_frameImages = new Collection<Image>();
-			_frameDelays = new Collection<int>();
 		}
 		#endregion
 		
-		#region constructor
+		#region properties
+		
+		#region Transparent property
 		/// <summary>
-		/// Constructor.
+		/// Gets and sets the transparent color for the next added frame and 
+		/// any subsequent frames.
+		/// Since all colors are subject to modification in the quantization 
+		/// process, the color in the final palette for each frame closest to 
+		/// the given color becomes the transparent color for that frame.
+		/// May be set to Color.Empty to indicate no transparent color.
 		/// </summary>
-		/// <param name="screenSize">
-		/// The size, in pixels, of the animated GIF file.
-		/// If this parameter is Size.Empty, the size of the first frame to be 
-		/// added will be used.
-		/// </param>
-		/// <param name="repeatCount">
+		public Color Transparent
+		{
+			get{ return _transparent; }
+			set{ _transparent = value; }
+		}
+		#endregion
+
+		#region ColourTableStrategy property
+		/// <summary>
+		/// Indicates whether the animation will contain a single global colour
+		/// table for all frames (UseGlobal) or a local colour table for each
+		/// frame (UseLocal)
+		/// </summary>
+		[Description( "Indicates whether the animation will contain a single " +
+		              "global colour table for all frames (UseGlobal) or a " +
+		              "local colour table for each frame (UseLocal)" )]
+		public ColourTableStrategy ColourTableStrategy
+		{
+			get { return _strategy; }
+			set { _strategy = value; }
+		}
+		#endregion
+		
+		#region RepeatCount property
+		/// <summary>
 		/// The number of times to repeat the animation.
 		/// 0 to repeat indefinitely.
 		/// -1 to not repeat.
 		/// Defaults to -1 if less than -1.
-		/// </param>
-		/// <param name="strategy">
-		/// The colour table strategy to use when encoding this file.
-		/// Either global colour tables are to be used, or local colour tables
-		/// are to be used.
-		/// </param>
-		/// <param name="quality">
+		/// </summary>
+		[Description( "The number of times to repeat the animation. 0 to " +
+		              "repeat indefinitely. -1 to not repeat. Defaults to -1 " +
+		              "if less than -1." )]
+		public int RepeatCount
+		{
+			get { return _repeatCount; }
+			set
+			{
+				if( value < -1 )
+				{
+					_repeatCount = -1;
+				}
+				else
+				{
+					_repeatCount = value;
+				}
+			}
+		}
+		#endregion
+		
+		#region ColourQuality property
+		/// <summary>
 		/// Sets quality of color quantization (conversion of images
 		/// to the maximum 256 colors allowed by the GIF specification).
 		/// Lower values (minimum = 1) produce better colors, but slow
@@ -176,37 +193,52 @@ namespace GifComponents
 		/// good color mapping at reasonable speeds.  Values greater
 		/// than 20 do not yield significant improvements in speed.
 		/// Defaults to 1 if less than 1.
-		/// </param>
-		public AnimatedGifEncoder( Size screenSize, 
-		                           int repeatCount, 
-		                           ColourTableStrategy strategy, 
-		                           int quality )
+		/// </summary>
+		[Description( "Sets quality of color quantization (conversion of " +
+		              "images to the maximum 256 colors allowed by the GIF " +
+		              "specification). Lower values (minimum = 1) produce " +
+		              "better colors, but slow processing significantly. " +
+		              "10 is the default, and produces good color mapping " +
+		              "at reasonable speeds. Values greater than 20 do not " +
+		              "yield significant improvements in speed. Defaults to " +
+		              "1 if less than 1." )]
+		public int ColourQuality
 		{
-			_logicalScreenSize = screenSize;
-			if( repeatCount < -1 )
+			get { return _quality; }
+			set
 			{
-				_repeatCount = -1;
+				if( value < 1 )
+				{
+					_quality = 1;
+				}
+				else
+				{
+					_quality = value;
+				}
 			}
-			else
-			{
-				_repeatCount = repeatCount;
-			}
-			_strategy = strategy;
-			if( quality < 1 )
-			{
-				_quality = 1;
-			}
-			else
-			{
-				_quality = quality;
-			}
-			_framesExpectUserInput = new Collection<bool>();
-			_framePositions = new Collection<Point>();
-			_frameImages = new Collection<Image>();
-			_frameDelays = new Collection<int>();
-			_pixels = new Collection<byte>();
 		}
 		#endregion
+		
+		#region LogicalScreenSize property
+		/// <summary>
+		/// The size, in pixels, of the animated GIF file.
+		/// If this property is not set before the animation is encoder, the 
+		/// size of the first frame to be added will be used.
+		/// </summary>
+		[Description( "The size, in pixels, of the animated GIF file. If " +
+		              "this property is not set before the animation is " +
+		              "encoder, the size of the first frame to be added " +
+		              "will be used." )]
+		public Size LogicalScreenSize
+		{
+			get { return _logicalScreenSize; }
+			set { _logicalScreenSize = value; }
+		}
+		#endregion
+		
+		#endregion
+
+		#region methods
 		
 		#region WriteToFile method
 		/// <summary>
@@ -232,6 +264,19 @@ namespace GifComponents
 		/// </param>
 		public override void WriteToStream( Stream outputStream )
 		{
+			if( _frames.Count == 0 )
+			{
+				string message
+					= "The AnimatedGifEncoder has no frames to write!";
+				throw new InvalidOperationException( message );
+			}
+			
+			if( _logicalScreenSize == Size.Empty )
+			{
+				// use first frame's size if logical screen size hasn't been set
+				_logicalScreenSize = _frames[0].TheImage.Size;
+			}
+
 			GifHeader header = new GifHeader( "GIF", "89a" );
 			header.WriteToStream( outputStream );
 			
@@ -242,8 +287,9 @@ namespace GifComponents
 				// Analyze the pixels in all the images to build the
 				// global colour table.
 				Collection<Image> images = new Collection<Image>();
-				foreach( Image thisImage in _frameImages )
+				foreach( GifFrame thisFrame in _frames )
 				{
+					Image thisImage = thisFrame.TheImage;
 					images.Add( thisImage );
 				}
 				analysis = new PixelAnalysis( images, _quality );
@@ -270,9 +316,10 @@ namespace GifComponents
 				WriteNetscapeExt( _repeatCount, outputStream );
 			}
 			
-			for( int i = 0; i < _frameImages.Count; i++ )
+			for( int i = 0; i < _frames.Count; i++ )
 			{
-				Image thisImage = _frameImages[i];
+				GifFrame thisFrame = _frames[i];
+				Image thisImage = thisFrame.TheImage;
 				ColourTable act; // active colour table
 				ColourTable lct = null; // local colour table
 				if( _strategy == ColourTableStrategy.UseLocal )
@@ -294,15 +341,15 @@ namespace GifComponents
 				}
 				else
 				{
+					// TODO: test case for this once transparency is understood
 					transparentColourIndex = FindClosest( _transparent, act );
 				}
-				WriteGraphicCtrlExt( _frameDelays[i],
-				                     transparentColourIndex,
-				                     _framesExpectUserInput[i],
+				WriteGraphicCtrlExt( thisFrame, 
+				                     transparentColourIndex, 
 				                     outputStream );
 				WriteImageDescriptor( thisImage.Size, 
-				                      _framePositions[i],
-				                      lct,
+				                      _frames[i].Position, 
+				                      lct, 
 				                      outputStream );
 				
 				// Write a local colour table if the strategy is to do so
@@ -324,117 +371,17 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region Transparent property
+		#region AddFrame( GifFrame ) method
 		/// <summary>
-		/// Gets and sets the transparent color for the next added frame and 
-		/// any subsequent frames.
-		/// Since all colors are subject to modification in the quantization 
-		/// process, the color in the final palette for each frame closest to 
-		/// the given color becomes the transparent color for that frame.
-		/// May be set to Color.Empty to indicate no transparent color.
+		/// Adds a frame to the animation.
 		/// </summary>
-		public Color Transparent
+		/// <param name="frame">
+		/// The frame to add to the animation.
+		/// </param>
+		public void AddFrame( GifFrame frame )
 		{
-			get{ return _transparent; }
-			set{ _transparent = value; }
+			_frames.Add( frame );
 		}
-		#endregion
-
-		#region AddFrame methods
-		
-		#region AddFrame( Image, int ) method
-		/// <summary>
-		/// Adds a frame to the GIF animation.
-		/// </summary>
-		/// <param name="imageToAdd">
-		/// The image to be added to the GIF animation.
-		/// </param>
-		/// <param name="delay">
-		/// The delay in hundredths of a second between displaying this frame 
-		/// and displaying the next frame.
-		/// </param>
-		public void AddFrame( Image imageToAdd, int delay )
-		{
-			AddFrame( imageToAdd, delay, false );
-		}
-		#endregion
-
-		#region AddFrame( Image, int, bool ) method
-		/// <summary>
-		/// Adds a frame to the GIF animation.
-		/// </summary>
-		/// <param name="imageToAdd">
-		/// The image to be added to the GIF animation.
-		/// </param>
-		/// <param name="delay">
-		/// The delay in hundredths of a second between displaying this frame 
-		/// and displaying the next frame.
-		/// </param>
-		/// <param name="expectsUserInput">
-		/// A flag indicating whether user interaction is required before the
-		/// next frame in the animation is displayed.
-		/// </param>
-		public void AddFrame( Image imageToAdd, int delay, bool expectsUserInput )
-		{
-			AddFrame( imageToAdd, delay, expectsUserInput, new Point( 0, 0 ) );
-		}
-		#endregion
-		
-		#region AddFrame( Image, int, Point ) method
-		/// <summary>
-		/// Adds a frame to the GIF animation.
-		/// </summary>
-		/// <param name="imageToAdd">
-		/// The image to be added to the GIF animation.
-		/// </param>
-		/// <param name="delay">
-		/// The delay in hundredths of a second between displaying this frame 
-		/// and displaying the next frame.
-		/// </param>
-		/// <param name="position">
-		/// A System.Drawing.Point representing the top-left position of the 
-		/// supplied image within the logical screen.
-		/// </param>
-		public void AddFrame( Image imageToAdd, int delay, Point position )
-		{
-			AddFrame( imageToAdd, delay, false, position );
-		}
-		#endregion
-		
-		#region AddFrame( Image, int, bool, Point ) method
-		/// <summary>
-		/// Adds a frame to the GIF animation.
-		/// </summary>
-		/// <param name="imageToAdd">
-		/// The image to be added to the GIF animation.
-		/// </param>
-		/// <param name="delay">
-		/// The delay in hundredths of a second between displaying this frame 
-		/// and displaying the next frame.
-		/// </param>
-		/// <param name="expectsUserInput">
-		/// A flag indicating whether user interaction is required before the
-		/// next frame in the animation is displayed.
-		/// </param>
-		/// <param name="position">
-		/// A System.Drawing.Point representing the top-left position of the 
-		/// supplied image within the logical screen.
-		/// </param>
-		public void AddFrame( Image imageToAdd, int delay, bool expectsUserInput, Point position )
-		{
-			if( _logicalScreenSize == Size.Empty )
-			{
-				// use first frame's size if logical screen size hasn't been set
-				_logicalScreenSize = imageToAdd.Size;
-			}
-			
-			_frameImages.Add( imageToAdd );
-			_frameDelays.Add( delay );
-			_framesExpectUserInput.Add( expectsUserInput );
-			_framePositions.Add( position );
-		}
-		#endregion
-
 		#endregion
 	
 		#region protected / private methods
@@ -486,22 +433,17 @@ namespace GifComponents
 		/// <summary>
 		/// Writes a Graphic Control Extension to the supplied output stream.
 		/// </summary>
-		/// <param name="delay">
-		/// The delay between showing this frame and the next.
+		/// <param name="frame">
+		/// The GifFrame to which this graphic control extension relates.
 		/// </param>
 		/// <param name="transparentColourIndex">
 		/// The index within the active colour table of the transparent colour.
 		/// </param>
-		/// <param name="expectsUserInput">
-		/// A flag indicating whether user interaction is required before the
-		/// next frame in the animation is displayed.
-		/// </param>
 		/// <param name="outputStream">
 		/// The stream to write to.
 		/// </param>
-		private void WriteGraphicCtrlExt( int delay,
+		private void WriteGraphicCtrlExt( GifFrame frame,
 		                                  int transparentColourIndex, 
-		                                  bool expectsUserInput,
 		                                  Stream outputStream )
 		{
 			outputStream.WriteByte( GifComponent.CodeExtensionIntroducer );
@@ -518,6 +460,7 @@ namespace GifComponents
 			} 
 			else 
 			{
+				// TODO: test case for this once transparency is better understood
 				hasTransparentColour = true;
 				disposalMethod = DisposalMethod.RestoreToBackgroundColour; // force clear if using transparent color
 			}
@@ -525,9 +468,9 @@ namespace GifComponents
 			GraphicControlExtension gce
 				= new GraphicControlExtension( blockSize, 
 				                               disposalMethod, 
-				                               expectsUserInput, 
+				                               frame.ExpectsUserInput, 
 				                               hasTransparentColour, 
-				                               delay, 
+				                               frame.Delay, 
 				                               transparentColourIndex );
 			gce.WriteToStream( outputStream );
 		}
@@ -550,7 +493,7 @@ namespace GifComponents
 		/// <param name="outputStream">
 		/// The stream to write to.
 		/// </param>
-		private static void WriteImageDescriptor( Size imageSize, 
+		private static void WriteImageDescriptor( Size imageSize,
 		                                          Point position,
 		                                          ColourTable localColourTable,
 		                                          Stream outputStream )
@@ -662,6 +605,7 @@ namespace GifComponents
 		#endregion
 
 		#endregion
-	}
 
+		#endregion
+	}
 }

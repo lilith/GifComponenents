@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <OutputType>Package</OutputType>
     <RootNamespace>GifInspector.Setup</RootNamespace>
-    <OutputName>GifInspector.Setup</OutputName>
+    <OutputName>GifComponents.Setup</OutputName>
     <WixToolPath Condition=" '$(WixToolPath)' == '' ">$(SharpDevelopBinPath)\Tools\Wix</WixToolPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(WixToolPath)\wix.targets</WixTargetsPath>
     <WixTasksPath Condition=" '$(WixTasksPath)' == '' ">$(WixToolPath)\WixTasks.dll</WixTasksPath>
@@ -33,6 +33,10 @@
     <Compile Include="Files.wxs" />
     <Compile Include="Setup.wxs" />
     <None Include="license.rtf" />
+    <ProjectReference Include="..\GifBuilder\GifBuilder.csproj">
+      <Project>{81D2BE9D-CE2D-4A54-951B-0BA55CB12D85}</Project>
+      <Name>GifBuilder</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">
       <Project>{1C3A03CA-5E55-4CC4-9746-194A4188960A}</Project>
       <Name>GifComponents</Name>

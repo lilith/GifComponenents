@@ -20,6 +20,7 @@
 // See also the Wikipedia entry on the GNU GPL at:
 // http://en.wikipedia.org/wiki/GNU_General_Public_License
 #endregion
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -27,9 +28,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Windows.Forms;
 using System.Threading;
+using System.Windows.Forms;
 using GifComponents;
+using CommonForms;
 
 namespace GifInspector
 {
@@ -211,7 +213,8 @@ namespace GifInspector
 		#endregion
 		
 		#region help/about menu item click handler
-		[SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
+		[SuppressMessage("Microsoft.Design", 
+		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
 		void AboutToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			try

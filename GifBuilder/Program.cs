@@ -1,4 +1,4 @@
-#region Copyright (C) Simon Bridewell
+﻿#region Copyright (C) Simon Bridewell
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -20,45 +20,31 @@
 // See also the Wikipedia entry on the GNU GPL at:
 // http://en.wikipedia.org/wiki/GNU_General_Public_License
 #endregion
+
 using System;
-using System.Drawing;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Forms;
 
-namespace GifInspector
+namespace GifBuilder
 {
 	/// <summary>
-	/// A form for displaying details of an unhandled exception to the user.
+	/// Class with program entry point.
 	/// </summary>
-	public partial class ExceptionForm : Form
+	internal sealed class Program
 	{
-		#region constructor
 		/// <summary>
-		/// Constructor.
+		/// Program entry point.
 		/// </summary>
-		/// <param name="ex">
-		/// The exception to display information about.
-		/// </param>
-		public ExceptionForm( Exception ex )
+		[STAThread]
+		[SuppressMessage("Microsoft.Usage", 
+		                 "CA1801:ReviewUnusedParameters", 
+		                 MessageId = "args")]
+		private static void Main(string[] args)
 		{
-			//
-			// The InitializeComponent() call is required for Windows Forms
-			// designer support.
-			//
-			InitializeComponent();
-			
-			if( ex == null )
-			{
-				StackTrace trace = new StackTrace();
-				textBoxExceptionText.Text 
-					= "No exception information was supplied by the application"
-					+ trace.ToString();
-			}
-			else
-			{
-				textBoxExceptionText.Text = ex.ToString();
-			}
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			Application.Run(new MainForm());
 		}
-		#endregion
+		
 	}
 }

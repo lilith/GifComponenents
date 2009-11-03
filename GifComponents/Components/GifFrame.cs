@@ -35,7 +35,7 @@ namespace GifComponents
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	///
-	/// Amended by Simon Bridewell June-August 2009:
+	/// Amended by Simon Bridewell June-November 2009:
 	/// 1. Made member variables private.
 	/// 2. Added various properties to expose all the elements of the GifFrame.
 	/// 3. Added constructors for use in both encoding and decoding.
@@ -46,8 +46,10 @@ namespace GifComponents
 	public class GifFrame : GifComponent
 	{
 		#region declarations
-		private Bitmap _image;
+		private Image _image;
 		private int _delay;
+		private bool _expectsUserInput;
+		private Point _position;
 		private ColourTable _localColourTable;
 		private GraphicControlExtension _extension;
 		private ImageDescriptor _imageDescriptor;
@@ -62,14 +64,10 @@ namespace GifComponents
 		/// <param name="theImage">
 		/// The image held in this frame of the GIF file
 		/// </param>
-		/// <param name="delay">
-		/// Delay in hundredths of a second before showing the next frame.
-		/// </param>
-		internal GifFrame( Bitmap theImage, 
-		                 int delay )
+		public GifFrame( Image theImage )
 		{
 			_image = theImage;
-			_delay = delay;
+			_delay = 10; // 10 1/100ths of a second, i.e. 1/10 of a second.
 		}
 		
 		/// <summary>
@@ -101,14 +99,16 @@ namespace GifComponents
 		/// <param name="previousFrameBut1">
 		/// The frame which precedes the frame before this one in the GIF stream,
 		/// if present.
+		/// TODO: make this an internal constructor? (breaks its unit test)
+		/// TODO: alternatively write a separate internal GifFrameBuilder class to replace this constructor
 		/// </param>
 		public GifFrame( TableBasedImageData indexedPixels,
 		                 ColourTable activeColourTable,
 		                 ImageDescriptor imageDescriptor,
 		                 GraphicControlExtension extension,
-		                 Color backgroundColour, 
+		                 Color backgroundColour,
 		                 LogicalScreenDescriptor logicalScreenDescriptor,
-		                 GifFrame previousFrame, 
+		                 GifFrame previousFrame,
 		                 GifFrame previousFrameBut1 )
 		{
 			#region guard against null arguments
@@ -122,6 +122,7 @@ namespace GifComponents
 
 			if( imageDescriptor.HasLocalColourTable )
 			{
+				// TODO: test case for this condition
 				_localColourTable = activeColourTable;
 			}
 			else
@@ -148,24 +149,137 @@ namespace GifComponents
 		
 		#region properties
 		
+		#region read/write properties
+		
+		#region Delay property
+		/// <summary>
+		/// Gets and sets the delay in hundredths of a second before showing 
+		/// the next frame.
+		/// </summary>
+		[Description( "The delay in hundredths of a second before showing " +
+		              "the next frame in the animation" )]
+		public int Delay
+		{
+			get { return _delay; }
+			set { _delay = value; }
+		}
+		#endregion
+		
+		#region BackgroundColour property
+		/// <summary>
+		/// Gets and sets the background colour of the current frame
+		/// </summary>
+		[Description( "The background colour for this frame." )]
+		public Color BackgroundColour
+		{
+			get { return _backgroundColour; }
+			set { _backgroundColour = value; }
+		}
+		#endregion
+		
+		#region ExpectsUserInput property
+		/// <summary>
+		/// Gets a flag indicating whether the device displaying the animation
+		/// should wait for user input (e.g. a mouse click or key press) before
+		/// displaying the next frame.
+		/// </summary>
+		/// <remarks>
+		/// This is actually a property of the graphic control extension.
+		/// </remarks>
+		/// <exception cref="InvalidOperationException">
+		/// An attempt was made to set this property for a GifFrame which was
+		/// created by a GifDecoder.
+		/// </exception>
+		[Description( "Gets a flag indicating whether the device displaying " +
+		              "the animation should wait for user input (e.g. a mouse " +
+		              "click or key press) before displaying the next frame." )]
+		public bool ExpectsUserInput
+		{
+			get 
+			{ 
+				if( _extension == null )
+				{
+					return _expectsUserInput; 
+				}
+				else
+				{
+					return _extension.ExpectsUserInput;
+				}
+			}
+			set 
+			{ 
+				if( _extension == null )
+				{
+					_expectsUserInput = value;
+				}
+				else
+				{
+					string message
+						= "This GifFrame was returned by a GifDecoder so this "
+						+ "property is read-only";
+					throw new InvalidOperationException( message );
+				}
+			}
+		}
+		#endregion
+		
+		#region Position property
+		/// <summary>
+		/// Gets and sets the position of this frame's image within the logical
+		/// screen.
+		/// </summary>
+		/// <remarks>
+		/// This is actually a property of the image descriptor.
+		/// </remarks>
+		/// <exception cref="InvalidOperationException">
+		/// An attempt was made to set this property for a GifFrame which was
+		/// created by a GifDecoder.
+		/// </exception>
+		[Description( "Gets and sets the position of this frame's image " +
+		              "within the logical screen." )]
+		public Point Position
+		{
+			get
+			{
+				if( _imageDescriptor == null )
+				{
+					return _position;
+				}
+				else
+				{
+					return _imageDescriptor.Position;
+				}
+			}
+			set
+			{
+				if( _imageDescriptor == null )
+				{
+					_position = value;
+				}
+				else
+				{
+					string message
+						= "This GifFrame was returned by a GifDecoder so this "
+						+ "property is read-only";
+					throw new InvalidOperationException( message );
+				}
+			}
+		}
+		#endregion
+		
+		#endregion
+		
+		#region read-only properties
+		
 		#region TheImage property
 		/// <summary>
 		/// Gets the image held in this frame.
 		/// </summary>
-		public Bitmap TheImage
+		[Description( "The image held in this frame" )]
+		[Category( "Set by decoder" )]
+		public Image TheImage
 		{
 			get { return _image; }
-		}
-		#endregion
-		
-		#region Delay property
-		/// <summary>
-		/// Gets the delay in hundredths of a second before showing the next
-		/// frame.
-		/// </summary>
-		public int Delay
-		{
-			get { return _delay; }
 		}
 		#endregion
 		
@@ -173,6 +287,8 @@ namespace GifComponents
 		/// <summary>
 		/// Gets the local colour table for this frame.
 		/// </summary>
+		[Description( "The local colour table for this frame" )]
+		[Category( "Set by decoder" )]
 		public ColourTable LocalColourTable
 		{
 			get { return _localColourTable; }
@@ -183,6 +299,8 @@ namespace GifComponents
 		/// <summary>
 		/// Gets the graphic control extension which precedes this image.
 		/// </summary>
+		[Description( "The graphic control extension which precedes this image." )]
+		[Category( "Set by decoder" )]
 		public GraphicControlExtension GraphicControlExtension
 		{
 			get { return _extension; }
@@ -193,28 +311,24 @@ namespace GifComponents
 		/// <summary>
 		/// Gets the image descriptor for this frame.
 		/// </summary>
+		[Category( "Set by decoder" )]
+		[Description( "The image descriptor for this frame. This contains the " +
+		              "size and position of the image, and flags indicating " +
+		              "whether the colour table is global or local, whether " +
+		              "it is sorted, and whether the image is interlaced." )]
 		public ImageDescriptor ImageDescriptor
 		{
 			get { return _imageDescriptor; }
 		}
 		#endregion
 
-		#region BackgroundColour property
-		/// <summary>
-		/// Gets the background colour of the current frame
-		/// </summary>
-		public Color BackgroundColour
-		{
-			get { return _backgroundColour; }
-		}
-		#endregion
-		
 		#region IndexedPixels property
 		/// <summary>
 		/// Gets the table-based image data containing the indices within the
 		/// active colour table of the colours of each of the pixels in the
 		/// frame.
 		/// </summary>
+		[Category( "Set by decoder" )]
 		[Description( "Gets the table-based image data containing the " + 
 		              "indices within the active colour table of the colours " + 
 		              "of each of the pixels in the frame." )]
@@ -226,7 +340,11 @@ namespace GifComponents
 		
 		#endregion
 		
-		#region static FromStream method
+		#endregion
+		
+		#region public methods
+		
+		#region public static FromStream method
 		/// <summary>
 		/// Creates and returns a GifFrame by reading its data from the supplied
 		/// input stream.
@@ -280,17 +398,7 @@ namespace GifComponents
 			}
 			#endregion
 			
-			#region get transparent colour index from graphic control extension
-			int transparentColourIndex;
-			if( gce == null )
-			{
-				transparentColourIndex = 0;
-			}
-			else
-			{
-				transparentColourIndex = gce.TransparentColourIndex;
-			}
-			#endregion
+			int transparentColourIndex = gce.TransparentColourIndex;
 
 			ImageDescriptor imageDescriptor = ImageDescriptor.FromStream( inputStream );
 			
@@ -301,6 +409,7 @@ namespace GifComponents
 			ColourTable localColourTable;
 			if( imageDescriptor.HasLocalColourTable ) 
 			{
+				// TODO: test case for local colour table
 				localColourTable = ColourTable.FromStream( inputStream, imageDescriptor.LocalColourTableSize );
 				activeColourTable = localColourTable; // make local table active
 			} 
@@ -320,35 +429,23 @@ namespace GifComponents
 			Color savedTransparentColour = Color.FromArgb( 0 );
 			if( gce.HasTransparentColour )
 			{
+				// TODO: test case for graphic control extension has transparent colour
 				savedTransparentColour = activeColourTable[transparentColourIndex];
 				activeColourTable[transparentColourIndex] = Color.FromArgb( 0 );
 			}
-
-			#region handle the situation when there's no colour table
-			bool noColourTable = false;
-			string noColourTableMessage = "";
-			if( activeColourTable == null ) 
-			{
-				noColourTableMessage
-					= "No active colour table for this frame. "
-					+ "Local colour table flag: " + imageDescriptor.HasLocalColourTable
-					+ ". Local colour table size: " + imageDescriptor.LocalColourTableSize
-					+ ". Global colour table size: " + lsd.GlobalColourTableSize;
-				noColourTable = true; // use this flag later to set the GifFrame status
-			}
-			#endregion
 
 			// decode pixel data
 			int pixelCount = imageDescriptor.Size.Width * imageDescriptor.Size.Height;
 			TableBasedImageData indexedPixels 
 				= new TableBasedImageData( inputStream, pixelCount );
 			
+			// TODO: can this ever happen? Test case needed
 			if( indexedPixels.Pixels.Count == 0 )
 			{
 				Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
 				                                 lsd.LogicalScreenSize.Height );
-				GifFrame emptyFrame = new GifFrame( emptyBitmap, 
-				                                    gce.DelayTime );
+				GifFrame emptyFrame = new GifFrame( emptyBitmap );
+				emptyFrame.Delay = gce.DelayTime;
 				emptyFrame.SetStatus( ErrorState.FrameHasNoImageData, "" );
 				return emptyFrame;
 			}
@@ -373,16 +470,27 @@ namespace GifComponents
 			                               previousFrame,
 			                               previousFrameBut1 );
 
-			if( noColourTable )
-			{
-				frame.SetStatus( ErrorState.FrameHasNoColourTable, 
-				                 noColourTableMessage );
-			}
-			
 			return frame;
 		}
 		#endregion
 
+		#region public override WriteToStream method
+		/// <summary>
+		/// Writes this component to the supplied output stream.
+		/// </summary>
+		/// <param name="outputStream">
+		/// The output stream to write to.
+		/// </param>
+		public override void WriteToStream( Stream outputStream )
+		{
+			throw new NotImplementedException();
+		}
+		#endregion
+
+		#endregion
+		
+		#region private methods
+		
 		#region private static CreateBitmap( GifDecoder, ImageDescriptor, ColourTable, bool ) method
 		/// <summary>
 		/// Sets the pixels of the decoded image.
@@ -436,7 +544,7 @@ namespace GifComponents
 			#endregion
 
 			// fill in starting image contents based on last image's dispose code
-			Bitmap previousImageBut1;
+			Image previousImageBut1;
 			if( previousDisposalMethod > 0 )
 			{
 				if( previousFrameBut1 == null )
@@ -492,6 +600,7 @@ namespace GifComponents
 				int pixelRowNumber = i;
 				if( id.IsInterlaced ) 
 				{
+					// TODO: test case for interlaced images
 					#region work out the pixel row we're setting for an interlaced image
 					if( interlaceRowNumber >= id.Size.Height ) 
 					{
@@ -525,7 +634,7 @@ namespace GifComponents
 					int dlim = dx + id.Size.Width; // end of dest line
 					if( (k + lsd.LogicalScreenSize.Width) < dlim ) 
 					{
-						// TODO: does this ever happen?
+						// TODO: does this ever happen? Test case needed
 						dlim = k + lsd.LogicalScreenSize.Width; // past dest edge
 					}
 					int sx = i * id.Size.Width; // start of line in source
@@ -603,17 +712,6 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region public WriteToStream method
-		/// <summary>
-		/// Writes this component to the supplied output stream.
-		/// </summary>
-		/// <param name="outputStream">
-		/// The output stream to write to.
-		/// </param>
-		public override void WriteToStream( Stream outputStream )
-		{
-			throw new NotImplementedException();
-		}
 		#endregion
 
 	}

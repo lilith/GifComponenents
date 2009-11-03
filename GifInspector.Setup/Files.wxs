@@ -3,7 +3,7 @@
 	<Fragment>
 		<DirectoryRef Id="TARGETDIR">
 			<Directory Id="ProgramFilesFolder" Name="PFiles">
-				<Directory Id="INSTALLDIR" Name="GifInspector">
+				<Directory Id="INSTALLDIR" Name="GifComponents">
 					<Component Id="LicenseRtf" 
 					           Guid="463CB361-65ED-419B-B039-7C87FBA48C43" 
 					           DiskId="1">
@@ -25,6 +25,13 @@
 						      Name="GifInspector.exe" 
 						      Source="..\GifInspector\bin\release\GifInspector.exe"/>
 					</Component>
+					<Component Id="GifBuilder" 
+					           Guid="4FC185E5-C1C4-4D81-B68E-802DB7359A54"
+					           DiskId="1">
+						<File Id="GifBuilder" 
+						      Name="GifBuilder.exe" 
+						      Source="..\GifBuilder\bin\release\GifBuilder.exe"/>
+					</Component>
 					<Component Id="GifComponents" 
 					           Guid="BA1252C1-6AB0-4422-92D1-7B7EF3F10836"
 					           DiskId="1">
@@ -34,12 +41,28 @@
 						      KeyPath="yes"
 						      Assembly=".net"/>
 					</Component>
-					<Component Id="AboutFormParameters" 
+					<Component Id="CommonForms" 
+					           Guid="9D571E22-E84E-435B-A56D-8C904181E776"
+					           DiskId="1">
+						<File Id="CommonForms" 
+						      Name="CommonForms.dll"
+						      KeyPath="yes" 
+						      Assembly=".net"
+						      Source="..\..\CommonForms\CommonForms\bin\release\CommonForms.dll"/>
+					</Component>
+					<Component Id="GifInspectorAboutFormParameters" 
 					           Guid="9A2DBB5D-C387-4763-9755-1A165A1BD2F6"
 					           DiskId="1">
-						<File Id="AboutFormParameters" 
+						<File Id="GifInspectorAboutFormParameters" 
 						      Name="GifInspector.AboutFormParameters.xml"
 						      Source="..\GifInspector\GifInspector.AboutFormParameters.xml"/>
+					</Component>
+					<Component Id="GifBuilderAboutFormParameters" 
+					           Guid="E3F54C5C-5B94-4EC9-905C-83F95ED9087B"
+					           DiskId="1">
+						<File Id="GifBuilderAboutFormParameters" 
+						      Name="GifBuilder.AboutFormParameters.xml"
+						      Source="..\GifBuilder\GifBuilder.AboutFormParameters.xml"/>
 					</Component>
 				</Directory>
 			</Directory>

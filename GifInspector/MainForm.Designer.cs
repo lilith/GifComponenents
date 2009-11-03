@@ -107,6 +107,7 @@ namespace GifInspector
 			// openFileDialog1
 			// 
 			this.openFileDialog1.Filter = "GIF files | *.gif";
+			this.openFileDialog1.RestoreDirectory = true;
 			this.openFileDialog1.SupportMultiDottedExtensions = true;
 			this.openFileDialog1.Title = "Pick GIF file to inspect";
 			// 

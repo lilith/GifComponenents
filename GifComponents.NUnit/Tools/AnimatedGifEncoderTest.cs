@@ -22,6 +22,8 @@
 #endregion
 
 using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
@@ -32,14 +34,130 @@ namespace GifComponents.NUnit
 {
 	/// <summary>
 	/// Test fixture for the AnimatedGifEncoder class.
-	/// TODO: more private methods needed to simplify the actual test cases
 	/// </summary>
 	[TestFixture]
 	public class AnimatedGifEncoderTest
 	{
 		private AnimatedGifEncoder _e;
 		private GifDecoder _d;
+		private Collection<GifFrame> _frames;
 		
+		#region WikipediaExampleTest
+		/// <summary>
+		/// Uses the encoder to create a GIF file using the example at
+		/// http://en.wikipedia.org/wiki/Gif#Example_.gif_file and then reads
+		/// back in and verifies all its components.
+		/// </summary>
+		[Test]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Wikipedia")]
+		public void WikipediaExampleTest()
+		{
+			_e = new AnimatedGifEncoder();
+			GifFrame frame = new GifFrame( WikipediaExample.ExpectedBitmap );
+			frame.Delay = WikipediaExample.DelayTime;
+			_e.AddFrame( frame );
+			
+			// TODO: some way of creating/testing a UseLocal version of WikipediaExample
+			string fileName = "WikipediaExampleUseGlobal.gif";
+			_e.WriteToFile( fileName );
+			Stream s = File.OpenRead( fileName );
+			
+			int code;
+
+			// check GIF header
+			GifHeader gh = GifHeader.FromStream( s );
+			Assert.AreEqual( ErrorState.Ok, gh.ConsolidatedState );
+
+			// check logical screen descriptor
+			LogicalScreenDescriptor lsd = LogicalScreenDescriptor.FromStream( s );
+			Assert.AreEqual( ErrorState.Ok, lsd.ConsolidatedState );
+			WikipediaExample.CheckLogicalScreenDescriptor( lsd );
+			
+			// read global colour table
+			ColourTable gct = ColourTable.FromStream( s, WikipediaExample.GlobalColourTableSize );
+			Assert.AreEqual( ErrorState.Ok, gct.ConsolidatedState );
+			// cannot compare global colour table as different encoders will
+			// produce difference colour tables.
+//			WikipediaExample.CheckGlobalColourTable( gct );
+			
+			// check for extension introducer
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeExtensionIntroducer, code );
+			
+			// check for app extension label
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeApplicationExtensionLabel, code );
+			
+			// check netscape extension
+			ApplicationExtension ae = ApplicationExtension.FromStream( s );
+			Assert.AreEqual( ErrorState.Ok, ae.ConsolidatedState );
+			NetscapeExtension ne = new NetscapeExtension( ae );
+			Assert.AreEqual( ErrorState.Ok, ne.ConsolidatedState );
+			Assert.AreEqual( 0, ne.LoopCount );
+			
+			// check for extension introducer
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeExtensionIntroducer, code );
+
+			// check for gce label
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeGraphicControlLabel, code );
+			
+			// check graphic control extension
+			GraphicControlExtension gce = GraphicControlExtension.FromStream( s );
+			Assert.AreEqual( ErrorState.Ok, gce.ConsolidatedState );
+			WikipediaExample.CheckGraphicControlExtension( gce );
+
+			// check for image separator
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeImageSeparator, code );
+			
+			// check for image descriptor
+			ImageDescriptor id = ImageDescriptor.FromStream( s );
+			Assert.AreEqual( ErrorState.Ok, id.ConsolidatedState );
+			WikipediaExample.CheckImageDescriptor( id );
+
+			// read, decode and check image data
+			// Cannot compare encoded LZW data directly as different encoders
+			// will create different colour tables, so even if the bitmaps are
+			// identical, the colour indices will be different
+			int pixelCount = WikipediaExample.FrameSize.Width
+							* WikipediaExample.FrameSize.Height;
+			TableBasedImageData tbid = new TableBasedImageData( s, pixelCount );
+			for( int y = 0; y < WikipediaExample.LogicalScreenSize.Height; y++ )
+			{
+				for( int x = 0; x < WikipediaExample.LogicalScreenSize.Width; x++ )
+				{
+					int i = (y * WikipediaExample.LogicalScreenSize.Width) + x;
+					Assert.AreEqual( WikipediaExample.ExpectedBitmap.GetPixel( x, y ),
+					                 gct[tbid.Pixels[i]],
+					                 "X: " + x + ", Y: " + y );
+				}
+			}
+
+			// Check for block terminator after image data
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( 0x00, code );
+			
+			// check for GIF trailer
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( GifComponent.CodeTrailer, code );
+			
+			// check we're at the end of the stream
+			code = ExampleComponent.CallRead( s );
+			Assert.AreEqual( -1, code );
+			s.Close();
+			
+			_d = new GifDecoder( fileName );
+			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
+			BitmapAssert.AreEqual( WikipediaExample.ExpectedBitmap, 
+			                      (Bitmap) _d.Frames[0].TheImage,
+			                       "" );
+		}
+		#endregion
+
 		#region UseGlobal
 		/// <summary>
 		/// Tests the encoder using a two-frame 2x2 pixel checkerboard animation
@@ -48,57 +166,12 @@ namespace GifComponents.NUnit
 		[Test]
 		public void UseGlobal()
 		{
-			_e = new AnimatedGifEncoder( new Size( 2, 2 ), 
-			                             0,
-			                             ColourTableStrategy.UseGlobal,
-			                             10 );
-			_e.AddFrame( Bitmap1(), 10 );
-			_e.AddFrame( Bitmap2(), 10 );
-			string fileName = "Checks.UseGlobal.gif";
-			_e.WriteToFile( fileName );
-			
-			Stream s = File.OpenRead( fileName );
-
-			// global info
-			CheckGifHeader( s );
-			LogicalScreenDescriptor lsd = CheckLogicalScreenDescriptor( s, true );
-			ColourTable gct = CheckColourTable( s, lsd.GlobalColourTableSize );
-			CheckExtensionIntroducer( s );
-			CheckAppExtensionLabel( s );
-			CheckNetscapeExtension( s, 0 );
-			
-			// start of first frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			ImageDescriptor id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap1() );
-			CheckBlockTerminator( s );
-			
-			// start of second frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap2() );
-			CheckBlockTerminator( s );
-			
-			// end of image data
-			CheckGifTrailer( s );
-			CheckEndOfStream( s );
-			s.Close();
-			
-			// Check the file using the decoder
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 2, _d.Frames.Count );
-			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			BitmapAssert.AreEqual( Bitmap1(), _d.Frames[0].TheImage, "frame 0" );
-			BitmapAssert.AreEqual( Bitmap2(), _d.Frames[1].TheImage, "frame 1" );
-			Assert.AreEqual( false, _d.Frames[0].ImageDescriptor.HasLocalColourTable );
-			Assert.AreEqual( false, _d.Frames[1].ImageDescriptor.HasLocalColourTable );
+			_frames = new Collection<GifFrame>();
+			_frames.Add( new GifFrame( (Image) Bitmap1() ) );
+			_frames.Add( new GifFrame( (Image) Bitmap2() ) );
+			TestAnimatedGifEncoder( ColourTableStrategy.UseGlobal, 
+			                        8, 
+			                        Bitmap1().Size );
 		}
 		#endregion
 
@@ -110,256 +183,198 @@ namespace GifComponents.NUnit
 		[Test]
 		public void UseLocal()
 		{
-			_e = new AnimatedGifEncoder( new Size( 2, 2 ), 
-			                             0,
-			                             ColourTableStrategy.UseLocal,
-			                             10 );
-			_e.AddFrame( Bitmap1(), 10 );
-			_e.AddFrame( Bitmap2(), 10 );
-			string fileName = "Checks.UseLocal.gif";
-			_e.WriteToFile( fileName );
-			
-			Stream s = File.OpenRead( fileName );
-
-			// global info
-			CheckGifHeader( s );
-			CheckLogicalScreenDescriptor( s, false );
-			// no global colour table here
-			CheckExtensionIntroducer( s );
-			CheckAppExtensionLabel( s );
-			CheckNetscapeExtension( s, 0 );
-			
-			ColourTable lct;
-			
-			// start of first frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			ImageDescriptor id = CheckImageDescriptor( s, true, 1 );
-			lct = CheckColourTable( s, id.LocalColourTableSize );
-			CheckImageData( s, lct, id, Bitmap1() );
-			CheckBlockTerminator( s );
-			
-			// start of second frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			id = CheckImageDescriptor( s, true, 1 );
-			lct = CheckColourTable( s, id.LocalColourTableSize );
-			CheckImageData( s, lct, id, Bitmap2() );
-			CheckBlockTerminator( s );
-			
-			// end of image data
-			CheckGifTrailer( s );
-			CheckEndOfStream( s );
-			s.Close();
-			
-			// Check the file using the decoder
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 2, _d.Frames.Count );
-			Assert.AreEqual( false, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			BitmapAssert.AreEqual( Bitmap1(), _d.Frames[0].TheImage, "frame 0" );
-			BitmapAssert.AreEqual( Bitmap2(), _d.Frames[1].TheImage, "frame 1" );
-			Assert.AreEqual( true, _d.Frames[0].ImageDescriptor.HasLocalColourTable );
-			Assert.AreEqual( true, _d.Frames[1].ImageDescriptor.HasLocalColourTable );
+			_frames = new Collection<GifFrame>();
+			_frames.Add( new GifFrame( (Image) Bitmap1() ) );
+			_frames.Add( new GifFrame( (Image) Bitmap2() ) );
+			TestAnimatedGifEncoder( ColourTableStrategy.UseLocal, 
+			                        11, 
+			                        Bitmap1().Size );
 		}
 		#endregion
 
-		#region DefaultRepeatCount
+		#region ColourQualityTooLow
 		/// <summary>
-		/// Checks that when the encoded is passed a repeat count of less than
-		/// -1, the repeat count defaults to -1.
+		/// Checks that the colour quantization quality is set to the correct
+		/// value when given a value which is too low.
 		/// </summary>
 		[Test]
-		public void DefaultRepeatCount()
+		public void ColourQualityTooLow()
 		{
-			_e = new AnimatedGifEncoder( new Size( 2, 2 ), 
-			                             -2,
-			                             ColourTableStrategy.UseGlobal,
-			                             10 );
-			_e.AddFrame( Bitmap1(), 10 );
-			_e.AddFrame( Bitmap2(), 10 );
-			string fileName = "Checks.DefaultRepeatCount.gif";
-			_e.WriteToFile( fileName );
-			
-			Stream s = File.OpenRead( fileName );
-
-			// global info
-			CheckGifHeader( s );
-			LogicalScreenDescriptor lsd = CheckLogicalScreenDescriptor( s, true );
-			ColourTable gct = CheckColourTable( s, lsd.GlobalColourTableSize );
-			
-			// Because the repeat count is set to -1 (no repeat) there should
-			// be no Netscape extension
-//			CheckExtensionIntroducer( s );
-//			CheckAppExtensionLabel( s );
-//			CheckNetscapeExtension( s, -1 );
-			
-			// start of first frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			ImageDescriptor id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap1() );
-			CheckBlockTerminator( s );
-			
-			// start of second frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap2() );
-			CheckBlockTerminator( s );
-			
-			// end of image data
-			CheckGifTrailer( s );
-			CheckEndOfStream( s );
-			s.Close();
-			
-			// Check the file using the decoder
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 2, _d.Frames.Count );
-			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			BitmapAssert.AreEqual( Bitmap1(), _d.Frames[0].TheImage, "frame 0" );
-			BitmapAssert.AreEqual( Bitmap2(), _d.Frames[1].TheImage, "frame 1" );
-			Assert.AreEqual( false, _d.Frames[0].ImageDescriptor.HasLocalColourTable );
-			Assert.AreEqual( false, _d.Frames[1].ImageDescriptor.HasLocalColourTable );
-		}
-		#endregion
-
-		#region DefaultQuality
-		/// <summary>
-		/// Checks that when the encoder is passed a quality of less than 1, the
-		/// quality defaults to 1.
-		/// </summary>
-		[Test]
-		public void DefaultQuality()
-		{
-			_e = new AnimatedGifEncoder( new Size( 2, 2 ), 
-			                             0,
-			                             ColourTableStrategy.UseGlobal,
-			                             0 );
-			_e.AddFrame( Bitmap1(), 10 );
-			_e.AddFrame( Bitmap2(), 10 );
-			string fileName = "Checks.DefaultQuality.gif";
-			_e.WriteToFile( fileName );
-			
-			// TODO: no way to check the actual colour quantization quality!
-			
-			Stream s = File.OpenRead( fileName );
-
-			// global info
-			CheckGifHeader( s );
-			LogicalScreenDescriptor lsd = CheckLogicalScreenDescriptor( s, true );
-			ColourTable gct = CheckColourTable( s, lsd.GlobalColourTableSize );
-			CheckExtensionIntroducer( s );
-			CheckAppExtensionLabel( s );
-			CheckNetscapeExtension( s, 0 );
-			
-			// start of first frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			ImageDescriptor id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap1() );
-			CheckBlockTerminator( s );
-			
-			// start of second frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s );
-			CheckImageSeparator( s );
-			id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap2() );
-			CheckBlockTerminator( s );
-			
-			// end of image data
-			CheckGifTrailer( s );
-			CheckEndOfStream( s );
-			s.Close();
-			
-			// Check the file using the decoder
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 2, _d.Frames.Count );
-			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			BitmapAssert.AreEqual( Bitmap1(), _d.Frames[0].TheImage, "frame 0" );
-			BitmapAssert.AreEqual( Bitmap2(), _d.Frames[1].TheImage, "frame 1" );
-			Assert.AreEqual( false, _d.Frames[0].ImageDescriptor.HasLocalColourTable );
-			Assert.AreEqual( false, _d.Frames[1].ImageDescriptor.HasLocalColourTable );
-		}
-		#endregion
-
-		#region WithTransparency
-		/// <summary>
-		/// Checks that when the encoder sets the transparent colour correctly.
-		/// </summary>
-		[Test]
-		[Ignore( "The way transparency should work isn't clearly defined" )]
-		public void WithTransparency()
-		{
-			_e = new AnimatedGifEncoder( new Size( 2, 2 ), 
-			                             0,
-			                             ColourTableStrategy.UseGlobal,
-			                             10 );
-			_e.Transparent = Color.White;
-			_e.AddFrame( Bitmap1(), 10 );
-			_e.AddFrame( Bitmap2(), 10 );
-			string fileName = "Checks.WithTransparency.gif";
-			_e.WriteToFile( fileName );
-			
-			Stream s = File.OpenRead( fileName );
-
-			// global info
-			CheckGifHeader( s );
-			LogicalScreenDescriptor lsd = CheckLogicalScreenDescriptor( s, true );
-			ColourTable gct = CheckColourTable( s, lsd.GlobalColourTableSize );
-			CheckExtensionIntroducer( s );
-			CheckAppExtensionLabel( s );
-			CheckNetscapeExtension( s, 0 );
-			
-			// start of first frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s, Color.White );
-			CheckImageSeparator( s );
-			ImageDescriptor id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap1() );
-			CheckBlockTerminator( s );
-			
-			// start of second frame info
-			CheckExtensionIntroducer( s );
-			CheckGraphicControlLabel( s );
-			CheckGraphicControlExtension( s, Color.White );
-			CheckImageSeparator( s );
-			id = CheckImageDescriptor( s, false, 0 );
-			CheckImageData( s, gct, id, Bitmap2() );
-			CheckBlockTerminator( s );
-			
-			// end of image data
-			CheckGifTrailer( s );
-			CheckEndOfStream( s );
-			s.Close();
-			
-			// Check the file using the decoder
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 2, _d.Frames.Count );
-			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			BitmapAssert.AreEqual( Bitmap1(), _d.Frames[0].TheImage, "frame 0" );
-			BitmapAssert.AreEqual( Bitmap2(), _d.Frames[1].TheImage, "frame 1" );
-			Assert.AreEqual( false, _d.Frames[0].ImageDescriptor.HasLocalColourTable );
-			Assert.AreEqual( false, _d.Frames[1].ImageDescriptor.HasLocalColourTable );
+			_e = new AnimatedGifEncoder();
+			_e.ColourQuality = 0;
+			Assert.AreEqual( 1, _e.ColourQuality );
 		}
 		#endregion
 		
+		// TODO: test case for transparency
+
+		#region WriteToStreamNoFramesTest
+		/// <summary>
+		/// Checks that the correct exception is thrown when the WriteToStream
+		/// method is called when no frames have been added to the 
+		/// AnimatedGifEncoder.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( InvalidOperationException ) )]
+		public void WriteToStreamNoFramesTest()
+		{
+			_e = new AnimatedGifEncoder();
+			MemoryStream s = new MemoryStream();
+			try
+			{
+				_e.WriteToStream( s );
+			}
+			catch( InvalidOperationException ex )
+			{
+				string message
+					= "The AnimatedGifEncoder has no frames to write!";
+				StringAssert.Contains( message, ex.Message );
+				throw;
+			}
+		}
+		#endregion
+		
+		#region private methods
+		
+		#region private TestAnimatedGifEncoder method
+		/// <summary>
+		/// Tests the AnimatedGifEncoder and the encoded GIF file it produces
+		/// using the supplied parameters as property values.
+		/// </summary>
+		private void TestAnimatedGifEncoder( ColourTableStrategy strategy, 
+		                                     int colourQuality, 
+		                                     Size logicalScreenSize )
+		{
+			_e = new AnimatedGifEncoder();
+			
+			// Check default properties set by constructor.
+			Assert.AreEqual( ColourTableStrategy.UseGlobal, 
+			                 _e.ColourTableStrategy, 
+			                 "Colour table strategy set by constructor" );
+			Assert.AreEqual( 10, 
+			                 _e.ColourQuality, 
+			                 "Colour quantization quality set by constructor" );
+			Assert.AreEqual( Size.Empty, 
+			                 _e.LogicalScreenSize, 
+			                 "Logical screen size set by constructor" );
+			
+			_e.ColourTableStrategy = strategy;
+			_e.ColourQuality = colourQuality;
+			_e.LogicalScreenSize = logicalScreenSize;
+			
+			// Check property set/gets
+			Assert.AreEqual( strategy, 
+			                 _e.ColourTableStrategy, 
+			                 "Colour table strategy property set/get" );
+			Assert.AreEqual( colourQuality, 
+			                 _e.ColourQuality, 
+			                 "Colour quantization quality property set/get" );
+			Assert.AreEqual( logicalScreenSize, 
+			                 _e.LogicalScreenSize, 
+			                 "Logical screen size property get/set" );
+			
+			foreach( GifFrame thisFrame in _frames )
+			{
+				_e.AddFrame( thisFrame );
+			}
+			
+			StackTrace t = new StackTrace();
+			StackFrame f = t.GetFrame( 1 );
+			string fileName 
+				= "Checks." + this.GetType().Name 
+				+ "." + f.GetMethod().Name + ".gif";
+			_e.WriteToFile( fileName );
+			
+			Stream s = File.OpenRead( fileName );
+
+			// global info
+			CheckGifHeader( s );
+			bool shouldHaveGlobalColourTable 
+				= (strategy == ColourTableStrategy.UseGlobal);
+			LogicalScreenDescriptor lsd 
+				= CheckLogicalScreenDescriptor( s, shouldHaveGlobalColourTable );
+			
+			// Only check the global colour table if there should be one
+			ColourTable gct = null;
+			if( shouldHaveGlobalColourTable )
+			{
+				gct = CheckColourTable( s, lsd.GlobalColourTableSize );
+			}
+
+			CheckExtensionIntroducer( s );
+			CheckAppExtensionLabel( s );
+			CheckNetscapeExtension( s, 0 );
+			
+			CheckFrame( s, gct, Bitmap1() );
+			CheckFrame( s, gct, Bitmap2() );
+			
+			// end of image data
+			CheckGifTrailer( s );
+			CheckEndOfStream( s );
+			s.Close();
+
+			// Check the file using the decoder
+			_d = new GifDecoder( fileName );
+			Assert.AreEqual( ErrorState.Ok, 
+			                 _d.ConsolidatedState, 
+			                 "Decoder consolidated state" );
+			Assert.AreEqual( 2, _d.Frames.Count, "Decoder frame count" );
+			Assert.AreEqual( shouldHaveGlobalColourTable, 
+			                 _d.LogicalScreenDescriptor.HasGlobalColourTable, 
+			                 "Should have global colour table" );
+			Assert.AreEqual( logicalScreenSize, 
+			                 _d.LogicalScreenDescriptor.LogicalScreenSize, 
+			                 "Decoder logical screen size" );
+			
+			BitmapAssert.AreEqual( Bitmap1(), 
+			                       (Bitmap) _d.Frames[0].TheImage, 
+			                       "frame 0" );
+			BitmapAssert.AreEqual( Bitmap2(), 
+			                       (Bitmap) _d.Frames[1].TheImage, 
+			                       "frame 1" );
+			
+			bool shouldHaveLocalColourTable = !shouldHaveGlobalColourTable;
+			Assert.AreEqual( shouldHaveLocalColourTable, 
+			                 _d.Frames[0].ImageDescriptor.HasLocalColourTable, 
+			                 "Frame 0 has local colour table" );
+			Assert.AreEqual( shouldHaveLocalColourTable, 
+			                 _d.Frames[1].ImageDescriptor.HasLocalColourTable, 
+			                 "Frame 0 has local colour table" );
+		}
+		#endregion
+		
+		#region private static CheckFrame method
+		private static void CheckFrame( Stream s, 
+		                                ColourTable globalColourTable,
+		                                Bitmap bitmap )
+		{
+			CheckExtensionIntroducer( s );
+			CheckGraphicControlLabel( s );
+			CheckGraphicControlExtension( s );
+			CheckImageSeparator( s );
+			bool shouldHaveLocalColourTable 
+				= (globalColourTable == null) ? true : false;
+			int lctSizeBits = shouldHaveLocalColourTable ? 1 : 0;
+			ImageDescriptor id 
+				= CheckImageDescriptor( s, 
+				                        shouldHaveLocalColourTable, 
+				                        lctSizeBits );
+			
+			if( globalColourTable == null )
+			{
+				// no global colour table so must be a local colour table on
+				// each frame
+				ColourTable lct = CheckColourTable( s, id.LocalColourTableSize );
+				CheckImageData( s, lct, id, bitmap );
+			}
+			else
+			{
+				CheckImageData( s, globalColourTable, id, bitmap );
+			}
+			CheckBlockTerminator( s );
+		}
+		#endregion
+
 		#region private static Bitmap1 method
 		private static Bitmap Bitmap1()
 		{
@@ -402,10 +417,18 @@ namespace GifComponents.NUnit
 		{
 			// check logical screen descriptor
 			LogicalScreenDescriptor lsd = LogicalScreenDescriptor.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, lsd.ConsolidatedState );
-			Assert.AreEqual( new Size( 2, 2 ), lsd.LogicalScreenSize );
-			Assert.AreEqual( shouldHaveGlobalColourTable, lsd.HasGlobalColourTable );
-			Assert.AreEqual( false, lsd.GlobalColourTableIsSorted );
+			Assert.AreEqual( ErrorState.Ok, 
+			                 lsd.ConsolidatedState,
+			                 "Logical screen descriptor consolidated state" );
+			Assert.AreEqual( new Size( 2, 2 ), 
+			                 lsd.LogicalScreenSize, 
+			                 "Logical screen size" );
+			Assert.AreEqual( shouldHaveGlobalColourTable, 
+			                 lsd.HasGlobalColourTable,
+			                 "Should have global colour table" );
+			Assert.AreEqual( false, 
+			                 lsd.GlobalColourTableIsSorted, 
+			                 "Global colour table is sorted" );
 			return lsd;
 		}
 		#endregion
@@ -507,15 +530,24 @@ namespace GifComponents.NUnit
 		{
 			// check for image descriptor
 			ImageDescriptor id = ImageDescriptor.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, id.ConsolidatedState );
-			Assert.AreEqual( shouldHaveLocalColourTable, id.HasLocalColourTable );
-			Assert.AreEqual( false, id.IsInterlaced );
-			Assert.AreEqual( false, id.IsSorted );
-			Assert.AreEqual( localColourTableSizeBits, id.LocalColourTableSizeBits );
+			Assert.AreEqual( ErrorState.Ok, 
+			                 id.ConsolidatedState, 
+			                 "Image descriptor consolidated state" );
+			Assert.AreEqual( shouldHaveLocalColourTable, 
+			                 id.HasLocalColourTable, 
+			                 "Should have local colour table" );
+			Assert.AreEqual( false, id.IsInterlaced, "Is interlaced" );
+			Assert.AreEqual( false, id.IsSorted, "Local colour table is sorted" );
+			Assert.AreEqual( localColourTableSizeBits, 
+			                 id.LocalColourTableSizeBits, 
+			                 "Local colour table size (bits)" );
 			Assert.AreEqual( 1 << (localColourTableSizeBits + 1), 
-			                 id.LocalColourTableSize );
-			Assert.AreEqual( new Size( 2, 2 ), id.Size );
-			Assert.AreEqual( new Point( 0, 0 ), id.Position );
+			                 id.LocalColourTableSize,
+			                 "Local colour table size");
+			Assert.AreEqual( new Size( 2, 2 ), id.Size, "Image descriptor size" );
+			Assert.AreEqual( new Point( 0, 0 ), 
+			                 id.Position, 
+			                 "Image descriptor position" );
 			return id;
 		}
 		#endregion
@@ -573,117 +605,6 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		#region WikipediaExampleTest
-		/// <summary>
-		/// Uses the encoder to create a GIF file using the example at
-		/// http://en.wikipedia.org/wiki/Gif#Example_.gif_file and then reads
-		/// back in and verifies all its components.
-		/// </summary>
-		[Test]
-		[SuppressMessage("Microsoft.Naming", 
-		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
-		                 MessageId = "Wikipedia")]
-		public void WikipediaExampleTest()
-		{
-			_e = new AnimatedGifEncoder();
-			_e.AddFrame( WikipediaExample.ExpectedBitmap,
-			             WikipediaExample.DelayTime );
-			string fileName = "WikipediaExampleUseGlobal.gif";
-			_e.WriteToFile( fileName );
-			Stream s = File.OpenRead( fileName );
-			
-			int code;
-
-			// check GIF header
-			GifHeader gh = GifHeader.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, gh.ConsolidatedState );
-
-			// check logical screen descriptor
-			LogicalScreenDescriptor lsd = LogicalScreenDescriptor.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, lsd.ConsolidatedState );
-			WikipediaExample.CheckLogicalScreenDescriptor( lsd );
-			
-			// read global colour table
-			ColourTable gct = ColourTable.FromStream( s, WikipediaExample.GlobalColourTableSize );
-			Assert.AreEqual( ErrorState.Ok, gct.ConsolidatedState );
-			// cannot compare global colour table as different encoders will
-			// produce difference colour tables.
-//			WikipediaExample.CheckGlobalColourTable( gct );
-			
-			// check for extension introducer
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeExtensionIntroducer, code );
-			
-			// check for app extension label
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeApplicationExtensionLabel, code );
-			
-			// check netscape extension
-			ApplicationExtension ae = ApplicationExtension.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, ae.ConsolidatedState );
-			NetscapeExtension ne = new NetscapeExtension( ae );
-			Assert.AreEqual( ErrorState.Ok, ne.ConsolidatedState );
-			Assert.AreEqual( 0, ne.LoopCount );
-			
-			// check for extension introducer
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeExtensionIntroducer, code );
-
-			// check for gce label
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeGraphicControlLabel, code );
-			
-			// check graphic control extension
-			GraphicControlExtension gce = GraphicControlExtension.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, gce.ConsolidatedState );
-			WikipediaExample.CheckGraphicControlExtension( gce );
-
-			// check for image separator
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeImageSeparator, code );
-			
-			// check for image descriptor
-			ImageDescriptor id = ImageDescriptor.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, id.ConsolidatedState );
-			WikipediaExample.CheckImageDescriptor( id );
-
-			// read, decode and check image data
-			// Cannot compare encoded LZW data directly as different encoders
-			// will create different colour tables, so even if the bitmaps are
-			// identical, the colour indices will be different
-			int pixelCount = WikipediaExample.FrameSize.Width
-							* WikipediaExample.FrameSize.Height;
-			TableBasedImageData tbid = new TableBasedImageData( s, pixelCount );
-			for( int y = 0; y < WikipediaExample.LogicalScreenSize.Height; y++ )
-			{
-				for( int x = 0; x < WikipediaExample.LogicalScreenSize.Width; x++ )
-				{
-					int i = (y * WikipediaExample.LogicalScreenSize.Width) + x;
-					Assert.AreEqual( WikipediaExample.ExpectedBitmap.GetPixel( x, y ),
-					                 gct[tbid.Pixels[i]],
-					                 "X: " + x + ", Y: " + y );
-				}
-			}
-
-			// Check for block terminator after image data
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( 0x00, code );
-			
-			// check for GIF trailer
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( GifComponent.CodeTrailer, code );
-			
-			// check we're at the end of the stream
-			code = ExampleComponent.CallRead( s );
-			Assert.AreEqual( -1, code );
-			s.Close();
-			
-			_d = new GifDecoder( fileName );
-			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			BitmapAssert.AreEqual( WikipediaExample.ExpectedBitmap, 
-			                       _d.Frames[0].TheImage, 
-			                       "" );
-		}
 		#endregion
 	}
 }

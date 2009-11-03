@@ -1,11 +1,11 @@
 ﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{19D45270-91BE-4AD2-9F2E-84B3F792324F}</ProjectGuid>
+    <ProjectGuid>{81D2BE9D-CE2D-4A54-951B-0BA55CB12D85}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <OutputType>Library</OutputType>
-    <RootNamespace>GifComponents</RootNamespace>
-    <AssemblyName>GifComponents</AssemblyName>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>GifBuilder</RootNamespace>
+    <AssemblyName>GifBuilder</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <SourceAnalysisOverrideSettingsFile>I:\Documents and Settings\simon\Application Data\ICSharpCode/SharpDevelop3.0\Settings.SourceAnalysis</SourceAnalysisOverrideSettingsFile>
@@ -13,7 +13,7 @@
     <AssemblyOriginatorKeyFile>..\..\GifComponents.snk</AssemblyOriginatorKeyFile>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
-    <DocumentationFile>bin\Release\GifComponents.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\GifBuilder.xml</DocumentationFile>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
@@ -46,43 +46,34 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
+    <Reference Include="CommonForms" />
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Components\ApplicationExtension.cs" />
-    <Compile Include="Components\ColourTable.cs" />
-    <Compile Include="Components\DataBlock.cs" />
-    <Compile Include="Components\GifFrame.cs" />
-    <Compile Include="Components\GifHeader.cs" />
-    <Compile Include="Components\GraphicControlExtension.cs" />
-    <Compile Include="Components\ImageDescriptor.cs" />
-    <Compile Include="Components\LogicalScreenDescriptor.cs" />
-    <Compile Include="Components\NetscapeExtension.cs" />
-    <Compile Include="Components\TableBasedImageData.cs" />
-    <Compile Include="Enums\ColourTableStrategy.cs" />
-    <Compile Include="Enums\DisposalMethod.cs" />
-    <Compile Include="Enums\ErrorState.cs" />
+    <Compile Include="MainForm.cs" />
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tools\AnimatedGifEncoder.cs" />
-    <Compile Include="Tools\GifDecoder.cs" />
-    <Compile Include="Tools\LzwEncoder.cs" />
-    <Compile Include="Tools\NeuQuant.cs" />
-    <Compile Include="Tools\PixelAnalysis.cs" />
-    <Compile Include="Tools\Utils.cs" />
-    <Compile Include="Types\GifComponent.cs" />
-    <Compile Include="Types\GifComponentStatus.cs" />
-    <Compile Include="Types\IndexedPixels.cs" />
-    <Compile Include="Types\PackedFields.cs" />
-    <None Include="CPOL.txt">
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="GifBuilder.AboutFormParameters.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="license.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Components" />
-    <Folder Include="Enums" />
-    <Folder Include="Tools" />
-    <Folder Include="Types" />
+    <ProjectReference Include="..\GifComponents\GifComponents.csproj">
+      <Project>{19D45270-91BE-4AD2-9F2E-84B3F792324F}</Project>
+      <Name>GifComponents</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
