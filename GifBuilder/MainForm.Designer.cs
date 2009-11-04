@@ -233,7 +233,8 @@ namespace GifBuilder
 			// openFileDialog1
 			// 
 			this.openFileDialog1.DefaultExt = "bmp";
-			this.openFileDialog1.Filter = "Bitmap files|*.bmp";
+			this.openFileDialog1.Filter = "Image Files|*.gif;*.png;*.jpg;*.jpeg;*.bmp|PNG Files(*.png)|*.png|JPEG Files(*.jp" +
+			"g;*.jpeg)|*.jpg;*.jpeg|GIF Files(*.gif)|*.gif|BMP Files(*.bmp)|*.bmp";
 			this.openFileDialog1.RestoreDirectory = true;
 			this.openFileDialog1.Title = "Add image...";
 			// 
