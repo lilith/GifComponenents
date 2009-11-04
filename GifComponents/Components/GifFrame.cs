@@ -59,6 +59,13 @@ namespace GifComponents
 
 		#region constructors
 		/// <summary>
+		/// Private constructor for internal use only.
+		/// </summary>
+		private GifFrame()
+		{
+		}
+		
+		/// <summary>
 		/// Constructor.
 		/// </summary>
 		/// <param name="theImage">
@@ -68,82 +75,6 @@ namespace GifComponents
 		{
 			_image = theImage;
 			_delay = 10; // 10 1/100ths of a second, i.e. 1/10 of a second.
-		}
-		
-		/// <summary>
-		/// Constructor.
-		/// </summary>
-		/// <param name="indexedPixels">
-		/// <see cref="TableBasedImageData"/> for this frame.
-		/// </param>
-		/// <param name="activeColourTable">
-		/// The colour table for this frame - this could be a local colour table
-		/// or the stream's global colour table.
-		/// </param>
-		/// <param name="imageDescriptor">
-		/// The image descriptor for this frame.
-		/// </param>
-		/// <param name="extension">
-		/// The graphic control extension, if any, which precedes this image in
-		/// the input stream.
-		/// </param>
-		/// <param name="backgroundColour">
-		/// The background colour of this frame.
-		/// </param>
-		/// <param name="logicalScreenDescriptor">
-		/// The logical screen descriptor for the GIF stream.
-		/// </param>
-		/// <param name="previousFrame">
-		/// The frame which precedes this one in the GIF stream, if present.
-		/// </param>
-		/// <param name="previousFrameBut1">
-		/// The frame which precedes the frame before this one in the GIF stream,
-		/// if present.
-		/// TODO: make this an internal constructor? (breaks its unit test)
-		/// TODO: alternatively write a separate internal GifFrameBuilder class to replace this constructor
-		/// </param>
-		public GifFrame( TableBasedImageData indexedPixels,
-		                 ColourTable activeColourTable,
-		                 ImageDescriptor imageDescriptor,
-		                 GraphicControlExtension extension,
-		                 Color backgroundColour,
-		                 LogicalScreenDescriptor logicalScreenDescriptor,
-		                 GifFrame previousFrame,
-		                 GifFrame previousFrameBut1 )
-		{
-			#region guard against null arguments
-			if( imageDescriptor == null )
-			{
-				throw new ArgumentNullException( "imageDescriptor" );
-			}
-			#endregion
-
-			_indexedPixels = indexedPixels;
-
-			if( imageDescriptor.HasLocalColourTable )
-			{
-				// TODO: test case for this condition
-				_localColourTable = activeColourTable;
-			}
-			else
-			{
-				_localColourTable = null;
-			}
-
-			_extension = extension;
-			if( extension != null )
-			{
-				_delay = extension.DelayTime;
-			}
-			_imageDescriptor = imageDescriptor;
-			_backgroundColour = backgroundColour;
-			_image = CreateBitmap( indexedPixels, 
-			                       logicalScreenDescriptor,
-			                       imageDescriptor,
-			                       activeColourTable,
-			                       extension,
-			                       previousFrame, 
-			                       previousFrameBut1 );
 		}
 		#endregion
 		
@@ -461,15 +392,34 @@ namespace GifComponents
 				activeColourTable[transparentColourIndex] = savedTransparentColour;
 			}
 
-			GifFrame frame = new GifFrame( indexedPixels,
-			                               activeColourTable,
-			                               imageDescriptor,
-			                               gce,
-			                               backgroundColour,
-			                               lsd,
-			                               previousFrame,
-			                               previousFrameBut1 );
+			GifFrame frame = new GifFrame();
+			frame._indexedPixels = indexedPixels;
 
+			if( imageDescriptor.HasLocalColourTable )
+			{
+				// TODO: test case for this condition
+				frame._localColourTable = activeColourTable;
+			}
+			else
+			{
+				frame._localColourTable = null;
+			}
+
+			frame._extension = gce;
+			if( gce != null )
+			{
+				frame._delay = gce.DelayTime;
+			}
+			frame._imageDescriptor = imageDescriptor;
+			frame._backgroundColour = backgroundColour;
+			frame._image = CreateBitmap( indexedPixels, 
+			                             lsd,
+			                             imageDescriptor,
+			                             activeColourTable,
+			                             gce,
+			                             previousFrame,
+			                             previousFrameBut1 );
+			
 			return frame;
 		}
 		#endregion
