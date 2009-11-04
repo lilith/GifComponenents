@@ -16,7 +16,7 @@ using System.Security.Permissions;
 [assembly: AssemblyTitle("GifComponents")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Simon Bridewell")]
 [assembly: AssemblyProduct("GifComponents")]
 [assembly: AssemblyCopyright("Copyright 2009")]
 [assembly: AssemblyTrademark("")]
