@@ -42,6 +42,11 @@ namespace GifComponents
 		private ColourTable _colourTable;
 		private IndexedPixels _indexedPixels;
 		private Collection<IndexedPixels> _indexedPixelsCollection;
+		private Image _imageToStudy;
+		private Collection<Image> _imagesToStudy;
+		private int _colourQuality;
+		private string _status;
+		private int _processingFrame;
 		#endregion
 		
 		#region constructor( Image, int )
@@ -62,15 +67,9 @@ namespace GifComponents
 		/// </param>
 		public PixelAnalysis( Image imageToStudy, int colourQuantizationQuality )
 		{
-			_indexedPixels = new IndexedPixels();
-
-			// Work out the colour table for the pixels in the supplied image
-			Collection<Color> pixelColours = GetImagePixels( imageToStudy );
-			SetColourTable( pixelColours, colourQuantizationQuality );
-
-			// Work out the indices in the colour table of each of the pixels
-			// in the supplied image.
-			_indexedPixels = GetIndexedPixels( pixelColours );
+			_imageToStudy = imageToStudy;
+			_colourQuality = colourQuantizationQuality;
+			_status = string.Empty;
 		}
 		#endregion
 		
@@ -93,29 +92,9 @@ namespace GifComponents
 		public PixelAnalysis( Collection<Image> imagesToStudy, 
 		                      int colourQuantizationQuality )
 		{
-			Collection<Color> pixelData = new Collection<Color>(); // pixel data for the entire animation
-			Collection<Color> imagePixelData; // pixel data for a single image
-
-			// Work out the colour table for the pixels in each of the 
-			// supplied images
-			foreach( Bitmap thisImage in imagesToStudy )
-			{
-				imagePixelData = GetImagePixels( thisImage );
-				foreach( Color c in imagePixelData )
-				{
-					pixelData.Add( c );
-				}
-			}
-			SetColourTable( pixelData, colourQuantizationQuality );
-
-			// Work out the indices in the colour table of each of the pixels
-			// in each of the supplied images.
-			_indexedPixelsCollection = new Collection<IndexedPixels>();
-			foreach( Image thisImage in imagesToStudy )
-			{
-				imagePixelData = GetImagePixels( thisImage );
-				_indexedPixelsCollection.Add( GetIndexedPixels( imagePixelData ) );
-			}
+			_imagesToStudy = imagesToStudy;
+			_colourQuality = colourQuantizationQuality;
+			_status = string.Empty;
 		}
 		#endregion
 		
@@ -128,7 +107,14 @@ namespace GifComponents
 		/// </summary>
 		public ColourTable ColourTable
 		{
-			get { return _colourTable; }
+			get 
+			{ 
+				if( _colourTable == null )
+				{
+					Analyse();
+				}
+				return _colourTable; 
+			}
 		}
 		#endregion
 		
@@ -141,7 +127,7 @@ namespace GifComponents
 		{
 			get
 			{
-				if( _indexedPixels == null )
+				if( _imageToStudy == null )
 				{
 					string message
 						= "The PixelAnalysis object was instantiated using the "
@@ -150,6 +136,10 @@ namespace GifComponents
 						+ "pixels for a single image. "
 						+ "Call the IndexedPixelCollection property instead.";
 					throw new InvalidOperationException( message );
+				}
+				if( _indexedPixels == null )
+				{
+					Analyse();
 				}
 				return _indexedPixels; 
 			}
@@ -165,7 +155,7 @@ namespace GifComponents
 		{
 			get
 			{
-				if( _indexedPixelsCollection == null )
+				if( _imagesToStudy == null )
 				{
 					string message
 						= "The PixelAnalysis object was instantiated using the "
@@ -175,14 +165,108 @@ namespace GifComponents
 						+ "Call the IndexedPixels property instead.";
 					throw new InvalidOperationException( message );
 				}
+				if( _indexedPixelsCollection == null )
+				{
+					Analyse();
+				}
 				return _indexedPixelsCollection; 
 			}
+		}
+		#endregion
+		
+		#region Status property
+		/// <summary>
+		/// Gets a string representing the current status of the PixelAnalysis.
+		/// </summary>
+		public string Status
+		{
+			get { return _status; }
+		}
+		#endregion
+		
+		#region ProcessingFrame property
+		/// <summary>
+		/// Gets the frame number currently being analysed.
+		/// </summary>
+		public int ProcessingFrame
+		{
+			get { return _processingFrame; }
 		}
 		#endregion
 		
 		#endregion
 
 		#region private methods
+		
+		#region private Analyse method
+		private void Analyse()
+		{
+			_processingFrame = 0;
+			if( _imagesToStudy == null )
+			{
+				// We're analysing a single image
+				_indexedPixels = new IndexedPixels();
+	
+				// Work out the colour table for the pixels in the supplied image
+				_status = "Getting image pixels";
+				Collection<Color> pixelColours = GetImagePixels( _imageToStudy );
+				_status = "Setting colour table";
+				SetColourTable( pixelColours, _colourQuality );
+	
+				// Work out the indices in the colour table of each of the pixels
+				// in the supplied image.
+				_status = "Getting indexed pixels";
+				_indexedPixels = GetIndexedPixels( pixelColours );
+				_status = "Pixel analysis complete";
+			}
+			else
+			{
+				// We're analysing a collection of images
+				Collection<Color> pixelData = new Collection<Color>(); // pixel data for the entire animation
+				Collection<Color> imagePixelData; // pixel data for a single image
+	
+				// Work out the colour table for the pixels in each of the 
+				// supplied images
+				for( int i = 0; i < _imagesToStudy.Count; i++ )
+				{
+					_processingFrame = i + 1;
+					_status 
+						= "Getting image pixels for frame " + _processingFrame 
+						+ " of " + _imagesToStudy.Count;
+					Image thisImage = _imagesToStudy[i];
+					imagePixelData = GetImagePixels( thisImage );
+					foreach( Color c in imagePixelData )
+					{
+						pixelData.Add( c );
+					}
+				}
+				_status = "Setting colour table";
+				SetColourTable( pixelData, _colourQuality );
+	
+				// Work out the indices in the colour table of each of the pixels
+				// in each of the supplied images.
+				_indexedPixelsCollection = new Collection<IndexedPixels>();
+				for( int i = 0; i < _imagesToStudy.Count; i++ )
+				{
+					_processingFrame = i + 1;
+					Image thisImage = _imagesToStudy[i];
+					_status 
+						= "Getting image pixels for frame " + _processingFrame 
+						+ " of " + _imagesToStudy.Count;
+					imagePixelData = GetImagePixels( thisImage );
+					_status 
+						= "Getting indexed pixels for frame " + _processingFrame 
+						+ " of " + _imagesToStudy.Count;
+					IndexedPixels indexedPixels = GetIndexedPixels( imagePixelData );
+					_status 
+						= "Adding indexed pixels for frame " + _processingFrame 
+						+ " of " + _imagesToStudy.Count;
+					_indexedPixelsCollection.Add( indexedPixels );
+				}
+				_status = "Pixel analysis complete";
+			}
+		}
+		#endregion
 		
 		#region private SetColourTable method
 		/// <summary>
@@ -209,6 +293,9 @@ namespace GifComponents
 			Collection<byte> rgb = new Collection<byte>(); // for NeuQuant constructor, if used
 			for( int i = 0; i < len; i ++ )
 			{
+				_status 
+					= "Getting distinct colours: pixel " + i + " of " + len
+					+ ". Distinct colours: " + _distinctColours.Count;
 				byte red = (byte) pixelColours[i].R;
 				byte green = (byte) pixelColours[i].G;
 				byte blue = (byte) pixelColours[i].B;
@@ -225,7 +312,9 @@ namespace GifComponents
 			{
 				// more than 256 colours so need to adjust for a colour table
 				// of 256 colours.
+				_status = "Calling colour quantizer";
 				_nq = new NeuQuant( rgb, len, colourQuantizationQuality );
+				_status = "Processing colour quantizer";
 				_colourTable = _nq.Process(); // create reduced palette
 			}
 			else

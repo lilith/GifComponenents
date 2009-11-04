@@ -104,6 +104,9 @@ namespace GifComponents
 		/// </summary>
 		private int _quality;
 		
+		private string _status;
+		private int _processingFrame;
+		private PixelAnalysis _pixelAnalysis;
 		#endregion
 
 		#region default constructor
@@ -124,6 +127,16 @@ namespace GifComponents
 		#endregion
 		
 		#region properties
+		
+		#region Frames property
+		/// <summary>
+		/// Gets a collection of the GifFrames which make up the animation.
+		/// </summary>
+		public Collection<GifFrame> Frames
+		{
+			get { return _frames; }
+		}
+		#endregion
 		
 		#region Transparent property
 		/// <summary>
@@ -236,6 +249,74 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region Status property
+		/// <summary>
+		/// Gets a string indicating the current status of the encoder.
+		/// For use while the WriteToFile or WriteToStream method is running,
+		/// to indicate how far through the process it is.
+		/// </summary>
+		[Browsable( false )]
+		public string Status
+		{
+			get { return _status; }
+		}
+		#endregion
+		
+		#region PixelAnalysisStatus property
+		/// <summary>
+		/// Gets the status of the PixelAnalysis used to calculate colour tables.
+		/// </summary>
+		[Browsable( false )]
+		public string PixelAnalysisStatus
+		{
+			get
+			{
+				if( _pixelAnalysis == null )
+				{
+					return string.Empty;
+				}
+				else
+				{
+					return _pixelAnalysis.Status;
+				}
+			}
+		}
+		#endregion
+		
+		#region ProcessingFrame property
+		/// <summary>
+		/// Gets the frame number currently being processed by the encoder.
+		/// For use while the WriteToFile or WriteToStream method is running,
+		/// to indicate how far through the process it is.
+		/// </summary>
+		[Browsable( false )]
+		public int ProcessingFrame
+		{
+			get { return _processingFrame; }
+		}
+		#endregion
+		
+		#region PixelAnalysisProcessingFrame property
+		/// <summary>
+		/// Gets the frame number being analysed by the PixelAnalysis.
+		/// </summary>
+		[Browsable( false )]
+		public int PixelAnalysisProcessingFrame
+		{
+			get
+			{
+				if( _pixelAnalysis == null )
+				{
+					return 0;
+				}
+				else
+				{
+					return _pixelAnalysis.ProcessingFrame;
+				}
+			}
+		}
+		#endregion
+		
 		#endregion
 
 		#region methods
@@ -276,11 +357,13 @@ namespace GifComponents
 				// use first frame's size if logical screen size hasn't been set
 				_logicalScreenSize = _frames[0].TheImage.Size;
 			}
+			
+			_processingFrame = 0;
+			_status = "Writing GIF header";
 
 			GifHeader header = new GifHeader( "GIF", "89a" );
 			header.WriteToStream( outputStream );
 			
-			PixelAnalysis analysis = null;
 			ColourTable gct = null; // global colour table
 			if( _strategy == ColourTableStrategy.UseGlobal )
 			{
@@ -292,16 +375,20 @@ namespace GifComponents
 					Image thisImage = thisFrame.TheImage;
 					images.Add( thisImage );
 				}
-				analysis = new PixelAnalysis( images, _quality );
-				gct = analysis.ColourTable;
+				_status = "Building global colour table - analysing pixels";
+				_pixelAnalysis = new PixelAnalysis( images, _quality );
+				gct = _pixelAnalysis.ColourTable;
+				_status = "Writing logical screen descriptor";
 				WriteLogicalScreenDescriptor( _logicalScreenSize, 
 				                              _strategy,
 				                              gct.SizeBits,
 				                              outputStream );
+				_status = "Writing global colour table";
 				gct.WriteToStream( outputStream );
 			}
 			else
 			{
+				_status = "Writing logical screen descriptor";
 				WriteLogicalScreenDescriptor( _logicalScreenSize, 
 				                              _strategy,
 				                              7,
@@ -313,19 +400,26 @@ namespace GifComponents
 			if( _repeatCount >= 0 ) 
 			{
 				// use NS app extension to indicate repeating animation
+				_status = "Writing Netscape extension";
 				WriteNetscapeExt( _repeatCount, outputStream );
 			}
 			
 			for( int i = 0; i < _frames.Count; i++ )
 			{
+				_processingFrame = i + 1;
+				_status = "Frame " + _processingFrame + " of " + _frames.Count;
 				GifFrame thisFrame = _frames[i];
 				Image thisImage = thisFrame.TheImage;
 				ColourTable act; // active colour table
 				ColourTable lct = null; // local colour table
 				if( _strategy == ColourTableStrategy.UseLocal )
 				{
-					analysis = new PixelAnalysis( thisImage, _quality );
-					lct = analysis.ColourTable;
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": building local colour table - analysing pixels";
+					_pixelAnalysis = new PixelAnalysis( thisImage, _quality );
+					lct = _pixelAnalysis.ColourTable;
 					// make local colour table active
 					act = lct;
 				}
@@ -341,12 +435,24 @@ namespace GifComponents
 				}
 				else
 				{
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": finding closest to transparent colour";
 					// TODO: test case for this once transparency is understood
 					transparentColourIndex = FindClosest( _transparent, act );
 				}
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": writing graphic control extension";
 				WriteGraphicCtrlExt( thisFrame, 
 				                     transparentColourIndex, 
 				                     outputStream );
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": writing image descriptor";
 				WriteImageDescriptor( thisImage.Size, 
 				                      _frames[i].Position, 
 				                      lct, 
@@ -355,19 +461,33 @@ namespace GifComponents
 				// Write a local colour table if the strategy is to do so
 				if( _strategy == ColourTableStrategy.UseLocal )
 				{
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": writing local colour table";
 					lct.WriteToStream( outputStream );
-					WritePixels( analysis.IndexedPixels, 
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": encoding pixel data";
+					WritePixels( _pixelAnalysis.IndexedPixels, 
 					             outputStream ); // encode and write pixel data
 				}
 				else
 				{
-					WritePixels( analysis.IndexedPixelsCollection[i],
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": encoding pixel data";
+					WritePixels( _pixelAnalysis.IndexedPixelsCollection[i],
 					             outputStream ); // encode and write pixel data
 				}
 			}
 			
 			// GIF trailer
+			_status = "Writing GIF trailer";
 			WriteByte( CodeTrailer, outputStream );
+			_status = "Done";
 		}
 		#endregion
 		
