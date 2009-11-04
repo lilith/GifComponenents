@@ -606,5 +606,106 @@ namespace GifComponents.NUnit
 		#endregion
 		
 		#endregion
+
+		#region Test cases to reproduce reported bugs
+		
+		#region Bug2892015
+		/// <summary>
+		/// Here are the steps to reproduce the problem :
+		/// Lets add 3 frames, and encode a gif. 
+		/// On my machine it takes 2 or 3 seconds. -> great 
+		/// Now, i add 50 frames and encode a new gif -> it works, and it takes 
+		/// around 50-60 seconds. 
+		/// And finaly, i remove all the frames using the _frames.Clear() 
+		/// method, and add 3 frames again.
+		/// When i encode the new 3 frames gif, it takes  more than 60 seconds !
+		/// </summary>
+		[Test]
+		public void Bug2892015()
+		{
+			_e = new AnimatedGifEncoder();
+			
+			#region create 50 random bitmaps
+			Collection<Bitmap> bitmaps = new Collection<Bitmap>();
+			Random rand = new Random();
+			int r, g, b;
+			Color c = Color.FromArgb( 0, 0, 0 );
+			for( int i = 0; i < 50; i++ )
+			{
+				Console.WriteLine( "Creating bitmap " + i );
+				Bitmap bitmap = new Bitmap( 50, 50 );
+				for( int y = 0; y < bitmap.Height; y++ )
+				{
+					for( int x = 0; x < bitmap.Width; x++ )
+					{
+						int dice = rand.Next( 0, 10 );
+						if( dice == 0 )
+						{
+							// only change the pixel colour for 1 in 10 pixels
+							r = rand.Next( 0, 255 );
+							g = rand.Next( 0, 255 );
+							b = rand.Next( 0, 255 );
+							c = Color.FromArgb( r, g, b );
+						}
+						bitmap.SetPixel( x, y, c );
+					}
+				}
+				bitmaps.Add( bitmap );
+			}
+			#endregion
+			
+			DateTime startTime;
+			DateTime endTime;
+			
+			#region create animation using just the first 3 (this should be quick)
+			for( int i = 0; i < 3; i++ )
+			{
+				_e.AddFrame( new GifFrame( bitmaps[i] ) );
+			}
+			
+			startTime = DateTime.Now;
+			_e.WriteToFile( "2892015-1.gif" );
+			endTime = DateTime.Now;
+			TimeSpan runTime1 = endTime - startTime;
+			Console.WriteLine( runTime1 );
+			#endregion
+			
+			_e.Frames.Clear();
+			
+			#region create animation using all the bitmaps (this will take longer)
+			foreach( Bitmap bitmap in bitmaps )
+			{
+				_e.AddFrame( new GifFrame( bitmap ) );
+			}
+			
+			startTime = DateTime.Now;
+			_e.WriteToFile( "2892015-2.gif" );
+			endTime = DateTime.Now;
+			TimeSpan runTime2 = endTime - startTime;
+			Console.WriteLine( runTime2 );
+			#endregion
+			
+			_e.Frames.Clear();
+			
+			#region create animation using just the first 3 (this should be quick)
+			for( int i = 0; i < 3; i++ )
+			{
+				_e.AddFrame( new GifFrame( bitmaps[i] ) );
+			}
+			
+			startTime = DateTime.Now;
+			_e.WriteToFile( "2892015-3.gif" );
+			endTime = DateTime.Now;
+			TimeSpan runTime3 = endTime - startTime;
+			Console.WriteLine( runTime3 );
+			#endregion
+			
+			Assert.IsTrue( runTime3 < runTime2 );
+			GifDecoder decoder = new GifDecoder( "2892015-3.gif" );
+			Assert.AreEqual( 3, decoder.Frames.Count );
+		}
+		#endregion
+		
+		#endregion
 	}
 }
