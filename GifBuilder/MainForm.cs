@@ -25,6 +25,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 
 using GifComponents;
@@ -34,12 +35,16 @@ namespace GifBuilder
 {
 	/// <summary>
 	/// The main form in this application.
+	/// TODO: a way to change the order of the frames
 	/// </summary>
 	public partial class MainForm : Form
 	{
 		private AnimatedGifEncoder _encoder;
-		private Collection<GifFrame> _frames;
 		private int _currentIndex;
+		private string _saveFileName;
+		private bool _allowToClose;
+		private Thread _t;
+		private Exception _exception;
 		
 		#region constructor
 		/// <summary>
@@ -56,9 +61,11 @@ namespace GifBuilder
 			//
 			// Add constructor code after the InitializeComponent() call.
 			//
+			toolStripStatusLabelEncoder.Text = string.Empty;
+			toolStripStatusLabelPixelAnalysis.Text = string.Empty;
 			_encoder = new AnimatedGifEncoder();
 			propertyGridEncoder.SelectedObject = _encoder;
-			_frames = new Collection<GifFrame>();
+			_allowToClose = true;
 			RefreshUI();
 		}
 		#endregion
@@ -107,11 +114,11 @@ namespace GifBuilder
 						break;
 	
 					case "buttonAddFrameBefore":
-						AddFrame( true );
+						AddFrames( true );
 						break;
 	
 					case "buttonAddFrameAfter":
-						AddFrame( false );
+						AddFrames( false );
 						break;
 	
 					case "buttonRemoveFrame":
@@ -162,34 +169,72 @@ namespace GifBuilder
 		}
 		#endregion
 
+		#region Form closing event handler
+		[SuppressMessage("Microsoft.Globalization", 
+		                 "CA1300:SpecifyMessageBoxOptions")]
+		void MainFormFormClosing(object sender, FormClosingEventArgs e)
+		{
+			if( _allowToClose == false )
+			{
+				string message = "The process is still running - "
+					+ "are you sure you want to close this window?";
+				string caption = "Close window?";
+				DialogResult result =
+					MessageBox.Show( message,
+					                 caption,
+					                 MessageBoxButtons.YesNo,
+					                 MessageBoxIcon.Warning );
+				if( result == DialogResult.No )
+				{
+					// don't close the window
+					e.Cancel = true;
+				}
+				else
+				{
+					_t.Abort();
+				}
+			}
+		}
+		#endregion
+
+		#region Timer1 tick event handler
+		void Timer1Tick(object sender, EventArgs e)
+		{
+			UpdateStatusBar();
+		}
+		#endregion
+
 		#endregion
 		
 		#region other private methods
 		
-		#region AddFrame
-		private void AddFrame( bool addBefore )
+		#region AddFrames
+		private void AddFrames( bool addBefore )
 		{
 			DialogResult result = openFileDialog1.ShowDialog();
 			if( result == DialogResult.OK )
 			{
-				Image thisImage = Bitmap.FromFile( openFileDialog1.FileName );
-				GifFrame thisFrame = new GifFrame( thisImage );
-				if( _frames.Count == 0 )
+				foreach( string fileName in openFileDialog1.FileNames )
 				{
-					_frames.Add( thisFrame );
-				}
-				else
-				{
-					if( addBefore )
+					Image thisImage = Image.FromFile( fileName );
+					GifFrame thisFrame = new GifFrame( thisImage );
+					if( _encoder.Frames.Count == 0 )
 					{
-						_frames.Insert( _currentIndex, thisFrame );
+						_encoder.AddFrame( thisFrame );
 					}
 					else
 					{
-						_frames.Insert( ++_currentIndex, thisFrame );
+						if( addBefore )
+						{
+							_encoder.Frames.Insert( _currentIndex, thisFrame );
+						}
+						else
+						{
+							_encoder.Frames.Insert( ++_currentIndex, thisFrame );
+						}
 					}
+					RefreshUI();
 				}
-				RefreshUI();
 			}
 		}
 		#endregion
@@ -197,7 +242,7 @@ namespace GifBuilder
 		#region RemoveFrame
 		private void RemoveFrame()
 		{
-			_frames.Remove( _frames[_currentIndex] );
+			_encoder.Frames.Remove( _encoder.Frames[_currentIndex] );
 			RefreshUI();
 		}
 		#endregion
@@ -227,21 +272,21 @@ namespace GifBuilder
 				_currentIndex = 0;
 			}
 			
-			if( _currentIndex >= _frames.Count )
+			if( _currentIndex >= _encoder.Frames.Count )
 			{
-				_currentIndex = _frames.Count - 1;
+				_currentIndex = _encoder.Frames.Count - 1;
 			}
 			#endregion
 			
 			labelFrameNumber.Text 
 				= "Frame " + (_currentIndex + 1)
-				+ " of " + _frames.Count;
+				+ " of " + _encoder.Frames.Count;
 			
-			if( _frames.Count > 0 )
+			if( _encoder.Frames.Count > 0 )
 			{
-				pictureBox1.Image = _frames[_currentIndex].TheImage;
-				pictureBox1.Location = _frames[_currentIndex].Position;
-				propertyGridFrame.SelectedObject = _frames[_currentIndex];
+				pictureBox1.Image = _encoder.Frames[_currentIndex].TheImage;
+				pictureBox1.Location = _encoder.Frames[_currentIndex].Position;
+				propertyGridFrame.SelectedObject = _encoder.Frames[_currentIndex];
 				buttonAddFrameAfter.Enabled = true;
 				buttonRemoveFrame.Enabled = true;
 				labelNoImages.Visible = false;
@@ -258,20 +303,87 @@ namespace GifBuilder
 		}
 		#endregion
 		
+		#region UpdateStatusBar
+		private void UpdateStatusBar()
+		{
+			toolStripStatusLabelEncoder.Text = _encoder.Status;
+			toolStripStatusLabelPixelAnalysis.Text = _encoder.PixelAnalysisStatus;
+			double frameCount = (double) _encoder.Frames.Count;
+			double currentFrame, progress;
+			
+			currentFrame = (double) _encoder.ProcessingFrame;
+			progress = currentFrame / frameCount * 100;
+			toolStripProgressBarEncoder.Value = (int) progress;
+			
+			currentFrame = (double) _encoder.PixelAnalysisProcessingFrame;
+			progress = currentFrame / frameCount * 100;
+			toolStripProgressBarPixelAnalysis.Value = (int) progress;
+		}
+		#endregion
+		
 		#region Encode
 		private void Encode()
 		{
 			DialogResult result = saveFileDialog1.ShowDialog();
 			if( result == DialogResult.OK )
 			{
-				// Note the encoder was instantiated in this form's constructor
-				// and the user has set its properties in the UI.
-				foreach( GifFrame thisFrame in _frames )
+				_saveFileName = saveFileDialog1.FileName;
+				foreach( Control c in this.Controls )
 				{
-					_encoder.AddFrame( thisFrame );
+					c.Enabled = false;
 				}
-				_encoder.WriteToFile( saveFileDialog1.FileName );
+				_allowToClose = false;
+				_exception = null;
+				_t = new Thread( StartEncoding );
+				_t.IsBackground = true;
+				_t.Start();
+				timer1.Start();
 			}
+		}
+		#endregion
+		
+		#region StartEncoding method
+		/// <summary>
+		/// Starts off encoding the output animation on a background thread.
+		/// </summary>
+		[SuppressMessage("Microsoft.Design", 
+		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
+		private void StartEncoding()
+		{
+			// Note the encoder was instantiated in this form's constructor
+			// and the user has set its properties in the UI, including adding
+			// all the frames.
+			try
+			{
+				_encoder.WriteToFile( _saveFileName );
+			}
+			catch( Exception ex )
+			{
+				_exception = ex;
+			}
+			finally
+			{
+				Invoke( new MethodInvoker( StopTheClock ) );
+			}
+		}
+		#endregion
+		
+		#region StopTheClock method
+		private void StopTheClock()
+		{
+			timer1.Stop();
+			foreach( Control c in this.Controls )
+			{
+				c.Enabled = true;
+			}
+			_allowToClose = true;
+			if( _exception != null )
+			{
+				ExceptionForm ef = new ExceptionForm( _exception );
+				ef.ShowDialog();
+			}
+			UpdateStatusBar();
+			RefreshUI();
 		}
 		#endregion
 		
