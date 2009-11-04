@@ -50,6 +50,7 @@ namespace GifBuilder
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,10 +67,17 @@ namespace GifBuilder
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageEncoder = new System.Windows.Forms.TabPage();
+			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+			this.toolStripProgressBarEncoder = new System.Windows.Forms.ToolStripProgressBar();
+			this.toolStripStatusLabelEncoder = new System.Windows.Forms.ToolStripStatusLabel();
 			this.propertyGridEncoder = new System.Windows.Forms.PropertyGrid();
 			this.buttonEncode = new System.Windows.Forms.Button();
 			this.tabPageFrames = new System.Windows.Forms.TabPage();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+			this.timer1 = new System.Windows.Forms.Timer(this.components);
+			this.statusStrip2 = new System.Windows.Forms.StatusStrip();
+			this.toolStripProgressBarPixelAnalysis = new System.Windows.Forms.ToolStripProgressBar();
+			this.toolStripStatusLabelPixelAnalysis = new System.Windows.Forms.ToolStripStatusLabel();
 			this.menuStrip1.SuspendLayout();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -77,7 +85,9 @@ namespace GifBuilder
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageEncoder.SuspendLayout();
+			this.statusStrip1.SuspendLayout();
 			this.tabPageFrames.SuspendLayout();
+			this.statusStrip2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -235,6 +245,7 @@ namespace GifBuilder
 			this.openFileDialog1.DefaultExt = "bmp";
 			this.openFileDialog1.Filter = "Image Files|*.gif;*.png;*.jpg;*.jpeg;*.bmp|PNG Files(*.png)|*.png|JPEG Files(*.jp" +
 			"g;*.jpeg)|*.jpg;*.jpeg|GIF Files(*.gif)|*.gif|BMP Files(*.bmp)|*.bmp";
+			this.openFileDialog1.Multiselect = true;
 			this.openFileDialog1.RestoreDirectory = true;
 			this.openFileDialog1.Title = "Add image...";
 			// 
@@ -251,6 +262,8 @@ namespace GifBuilder
 			// 
 			// tabPageEncoder
 			// 
+			this.tabPageEncoder.Controls.Add(this.statusStrip2);
+			this.tabPageEncoder.Controls.Add(this.statusStrip1);
 			this.tabPageEncoder.Controls.Add(this.propertyGridEncoder);
 			this.tabPageEncoder.Controls.Add(this.buttonEncode);
 			this.tabPageEncoder.Location = new System.Drawing.Point(4, 22);
@@ -261,6 +274,28 @@ namespace GifBuilder
 			this.tabPageEncoder.Text = "Encoder properties";
 			this.tabPageEncoder.UseVisualStyleBackColor = true;
 			// 
+			// statusStrip1
+			// 
+			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.toolStripProgressBarEncoder,
+									this.toolStripStatusLabelEncoder});
+			this.statusStrip1.Location = new System.Drawing.Point(3, 333);
+			this.statusStrip1.Name = "statusStrip1";
+			this.statusStrip1.Size = new System.Drawing.Size(633, 22);
+			this.statusStrip1.TabIndex = 2;
+			this.statusStrip1.Text = "statusStrip1";
+			// 
+			// toolStripProgressBarEncoder
+			// 
+			this.toolStripProgressBarEncoder.Name = "toolStripProgressBarEncoder";
+			this.toolStripProgressBarEncoder.Size = new System.Drawing.Size(100, 16);
+			// 
+			// toolStripStatusLabelEncoder
+			// 
+			this.toolStripStatusLabelEncoder.Name = "toolStripStatusLabelEncoder";
+			this.toolStripStatusLabelEncoder.Size = new System.Drawing.Size(142, 17);
+			this.toolStripStatusLabelEncoder.Text = "toolStripStatusLabelEncoder";
+			// 
 			// propertyGridEncoder
 			// 
 			this.propertyGridEncoder.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -268,7 +303,7 @@ namespace GifBuilder
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.propertyGridEncoder.Location = new System.Drawing.Point(0, 29);
 			this.propertyGridEncoder.Name = "propertyGridEncoder";
-			this.propertyGridEncoder.Size = new System.Drawing.Size(639, 329);
+			this.propertyGridEncoder.Size = new System.Drawing.Size(639, 279);
 			this.propertyGridEncoder.TabIndex = 1;
 			this.propertyGridEncoder.TabStop = false;
 			// 
@@ -302,6 +337,32 @@ namespace GifBuilder
 			this.saveFileDialog1.RestoreDirectory = true;
 			this.saveFileDialog1.Title = "Save GIF file...";
 			// 
+			// timer1
+			// 
+			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
+			// 
+			// statusStrip2
+			// 
+			this.statusStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.toolStripProgressBarPixelAnalysis,
+									this.toolStripStatusLabelPixelAnalysis});
+			this.statusStrip2.Location = new System.Drawing.Point(3, 311);
+			this.statusStrip2.Name = "statusStrip2";
+			this.statusStrip2.Size = new System.Drawing.Size(633, 22);
+			this.statusStrip2.TabIndex = 3;
+			this.statusStrip2.Text = "statusStrip2";
+			// 
+			// toolStripProgressBarPixelAnalysis
+			// 
+			this.toolStripProgressBarPixelAnalysis.Name = "toolStripProgressBarPixelAnalysis";
+			this.toolStripProgressBarPixelAnalysis.Size = new System.Drawing.Size(100, 16);
+			// 
+			// toolStripStatusLabelPixelAnalysis
+			// 
+			this.toolStripStatusLabelPixelAnalysis.Name = "toolStripStatusLabelPixelAnalysis";
+			this.toolStripStatusLabelPixelAnalysis.Size = new System.Drawing.Size(164, 17);
+			this.toolStripStatusLabelPixelAnalysis.Text = "toolStripStatusLabelPixelAnalysis";
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -312,6 +373,7 @@ namespace GifBuilder
 			this.MainMenuStrip = this.menuStrip1;
 			this.Name = "MainForm";
 			this.Text = "GifBuilder";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFormFormClosing);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.splitContainer1.Panel1.ResumeLayout(false);
@@ -322,10 +384,22 @@ namespace GifBuilder
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
 			this.tabControl1.ResumeLayout(false);
 			this.tabPageEncoder.ResumeLayout(false);
+			this.tabPageEncoder.PerformLayout();
+			this.statusStrip1.ResumeLayout(false);
+			this.statusStrip1.PerformLayout();
 			this.tabPageFrames.ResumeLayout(false);
+			this.statusStrip2.ResumeLayout(false);
+			this.statusStrip2.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.Windows.Forms.StatusStrip statusStrip2;
+		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarEncoder;
+		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarPixelAnalysis;
+		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEncoder;
+		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelPixelAnalysis;
+		private System.Windows.Forms.Timer timer1;
+		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.PropertyGrid propertyGridFrame;
 		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
 		private System.Windows.Forms.TabPage tabPageFrames;
