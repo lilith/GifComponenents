@@ -26,6 +26,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
@@ -627,29 +628,12 @@ namespace GifComponents.NUnit
 			
 			#region create 50 random bitmaps
 			Collection<Bitmap> bitmaps = new Collection<Bitmap>();
-			Random rand = new Random();
-			int r, g, b;
-			Color c = Color.FromArgb( 0, 0, 0 );
 			for( int i = 0; i < 50; i++ )
 			{
 				Console.WriteLine( "Creating bitmap " + i );
-				Bitmap bitmap = new Bitmap( 50, 50 );
-				for( int y = 0; y < bitmap.Height; y++ )
-				{
-					for( int x = 0; x < bitmap.Width; x++ )
-					{
-						int dice = rand.Next( 0, 10 );
-						if( dice == 0 )
-						{
-							// only change the pixel colour for 1 in 10 pixels
-							r = rand.Next( 0, 255 );
-							g = rand.Next( 0, 255 );
-							b = rand.Next( 0, 255 );
-							c = Color.FromArgb( r, g, b );
-						}
-						bitmap.SetPixel( x, y, c );
-					}
-				}
+				Bitmap bitmap = RandomBitmap.Create( new Size( 50, 50 ),
+				                                     10,
+				                                     PixelFormat.Format32bppRgb );
 				bitmaps.Add( bitmap );
 			}
 			#endregion
