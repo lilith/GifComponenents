@@ -55,6 +55,7 @@ namespace GifBuilder
 			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+			this.buttonReorderFrames = new System.Windows.Forms.Button();
 			this.propertyGridFrame = new System.Windows.Forms.PropertyGrid();
 			this.buttonAddFrameAfter = new System.Windows.Forms.Button();
 			this.buttonRemoveFrame = new System.Windows.Forms.Button();
@@ -67,6 +68,9 @@ namespace GifBuilder
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageEncoder = new System.Windows.Forms.TabPage();
+			this.statusStrip2 = new System.Windows.Forms.StatusStrip();
+			this.toolStripProgressBarPixelAnalysis = new System.Windows.Forms.ToolStripProgressBar();
+			this.toolStripStatusLabelPixelAnalysis = new System.Windows.Forms.ToolStripStatusLabel();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.toolStripProgressBarEncoder = new System.Windows.Forms.ToolStripProgressBar();
 			this.toolStripStatusLabelEncoder = new System.Windows.Forms.ToolStripStatusLabel();
@@ -75,9 +79,6 @@ namespace GifBuilder
 			this.tabPageFrames = new System.Windows.Forms.TabPage();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
-			this.statusStrip2 = new System.Windows.Forms.StatusStrip();
-			this.toolStripProgressBarPixelAnalysis = new System.Windows.Forms.ToolStripProgressBar();
-			this.toolStripStatusLabelPixelAnalysis = new System.Windows.Forms.ToolStripStatusLabel();
 			this.menuStrip1.SuspendLayout();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -85,9 +86,9 @@ namespace GifBuilder
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageEncoder.SuspendLayout();
+			this.statusStrip2.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
 			this.tabPageFrames.SuspendLayout();
-			this.statusStrip2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
@@ -124,6 +125,7 @@ namespace GifBuilder
 			// 
 			// splitContainer1.Panel1
 			// 
+			this.splitContainer1.Panel1.Controls.Add(this.buttonReorderFrames);
 			this.splitContainer1.Panel1.Controls.Add(this.propertyGridFrame);
 			this.splitContainer1.Panel1.Controls.Add(this.buttonAddFrameAfter);
 			this.splitContainer1.Panel1.Controls.Add(this.buttonRemoveFrame);
@@ -139,6 +141,17 @@ namespace GifBuilder
 			this.splitContainer1.Size = new System.Drawing.Size(633, 352);
 			this.splitContainer1.SplitterDistance = 231;
 			this.splitContainer1.TabIndex = 1;
+			// 
+			// buttonReorderFrames
+			// 
+			this.buttonReorderFrames.Location = new System.Drawing.Point(318, 30);
+			this.buttonReorderFrames.Name = "buttonReorderFrames";
+			this.buttonReorderFrames.Size = new System.Drawing.Size(97, 23);
+			this.buttonReorderFrames.TabIndex = 7;
+			this.buttonReorderFrames.TabStop = false;
+			this.buttonReorderFrames.Text = "Re&order frames...";
+			this.buttonReorderFrames.UseVisualStyleBackColor = true;
+			this.buttonReorderFrames.Click += new System.EventHandler(this.ButtonClick);
 			// 
 			// propertyGridFrame
 			// 
@@ -274,6 +287,28 @@ namespace GifBuilder
 			this.tabPageEncoder.Text = "Encoder properties";
 			this.tabPageEncoder.UseVisualStyleBackColor = true;
 			// 
+			// statusStrip2
+			// 
+			this.statusStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.toolStripProgressBarPixelAnalysis,
+									this.toolStripStatusLabelPixelAnalysis});
+			this.statusStrip2.Location = new System.Drawing.Point(3, 311);
+			this.statusStrip2.Name = "statusStrip2";
+			this.statusStrip2.Size = new System.Drawing.Size(633, 22);
+			this.statusStrip2.TabIndex = 3;
+			this.statusStrip2.Text = "statusStrip2";
+			// 
+			// toolStripProgressBarPixelAnalysis
+			// 
+			this.toolStripProgressBarPixelAnalysis.Name = "toolStripProgressBarPixelAnalysis";
+			this.toolStripProgressBarPixelAnalysis.Size = new System.Drawing.Size(100, 16);
+			// 
+			// toolStripStatusLabelPixelAnalysis
+			// 
+			this.toolStripStatusLabelPixelAnalysis.Name = "toolStripStatusLabelPixelAnalysis";
+			this.toolStripStatusLabelPixelAnalysis.Size = new System.Drawing.Size(164, 17);
+			this.toolStripStatusLabelPixelAnalysis.Text = "toolStripStatusLabelPixelAnalysis";
+			// 
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -341,28 +376,6 @@ namespace GifBuilder
 			// 
 			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
 			// 
-			// statusStrip2
-			// 
-			this.statusStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-									this.toolStripProgressBarPixelAnalysis,
-									this.toolStripStatusLabelPixelAnalysis});
-			this.statusStrip2.Location = new System.Drawing.Point(3, 311);
-			this.statusStrip2.Name = "statusStrip2";
-			this.statusStrip2.Size = new System.Drawing.Size(633, 22);
-			this.statusStrip2.TabIndex = 3;
-			this.statusStrip2.Text = "statusStrip2";
-			// 
-			// toolStripProgressBarPixelAnalysis
-			// 
-			this.toolStripProgressBarPixelAnalysis.Name = "toolStripProgressBarPixelAnalysis";
-			this.toolStripProgressBarPixelAnalysis.Size = new System.Drawing.Size(100, 16);
-			// 
-			// toolStripStatusLabelPixelAnalysis
-			// 
-			this.toolStripStatusLabelPixelAnalysis.Name = "toolStripStatusLabelPixelAnalysis";
-			this.toolStripStatusLabelPixelAnalysis.Size = new System.Drawing.Size(164, 17);
-			this.toolStripStatusLabelPixelAnalysis.Text = "toolStripStatusLabelPixelAnalysis";
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -385,14 +398,15 @@ namespace GifBuilder
 			this.tabControl1.ResumeLayout(false);
 			this.tabPageEncoder.ResumeLayout(false);
 			this.tabPageEncoder.PerformLayout();
+			this.statusStrip2.ResumeLayout(false);
+			this.statusStrip2.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
 			this.tabPageFrames.ResumeLayout(false);
-			this.statusStrip2.ResumeLayout(false);
-			this.statusStrip2.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
+		private System.Windows.Forms.Button buttonReorderFrames;
 		private System.Windows.Forms.StatusStrip statusStrip2;
 		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarEncoder;
 		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarPixelAnalysis;

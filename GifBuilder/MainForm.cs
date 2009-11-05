@@ -35,7 +35,6 @@ namespace GifBuilder
 {
 	/// <summary>
 	/// The main form in this application.
-	/// TODO: a way to change the order of the frames
 	/// </summary>
 	public partial class MainForm : Form
 	{
@@ -125,6 +124,10 @@ namespace GifBuilder
 	
 					case "buttonRemoveFrame":
 						RemoveFrame();
+						break;
+						
+					case "buttonReorderFrames":
+						ReorderFrames();
 						break;
 						
 					case "buttonEncode":
@@ -264,6 +267,15 @@ namespace GifBuilder
 		}
 		#endregion
 		
+		#region ReorderFrames
+		private void ReorderFrames()
+		{
+			ReorderFramesForm f = new ReorderFramesForm( _encoder );
+			f.ShowDialog();
+			RefreshUI();
+		}
+		#endregion
+		
 		#region RefreshUI
 		private void RefreshUI()
 		{
@@ -301,6 +313,14 @@ namespace GifBuilder
 				labelNoImages.Visible = true;
 			}
 			
+			if( _encoder.Frames.Count > 1 )
+			{
+				buttonReorderFrames.Enabled = true;
+			}
+			else
+			{
+				buttonReorderFrames.Enabled = false;
+			}
 		}
 		#endregion
 		
