@@ -39,12 +39,14 @@ namespace GifBuilder
 	/// </summary>
 	public partial class MainForm : Form
 	{
+		#region declarations
 		private AnimatedGifEncoder _encoder;
 		private int _currentIndex;
 		private string _saveFileName;
 		private bool _allowToClose;
 		private Thread _t;
 		private Exception _exception;
+		#endregion
 		
 		#region constructor
 		/// <summary>
@@ -170,8 +172,6 @@ namespace GifBuilder
 		#endregion
 
 		#region Form closing event handler
-		[SuppressMessage("Microsoft.Globalization", 
-		                 "CA1300:SpecifyMessageBoxOptions")]
 		void MainFormFormClosing(object sender, FormClosingEventArgs e)
 		{
 			if( _allowToClose == false )
@@ -180,10 +180,11 @@ namespace GifBuilder
 					+ "are you sure you want to close this window?";
 				string caption = "Close window?";
 				DialogResult result =
-					MessageBox.Show( message,
-					                 caption,
-					                 MessageBoxButtons.YesNo,
-					                 MessageBoxIcon.Warning );
+					CleverMessageBox.Show( message,
+					                       caption,
+					                       MessageBoxButtons.YesNo,
+					                       MessageBoxIcon.Warning, 
+					                       this );
 				if( result == DialogResult.No )
 				{
 					// don't close the window
@@ -324,6 +325,16 @@ namespace GifBuilder
 		#region Encode
 		private void Encode()
 		{
+			if( _encoder.Frames.Count < 1 )
+			{
+				CleverMessageBox.Show( "This animation has no frames!", 
+				                       "Error",
+				                       MessageBoxButtons.OK,
+				                       MessageBoxIcon.Warning, 
+				                       this );
+				return;
+			}
+			
 			DialogResult result = saveFileDialog1.ShowDialog();
 			if( result == DialogResult.OK )
 			{
