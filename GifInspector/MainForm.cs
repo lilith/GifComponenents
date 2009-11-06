@@ -44,6 +44,7 @@ namespace GifInspector
 		private Thread _t;
 		private int _imageIndex;
 		private string _status;
+		private Exception _exception;
 		
 		#region constructor
 		/// <summary>
@@ -65,10 +66,22 @@ namespace GifInspector
 		#region private methods
 
 		#region private LoadGif method - runs on background thread
+		[SuppressMessage("Microsoft.Design", 
+		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
 		private void LoadGif()
 		{
-			_decoder = new GifDecoder( openFileDialog1.FileName );
-			Invoke( new MethodInvoker( StopTheClock ) );
+			try
+			{
+				_decoder = new GifDecoder( openFileDialog1.FileName );
+			}
+			catch( Exception ex )
+			{
+				_exception = ex;
+			}
+			finally
+			{
+				Invoke( new MethodInvoker( StopTheClock ) );
+			}
 		}
 		#endregion
 
@@ -96,6 +109,12 @@ namespace GifInspector
 			_imageIndex = 0;
 			UpdateUI();
 			EnableControls();
+			if( _exception != null )
+			{
+				ExceptionForm ef = new ExceptionForm( _exception );
+				ef.ShowDialog();
+				_exception = null;
+			}
 		}
 		#endregion
 		
