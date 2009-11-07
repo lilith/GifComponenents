@@ -27,6 +27,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
@@ -193,6 +194,119 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 
+		#region DecodeEncodeGlobeGlobal
+		/// <summary>
+		/// Decodes the rotating globe animation, creates a new animation using
+		/// its frames and a global colour table, and checks that the encoded 
+		/// images are the same as the original images.
+		/// </summary>
+		[Test]
+		public void DecodeEncodeGlobeGlobal()
+		{
+			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
+			_d = new GifDecoder( filename );
+			_e = new AnimatedGifEncoder();
+			_e.ColourTableStrategy = ColourTableStrategy.UseGlobal;
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( new GifFrame( f.TheImage ) );
+			}
+			MemoryStream s = new MemoryStream();
+			_e.WriteToStream( s );
+			s.Seek( 0, SeekOrigin.Begin );
+			_d = new GifDecoder( s );
+			CheckFrames();
+		}
+		#endregion
+		
+		#region DecodeEncodeGlobeLocal
+		/// <summary>
+		/// Decodes the rotating globe animation, creates a new animation using
+		/// its frames and local colour tables, and checks that the encoded 
+		/// images are the same as the original images.
+		/// </summary>
+		[Test]
+		public void DecodeEncodeGlobeLocal()
+		{
+			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
+			_d = new GifDecoder( filename );
+			_e = new AnimatedGifEncoder();
+			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( new GifFrame( f.TheImage ) );
+			}
+			MemoryStream s = new MemoryStream();
+			_e.WriteToStream( s );
+			s.Seek( 0, SeekOrigin.Begin );
+			_d = new GifDecoder( s );
+			CheckFrames();
+		}
+		#endregion
+		
+		#region DecodeEncodeSmileyGlobal
+		/// <summary>
+		/// Decodes the smiley animation, creates a new animation using its 
+		/// frames and a global colour table, and checks that the encoded 
+		/// images are the same as the original images.
+		/// </summary>
+		[Test]
+		public void DecodeEncodeSmileyGlobal()
+		{
+			string filename = @"images/smiley/smiley.gif";
+			_d = new GifDecoder( filename );
+			_e = new AnimatedGifEncoder();
+			_e.ColourTableStrategy = ColourTableStrategy.UseGlobal;
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( new GifFrame( f.TheImage ) );
+			}
+			MemoryStream s = new MemoryStream();
+			_e.WriteToStream( s );
+			s.Seek( 0, SeekOrigin.Begin );
+			_d = new GifDecoder( s );
+			CheckFrames();
+		}
+		#endregion
+		
+		#region DecodeEncodeSmileyLocal
+		/// <summary>
+		/// Decodes the smiley animation, creates a new animation using its 
+		/// frames and local colour tables, and checks that the encoded 
+		/// images are the same as the original images.
+		/// </summary>
+		[Test]
+		public void DecodeEncodeSmileyLocal()
+		{
+			string filename = @"images/smiley/smiley.gif";
+			_d = new GifDecoder( filename );
+			_e = new AnimatedGifEncoder();
+			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( new GifFrame( f.TheImage ) );
+			}
+			MemoryStream s = new MemoryStream();
+			_e.WriteToStream( s );
+			s.Seek( 0, SeekOrigin.Begin );
+			_d = new GifDecoder( s );
+			CheckFrames();
+		}
+		#endregion
+		
+		#region private CheckFrames method
+		private void CheckFrames()
+		{
+			Assert.AreEqual( _e.Frames.Count, _d.Frames.Count );
+			for( int i = 0; i < _e.Frames.Count; i++ )
+			{
+				ImageAssert.AreEqual( _e.Frames[i].TheImage, 
+				                      _d.Frames[i].TheImage,
+				                      "Frame " + i );
+			}
+		}
+		#endregion
+		
 		#region ColourQualityTooLow
 		/// <summary>
 		/// Checks that the colour quantization quality is set to the correct
@@ -231,6 +345,60 @@ namespace GifComponents.NUnit
 					= "The AnimatedGifEncoder has no frames to write!";
 				StringAssert.Contains( message, ex.Message );
 				throw;
+			}
+		}
+		#endregion
+		
+		#region CompareQuantizers
+		/// <summary>
+		/// Compares the results of encoding an animation using the NeuQuant and
+		/// Octree quantizers.
+		/// </summary>
+		[Test]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Quantizers")]
+		public void CompareQuantizers()
+		{
+			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
+			
+			_e = new AnimatedGifEncoder();
+			// NB OctreeQuantizer does not support global colour tables (yet!)
+			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( new GifFrame( f.TheImage ) );
+			}
+			
+			string fileName;
+			DateTime startTime;
+			DateTime endTime;
+			TimeSpan encodingTime;
+			
+			fileName = "NeuQuant.gif";
+			_e.QuantizerType = QuantizerType.NeuQuant;
+			startTime = DateTime.Now;
+			_e.WriteToFile( fileName );
+			endTime = DateTime.Now;
+			encodingTime = endTime - startTime;
+			Console.WriteLine( "Encoding using NeuQuant took " + encodingTime );
+			
+			fileName = "Octree.gif";
+			_e.QuantizerType = QuantizerType.Octree;
+			startTime = DateTime.Now;
+			_e.WriteToFile( fileName );
+			endTime = DateTime.Now;
+			encodingTime = endTime - startTime;
+			Console.WriteLine( "Encoding using Octree took " + encodingTime );
+			
+			GifDecoder nqDecoder = new GifDecoder( "NeuQuant.gif" );
+			GifDecoder otDecoder = new GifDecoder( "Octree.gif" );
+			Assert.AreEqual( nqDecoder.Frames.Count, otDecoder.Frames.Count );
+			for( int i = 0; i < nqDecoder.Frames.Count; i++ )
+			{
+				ImageAssert.AreEqual( nqDecoder.Frames[i].TheImage, 
+				                      otDecoder.Frames[i].TheImage,
+				                      "frame " + i );
 			}
 		}
 		#endregion
@@ -626,9 +794,9 @@ namespace GifComponents.NUnit
 		{
 			_e = new AnimatedGifEncoder();
 			
-			#region create 50 random bitmaps
+			#region create 10 random bitmaps
 			Collection<Bitmap> bitmaps = new Collection<Bitmap>();
-			for( int i = 0; i < 50; i++ )
+			for( int i = 0; i < 10; i++ )
 			{
 				Console.WriteLine( "Creating bitmap " + i );
 				Bitmap bitmap = RandomBitmap.Create( new Size( 50, 50 ),
