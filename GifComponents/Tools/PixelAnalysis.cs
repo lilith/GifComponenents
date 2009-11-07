@@ -23,21 +23,31 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace GifComponents
 {
 	/// <summary>
-	/// The result of analysing the pixels in an image or a collection of
-	/// images.
-	/// Creates a colour table containing the colours in the image or images,
-	/// and a collection of indexed pixels for each image containing the indices
-	/// of each pixel's colour within the colour table.
+	/// PixelAnalysis wraps various classes for quantizing images (i.e. changing
+	/// their colour palettes so that a maximum of 256 colours is used).
+	/// The input is an image or collection of images, a quantization colour
+	/// quality (applicable only when NeuQuant is the quantization method),
+	/// and a quantizer type indicating the class which performs the actual
+	/// quantization.
+	/// The output is a <see cref="ColourTable"/> containing all the colours 
+	/// from the quantized image(s), and a collection of indices into that
+	/// colour table indicating the colours of each of the pixels in the 
+	/// supplied image(s), both suitable for use by the 
+	/// <see cref="AnimatedGifEncoder"/>.
 	/// </summary>
 	public class PixelAnalysis
 	{
 		#region declarations
 		private NeuQuant _nq;
+		private OctreeQuantizer _oq;
+		private QuantizerType _quantizerType;
 		private Collection<Color> _distinctColours;
 		private ColourTable _colourTable;
 		private IndexedPixels _indexedPixels;
@@ -65,11 +75,41 @@ namespace GifComponents
 		/// than 20 do not yield significant improvements in speed.
 		/// Defaults to 1 if not greater than zero.
 		/// </param>
-		public PixelAnalysis( Image imageToStudy, int colourQuantizationQuality )
+		/// <param name="quantizerType">
+		/// The type of object to use to quantize the image to 255 colours.
+		/// </param>
+		/// <exception cref="ArgumentException">
+		/// The supplied quantizer type is not valid.
+		/// </exception>
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "2#quantizer")]
+		[SuppressMessage("Microsoft.Usage", 
+		                 "CA2204:LiteralsShouldBeSpelledCorrectly", 
+		                 MessageId = "quantizer")]
+		public PixelAnalysis( Image imageToStudy, 
+		                      int colourQuantizationQuality, 
+		                      QuantizerType quantizerType )
 		{
 			_imageToStudy = imageToStudy;
 			_colourQuality = colourQuantizationQuality;
 			_status = string.Empty;
+			_quantizerType = quantizerType;
+			switch( quantizerType )
+			{
+				case QuantizerType.NeuQuant:
+					// TODO: maybe _nq should be instantiated here?
+					break;
+					
+				case QuantizerType.Octree:
+					_oq = new OctreeQuantizer( 255, 8 );
+					break;
+					
+				default:
+					string message
+						= "Unexpected quantizer type: " + quantizerType.ToString();
+					throw new ArgumentException( message, "quantizerType" );
+			}
 		}
 		#endregion
 		
@@ -95,6 +135,7 @@ namespace GifComponents
 			_imagesToStudy = imagesToStudy;
 			_colourQuality = colourQuantizationQuality;
 			_status = string.Empty;
+			_quantizerType = QuantizerType.NeuQuant;
 		}
 		#endregion
 		
@@ -198,74 +239,125 @@ namespace GifComponents
 
 		#region private methods
 		
+		#region private analysis methods
+		
 		#region private Analyse method
 		private void Analyse()
 		{
+			_status = "Pixel analysis started";
 			_processingFrame = 0;
 			if( _imagesToStudy == null )
 			{
-				// We're analysing a single image
-				_indexedPixels = new IndexedPixels();
-	
-				// Work out the colour table for the pixels in the supplied image
-				_status = "Getting image pixels";
-				Collection<Color> pixelColours = GetImagePixels( _imageToStudy );
-				_status = "Setting colour table";
-				SetColourTable( pixelColours, _colourQuality );
-	
-				// Work out the indices in the colour table of each of the pixels
-				// in the supplied image.
-				_status = "Getting indexed pixels";
-				_indexedPixels = GetIndexedPixels( pixelColours );
-				_status = "Pixel analysis complete";
+				AnalyseSingleImage();
 			}
 			else
 			{
-				// We're analysing a collection of images
-				Collection<Color> pixelData = new Collection<Color>(); // pixel data for the entire animation
-				Collection<Color> imagePixelData; // pixel data for a single image
-	
-				// Work out the colour table for the pixels in each of the 
-				// supplied images
-				for( int i = 0; i < _imagesToStudy.Count; i++ )
-				{
-					_processingFrame = i + 1;
-					_status 
-						= "Getting image pixels for frame " + _processingFrame 
-						+ " of " + _imagesToStudy.Count;
-					Image thisImage = _imagesToStudy[i];
-					imagePixelData = GetImagePixels( thisImage );
-					foreach( Color c in imagePixelData )
-					{
-						pixelData.Add( c );
-					}
-				}
-				_status = "Setting colour table";
-				SetColourTable( pixelData, _colourQuality );
-	
-				// Work out the indices in the colour table of each of the pixels
-				// in each of the supplied images.
-				_indexedPixelsCollection = new Collection<IndexedPixels>();
-				for( int i = 0; i < _imagesToStudy.Count; i++ )
-				{
-					_processingFrame = i + 1;
-					Image thisImage = _imagesToStudy[i];
-					_status 
-						= "Getting image pixels for frame " + _processingFrame 
-						+ " of " + _imagesToStudy.Count;
-					imagePixelData = GetImagePixels( thisImage );
-					_status 
-						= "Getting indexed pixels for frame " + _processingFrame 
-						+ " of " + _imagesToStudy.Count;
-					IndexedPixels indexedPixels = GetIndexedPixels( imagePixelData );
-					_status 
-						= "Adding indexed pixels for frame " + _processingFrame 
-						+ " of " + _imagesToStudy.Count;
-					_indexedPixelsCollection.Add( indexedPixels );
-				}
-				_status = "Pixel analysis complete";
+				AnalyseManyImages();
+			}
+			_status = "Pixel analysis complete";
+		}
+		#endregion
+		
+		#region private AnalyseSingleImage method
+		private void AnalyseSingleImage()
+		{
+			_indexedPixels = new IndexedPixels();
+
+			switch( _quantizerType )
+			{
+				case QuantizerType.NeuQuant:
+					AnalyseSingleImageWithNeuQuant();
+					break;
+					
+				case QuantizerType.Octree:
+					AnalyseSingleImageWithOctree();
+					break;
 			}
 		}
+		#endregion
+		
+		#region private AnalyseSingleImageWithNeuQuant method
+		private void AnalyseSingleImageWithNeuQuant()
+		{
+			// Work out the colour table for the pixels in the supplied image
+			_status = "Getting image pixels";
+			Collection<Color> pixelColours = ImageTools.GetColours( _imageToStudy );
+			_status = "Setting colour table";
+			SetColourTable( pixelColours, _colourQuality );
+
+			// Work out the indices in the colour table of each of the pixels
+			// in the supplied image.
+			_status = "Getting indexed pixels";
+			_indexedPixels = GetIndexedPixels( pixelColours );
+		}
+		#endregion
+		
+		#region private AnalyseSingleImageWithOctree method
+		[SuppressMessage("Microsoft.Usage", 
+		                 "CA2204:LiteralsShouldBeSpelledCorrectly", 
+		                 MessageId = "Octree")]
+		private void AnalyseSingleImageWithOctree()
+		{
+			// TODO: use Octree quantizer to quantize image, build colour table and get pixel indices
+			_status = "Quantizing image";
+			Image quantized = _oq.Quantize( _imageToStudy );
+			// FIXME: _imageToStudy.Palette contains 0 entries
+			_status = "Getting palette for quantized image";
+			ColorPalette palette = _oq.GetPalette( _imageToStudy.Palette );
+			// TODO: work out how to convert the quantized image and palette to the required formats
+			throw new NotImplementedException( "Octree quantization not implemented yet" );
+		}
+		#endregion
+		
+		#region private AnalyseManyImages method
+		private void AnalyseManyImages()
+		{
+			// TODO: once OctreeQuantizer works for single images, use it here too
+			Collection<Color> pixelData = new Collection<Color>(); // pixel data for the entire animation
+			Collection<Color> imagePixelData; // pixel data for a single image
+
+			// Work out the colour table for the pixels in each of the 
+			// supplied images
+			for( int i = 0; i < _imagesToStudy.Count; i++ )
+			{
+				_processingFrame = i + 1;
+				_status 
+					= "Getting image pixels for frame " + _processingFrame 
+					+ " of " + _imagesToStudy.Count;
+				Image thisImage = _imagesToStudy[i];
+				imagePixelData = ImageTools.GetColours( thisImage );
+				foreach( Color c in imagePixelData )
+				{
+					pixelData.Add( c );
+				}
+			}
+			_status = "Setting colour table";
+			SetColourTable( pixelData, _colourQuality );
+
+			// Work out the indices in the colour table of each of the pixels
+			// in each of the supplied images.
+			_indexedPixelsCollection = new Collection<IndexedPixels>();
+			for( int i = 0; i < _imagesToStudy.Count; i++ )
+			{
+				_processingFrame = i + 1;
+				Image thisImage = _imagesToStudy[i];
+				_status 
+					= "Getting image pixels for frame " + _processingFrame 
+					+ " of " + _imagesToStudy.Count;
+				imagePixelData = ImageTools.GetColours( thisImage );
+				_status 
+					= "Getting indexed pixels for frame " + _processingFrame 
+					+ " of " + _imagesToStudy.Count;
+				IndexedPixels indexedPixels = GetIndexedPixels( imagePixelData );
+				_status 
+					= "Adding indexed pixels for frame " + _processingFrame 
+					+ " of " + _imagesToStudy.Count;
+				_indexedPixelsCollection.Add( indexedPixels );
+			}
+			_status = "Pixel analysis complete";
+		}
+		#endregion
+
 		#endregion
 		
 		#region private SetColourTable method
@@ -289,33 +381,29 @@ namespace GifComponents
 		{
 			System.Diagnostics.Debug.WriteLine( DateTime.Now + " PixelAnalysis.SetColourTable - start" );
 			int len = pixelColours.Count;
-			_distinctColours = new Collection<Color>();
-			Collection<byte> rgb = new Collection<byte>(); // for NeuQuant constructor, if used
-			for( int i = 0; i < len; i ++ )
-			{
-				_status 
-					= "Getting distinct colours: pixel " + i + " of " + len
-					+ ". Distinct colours: " + _distinctColours.Count;
-				byte red = (byte) pixelColours[i].R;
-				byte green = (byte) pixelColours[i].G;
-				byte blue = (byte) pixelColours[i].B;
-				rgb.Add( red );
-				rgb.Add( green );
-				rgb.Add( blue );
-				Color c = Color.FromArgb( red, green, blue );
-				if( _distinctColours.Contains( c ) == false )
-				{
-					_distinctColours.Add( c );
-				}
-			}
+			_status = "Getting distinct colours";
+			_distinctColours = ImageTools.GetDistinctColours( pixelColours );
+			_status = "Done getting distinct colours";
+			
 			if( _distinctColours.Count > 256 )
 			{
 				// more than 256 colours so need to adjust for a colour table
 				// of 256 colours.
-				_status = "Calling colour quantizer";
-				_nq = new NeuQuant( rgb, len, colourQuantizationQuality );
-				_status = "Processing colour quantizer";
-				_colourTable = _nq.Process(); // create reduced palette
+				if( _quantizerType == QuantizerType.NeuQuant )
+				{
+					_status = "Populating RGB collection for NeuQuant";
+					byte[] rgb = ImageTools.GetRgbArray( pixelColours );
+					_status = "Instantiating NeuQuant";
+					_nq = new NeuQuant( rgb, len, colourQuantizationQuality );
+					_status = "Processing NeuQuant";
+					_colourTable = _nq.Process(); // create reduced palette
+					_status = "Done processing NeuQuant";
+				}
+				else
+				{
+					// TODO: use OctreeQuantizer
+					throw new InvalidOperationException( "Octree quantization not implemented yet" );
+				}
 			}
 			else
 			{
@@ -326,39 +414,9 @@ namespace GifComponents
 				{
 					_colourTable.Add( c );
 				}
-				// Pad colour table out to a length of an exact power of 2
-				while( IsPowerOf2( _colourTable.Length ) == false )
-				{
-					_colourTable.Add( Color.FromArgb( 0, 0, 0 ) );
-				}
+				_colourTable.Pad();
 			}
 			System.Diagnostics.Debug.WriteLine( DateTime.Now + " PixelAnalysis.SetColourTable - finish" );
-		}
-		#endregion
-		
-		#region private static IsPowerOf2 method
-		/// <summary>
-		/// Determines whether the supplied number is an exact power of 2 and
-		/// therefore a suitable size for a colour table.
-		/// </summary>
-		/// <param name="number"></param>
-		/// <returns></returns>
-		private static bool IsPowerOf2( int number )
-		{
-			switch( number )
-			{
-				case 4:
-				case 8:
-				case 16:
-				case 32:
-				case 64:
-				case 128:
-				case 256:
-					return true;
-					
-				default:
-					return false;
-			}
 		}
 		#endregion
 		
@@ -396,42 +454,12 @@ namespace GifComponents
 				}
 				else
 				{
-					Color c = Color.FromArgb( red, green, blue );
-					indexInColourTable = _distinctColours.IndexOf( c );
+					indexInColourTable = _distinctColours.IndexOf( pixelColours[i] );
 				}
 				indexedPixels.Add( (byte) indexInColourTable );
 			}
 			
 			return indexedPixels;
-		}
-		#endregion
-		
-		#region private static GetImagePixels method
-		/// <summary>
-		/// Extracts the pixels of the supplied image into a byte array.
-		/// </summary>
-		/// <param name="imageToStudy">
-		/// The image from which to extract the pixels.
-		/// </param>
-		/// <returns>
-		/// A collection of the colours of all the pixels in the supplied image.
-		/// </returns>
-		private static Collection<Color> GetImagePixels( Image imageToStudy )
-		{
-			// SB comment - this comment was present when I downloaded the
-			// code from thinkedge.com
-			// TODO: improve performance: use unsafe code
-			Collection<Color> pixelColours = new Collection<Color>();
-			Bitmap tempBitmap = new Bitmap( imageToStudy );
-			for( int th = 0; th < imageToStudy.Height; th++ )
-			{
-				for( int tw = 0; tw < imageToStudy.Width; tw++ )
-				{
-					Color color = tempBitmap.GetPixel(tw, th);
-					pixelColours.Add( color );
-				}
-			}
-			return pixelColours;
 		}
 		#endregion
 

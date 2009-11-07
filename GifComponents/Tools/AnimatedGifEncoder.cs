@@ -24,9 +24,10 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
-using System.ComponentModel;
 
 namespace GifComponents
 {
@@ -104,6 +105,12 @@ namespace GifComponents
 		/// </summary>
 		private int _quality;
 		
+		/// <summary>
+		/// Indicates the type of quantizer used to reduce the colour palette
+		/// to 256 colours.
+		/// </summary>
+		private QuantizerType _quantizerType;
+		
 		private string _status;
 		private int _processingFrame;
 		private PixelAnalysis _pixelAnalysis;
@@ -115,6 +122,7 @@ namespace GifComponents
 		/// Sets repeat count to 0 (repeat indefinitely)
 		/// Sets colour table strategy to UseGlobal
 		/// Sets image quantization quality to 10.
+		/// Sets quantizer type to NeuQuant.
 		/// Screen size defaults to size of first frame.
 		/// </summary>
 		public AnimatedGifEncoder()
@@ -122,6 +130,7 @@ namespace GifComponents
 			_frames = new Collection<GifFrame>();
 			_strategy = ColourTableStrategy.UseGlobal;
 			_quality = 10;
+			_quantizerType = QuantizerType.NeuQuant;
 			_logicalScreenSize = Size.Empty;
 		}
 		#endregion
@@ -246,6 +255,21 @@ namespace GifComponents
 		{
 			get { return _logicalScreenSize; }
 			set { _logicalScreenSize = value; }
+		}
+		#endregion
+		
+		#region QuantizerType property
+		/// <summary>
+		/// Gets and sets the type of quantizer used to reduce the colour
+		/// palette to 256 colours, if required.
+		/// </summary>
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Quantizer")]
+		public QuantizerType QuantizerType
+		{
+			get { return _quantizerType; }
+			set { _quantizerType = value; }
 		}
 		#endregion
 		
@@ -418,7 +442,7 @@ namespace GifComponents
 						= "Frame " + _processingFrame 
 						+ " of " + _frames.Count 
 						+ ": building local colour table - analysing pixels";
-					_pixelAnalysis = new PixelAnalysis( thisImage, _quality );
+					_pixelAnalysis = new PixelAnalysis( thisImage, _quality, _quantizerType );
 					lct = _pixelAnalysis.ColourTable;
 					// make local colour table active
 					act = lct;

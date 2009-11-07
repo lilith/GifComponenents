@@ -22,7 +22,7 @@
 #endregion
 
 using System;
-using System.Collections.ObjectModel;
+//using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 
@@ -50,12 +50,11 @@ namespace GifComponents
 	///
 	/// Ported to Java 12/00 K Weiner
 	/// 
-	/// Modified by Simon Bridewell, June 2009:
+	/// Modified by Simon Bridewell, June-November 2009:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
-	/// Adapted by for FxCop code analysis compliance and documentation comments 
+	/// Adapted for FxCop code analysis compliance and documentation comments 
 	/// converted to .net XML comments.
-	/// Updated to use .net 2.0 generics - use List instead of byte[]
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
@@ -122,8 +121,7 @@ namespace GifComponents
 		/* Types and Global Variables
 		-------------------------- */
 
-//		private byte[] _thepicture; /* the input image itself */
-		private Collection<byte> _thepicture; /* the input image itself */
+		private byte[] _thepicture; /* the input image itself */
 		private int _lengthcount; /* lengthcount = H*W*3 */
 
 		private int _samplefac; /* sampling factor 1..30 */
@@ -156,7 +154,7 @@ namespace GifComponents
 		/// <param name="sample">
 		/// Image quantization quality. // TODO: is this correct?
 		/// </param>
-		public NeuQuant( Collection<byte> thePicture, int len, int sample) 
+		public NeuQuant( byte[] thePicture, int len, int sample)
 		{
 
 			int i;
@@ -250,7 +248,7 @@ namespace GifComponents
 
 			int i, j, b, g, r;
 			int radius, rad, alpha, step, delta, samplepixels;
-			Collection<byte> p;
+			byte[] p;
 			int pix, lim;
 
 			if (_lengthcount < _minpicturebytes)
@@ -330,7 +328,6 @@ namespace GifComponents
 		/// Search for BGR values 0..255 (after net is unbiased) and return 
 		/// the index in the colour table of the colour closest to the supplied
 		/// colour.
-		/// TODO: consider accepting a Color rather than R,G,B integers.
 		/// </summary>
 		/// <param name="blue">
 		/// The blue component of the input colour.
