@@ -67,6 +67,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools\AnimatedGifEncoderSpeedTests.cs" />
     <Compile Include="Tools\AnimatedGifEncoderTest.cs" />
+    <Compile Include="Tools\ImageToolsTest.cs" />
+    <Compile Include="Tools\OctreeQuantizerTest.cs" />
     <Compile Include="Tools\RandomBitmap.cs" />
     <Compile Include="Tools\GifDecoderTest.cs" />
     <Compile Include="Tools\LzwEncoderTest.cs" />

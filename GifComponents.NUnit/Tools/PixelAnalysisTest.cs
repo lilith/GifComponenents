@@ -127,7 +127,7 @@ namespace GifComponents.NUnit
 		public void SingleImage257Colours()
 		{
 			Bitmap image = MakeBitmap( 257 );
-			_pa = new PixelAnalysis( image, 10 );
+			_pa = new PixelAnalysis( image, 10, QuantizerType.NeuQuant );
 			// Cannot use the TestSingleImage method this time because using
 			// more than 256 colours causes colour quantization to reduce it
 			// to 256 colours. Exact contents of colour table and indexed pixels
@@ -244,7 +244,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void IndexedPixelsCollectionException()
 		{
-			_pa = new PixelAnalysis( MakeBitmap( 10 ), 10 );
+			_pa = new PixelAnalysis( MakeBitmap( 10 ), 10, QuantizerType.NeuQuant );
 			try
 			{
 				Assert.IsNull( _pa.IndexedPixelsCollection );
@@ -271,7 +271,8 @@ namespace GifComponents.NUnit
 		private void TestSingleImage( int numberOfColours )
 		{
 			Bitmap image = MakeBitmap( numberOfColours );
-			_pa = new PixelAnalysis( image, 0 );
+			// TODO: QuantizerType parameter?
+			_pa = new PixelAnalysis( image, 0, QuantizerType.NeuQuant );
 			CheckColourTable( numberOfColours );
 			CheckIndexedPixels( numberOfColours );
 		}
@@ -351,10 +352,11 @@ namespace GifComponents.NUnit
 			}
 			
 			// Table should be filled with the colours in the image
+			// NB we can't compare _colours[i] with _pa.ColourTable[i] as they
+			// won't be in the same order
 			for( int i = 0; i < numberOfColours; i++ )
 			{
-				Assert.AreEqual( _colours[i], _pa.ColourTable[i], 
-				                 "ColourTable[" + i + "]" );
+				CollectionAssert.Contains( _pa.ColourTable.Colours, _colours[i] );
 			}
 			
 			// Remaining colours in the table should all be black
@@ -380,10 +382,11 @@ namespace GifComponents.NUnit
 			// in the colour table
 			for( int i = 0; i < _pa.IndexedPixels.Count; i++ )
 			{
-				int expectedIndex;
-				Math.DivRem( i, numberOfColours, out expectedIndex );
-				Assert.AreEqual( expectedIndex, _pa.IndexedPixels[i], 
-				                 "IndexedPixels[" + i + "]" );
+				int indexInTestFixtureColours;
+				Math.DivRem( i, numberOfColours, out indexInTestFixtureColours );
+				Color c = _colours[indexInTestFixtureColours];
+				Assert.AreEqual( c, _pa.ColourTable[_pa.IndexedPixels[i]], 
+				                 "Pixel index " + i );
 			}
 		}
 		#endregion
@@ -407,10 +410,12 @@ namespace GifComponents.NUnit
 				// in the colour table
 				for( int i = 0; i < _pa.IndexedPixelsCollection[j].Count; i++ )
 				{
-					int expectedIndex;
-					Math.DivRem( i, numberOfColours, out expectedIndex );
-					Assert.AreEqual( expectedIndex, _pa.IndexedPixelsCollection[j][i],
-					                 "IndexedPixelsCollection[" + j + "][" + i + "]" );
+					int indexInTestFixtureColours;
+					Math.DivRem( i, numberOfColours, out indexInTestFixtureColours );
+					Color expected = _colours[indexInTestFixtureColours];
+					Color actual = _pa.ColourTable[_pa.IndexedPixelsCollection[j][indexInTestFixtureColours]];
+					Assert.AreEqual( expected, actual, 
+					                 "Image index: " + j + ", Pixel index: " + i );
 				}
 			}
 		}
