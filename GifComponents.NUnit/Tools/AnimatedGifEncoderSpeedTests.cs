@@ -25,18 +25,52 @@ using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using NUnit.Framework;
 
 namespace GifComponents.NUnit
 {
 	/// <summary>
-	/// Test cases which compare the length of time taken to encode GIF files
-	/// under different circumstances.
+	/// Test cases which help to establish whether encoding is too slow and
+	/// which bits are causing the slowness.
 	/// </summary>
 	[TestFixture]
 	public class AnimatedGifEncoderSpeedTests
 	{
 		private AnimatedGifEncoder _encoder;
+		
+		#region ProfileTest
+		/// <summary>
+		/// Runs the WriteToFile method on a separate thread and writes out its
+		/// status every 100 miliseconds. Useful for identifying any bottlenecks
+		/// in the code.
+		/// </summary>
+		[Test]
+		public void ProfileTest()
+		{
+			_encoder = new AnimatedGifEncoder();
+			_encoder.AddFrame( new GifFrame( RandomBitmap.Create( new Size( 500, 500 ), 
+			                                                10, 
+			                                                PixelFormat.Format32bppArgb ) ) );
+			System.Threading.Thread t 
+				= new System.Threading.Thread( EncodeBigFile );
+			t.IsBackground = true;
+			t.Start();
+			while( t.IsAlive )
+			{
+				Console.WriteLine( DateTime.Now.ToString( CultureInfo.InvariantCulture ) 
+				                   + ": " + _encoder.Status 
+				                   + " / " + _encoder.PixelAnalysisStatus );
+				System.Threading.Thread.Sleep( 100 );
+			}
+			Console.WriteLine( "Finished" );
+		}
+		
+		private void EncodeBigFile()
+		{
+			_encoder.WriteToFile( "Profile.gif" );
+		}
+		#endregion
 		
 		#region RunColourDepthTest
 		/// <summary>
