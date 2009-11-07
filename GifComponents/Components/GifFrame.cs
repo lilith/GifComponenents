@@ -412,13 +412,16 @@ namespace GifComponents
 			}
 			frame._imageDescriptor = imageDescriptor;
 			frame._backgroundColour = backgroundColour;
+			GifComponentStatus status;
 			frame._image = CreateBitmap( indexedPixels, 
 			                             lsd,
 			                             imageDescriptor,
 			                             activeColourTable,
 			                             gce,
 			                             previousFrame,
-			                             previousFrameBut1 );
+			                             previousFrameBut1, 
+			                             out status );
+			frame.SetStatus( status.ErrorState, status.ErrorMessage );
 			
 			return frame;
 		}
@@ -470,14 +473,20 @@ namespace GifComponents
 		/// The frame which precedes the frame before this one in the GIF stream,
 		/// if present.
 		/// </param>
+		/// <param name="status">
+		/// GifComponentStatus containing any errors which occurred during the
+		/// creation of the bitmap.
+		/// </param>
 		private static Bitmap CreateBitmap( TableBasedImageData imageData,
 		                                    LogicalScreenDescriptor lsd,
 		                                    ImageDescriptor id,
 		                                    ColourTable activeColourTable,
 		                                    GraphicControlExtension gce,
 		                                    GifFrame previousFrame,
-		                                    GifFrame previousFrameBut1 )
+		                                    GifFrame previousFrameBut1, 
+		                                    out GifComponentStatus status )
 		{
+			status = new GifComponentStatus( ErrorState.Ok, "" );
 			Color[] pixelsForThisFrame = new Color[lsd.LogicalScreenSize.Width 
 			                                       * lsd.LogicalScreenSize.Height];
 			
@@ -598,7 +607,23 @@ namespace GifComponents
 						if( indexInColourTable != gce.TransparentColourIndex 
 						    || gce.HasTransparentColour == false )
 						{
-							Color c = activeColourTable[indexInColourTable];
+							Color c;
+							if( indexInColourTable < activeColourTable.Length )
+							{
+								c = activeColourTable[indexInColourTable];
+							}
+							else
+							{
+								c = Color.Black;
+								string message 
+									= "Colour index: "
+									+ indexInColourTable
+									+ ", colour table length: "
+									+ activeColourTable.Length
+									+ " (" + dx + "," + pixelRowNumber + ")";
+								status = new GifComponentStatus( ErrorState.BadColourIndex, 
+								                                 message );
+							}
 							pixelsForThisFrame[dx] = c;
 						}
 						dx++;
