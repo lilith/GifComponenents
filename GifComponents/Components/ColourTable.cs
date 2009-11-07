@@ -172,6 +172,19 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region Pad method
+		/// <summary>
+		/// Pads the colour table out to a length of an exact power of 2
+		/// </summary>
+		public void Pad()
+		{
+			while( IsPowerOf2( _colours.Count ) == false )
+			{
+				_colours.Add( Color.FromArgb( 0, 0, 0 ) );
+			}
+		}
+		#endregion
+		
 		#region static FromStream method
 		/// <summary>
 		/// Reads and returns a colour table from the supplied input stream.
@@ -258,5 +271,30 @@ namespace GifComponents
 		}
 		#endregion
 
+		#region private static IsPowerOf2 method (commented out)
+		/// <summary>
+		/// Determines whether the supplied number is an exact power of 2 and
+		/// therefore a suitable size for a colour table.
+		/// </summary>
+		/// <param name="number"></param>
+		/// <returns></returns>
+		private static bool IsPowerOf2( int number )
+		{
+			switch( number )
+			{
+				case 4:
+				case 8:
+				case 16:
+				case 32:
+				case 64:
+				case 128:
+				case 256:
+					return true;
+					
+				default:
+					return false;
+			}
+		}
+		#endregion
 	}
 }
