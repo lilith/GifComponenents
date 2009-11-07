@@ -140,6 +140,12 @@ namespace GifComponents
 		/// <summary>
 		/// An unexpected block terminator was encountered.
 		/// </summary>
-		UnexpectedBlockTerminator = 1 << 16
+		UnexpectedBlockTerminator = 1 << 16,
+		
+		/// <summary>
+		/// The decoded image data contains an index which is outside the range
+		/// of the active colour table.
+		/// </summary>
+		BadColourIndex
 	}
 }
