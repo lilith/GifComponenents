@@ -247,15 +247,15 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		#region Test1000000Pixels
-		/// <summary>
-		/// Tests the encoder with 1,000,000 random pixel values.
-		/// </summary>
-		[Test]
-		public void Test1000000Pixels()
-		{
-			RandomFill( 1000000 );
-		}
+		#region Test1000000Pixels (commented out - takes a while to run)
+//		/// <summary>
+//		/// Tests the encoder with 1,000,000 random pixel values.
+//		/// </summary>
+//		[Test]
+//		public void Test1000000Pixels()
+//		{
+//			RandomFill( 1000000 );
+//		}
 		#endregion
 		
 		#region private RandomFill method
