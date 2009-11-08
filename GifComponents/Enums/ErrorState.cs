@@ -146,6 +146,11 @@ namespace GifComponents
 		/// The decoded image data contains an index which is outside the range
 		/// of the active colour table.
 		/// </summary>
-		BadColourIndex
+		BadColourIndex = 1 << 17,
+		
+		/// <summary>
+		/// The frame does not have a graphic control extension.
+		/// </summary>
+		NoGraphicControlExtension = 1 << 18
 	}
 }
