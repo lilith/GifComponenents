@@ -323,9 +323,17 @@ namespace GifComponents
 				throw new ArgumentNullException( "lsd" );
 			}
 			
+			bool gceNull = false;
 			if( gce == null )
 			{
-				throw new ArgumentNullException( "gce" );
+				// use a default GCE
+				gce = new GraphicControlExtension( GraphicControlExtension.ExpectedBlockSize, 
+				                                   DisposalMethod.NotSpecified, 
+				                                   false, 
+				                                   false, 
+				                                   100, 
+				                                   0 );
+				gceNull = true;
 			}
 			#endregion
 			
@@ -422,6 +430,10 @@ namespace GifComponents
 			                             previousFrameBut1, 
 			                             out status );
 			frame.SetStatus( status.ErrorState, status.ErrorMessage );
+			if( gceNull )
+			{
+				frame.SetStatus( ErrorState.NoGraphicControlExtension, "" );
+			}
 			
 			return frame;
 		}
@@ -535,6 +547,7 @@ namespace GifComponents
 						} 
 						else 
 						{
+							// TODO: does this ever happen?
 							// use given background color
 							c = previousFrame.BackgroundColour;
 						}
@@ -614,6 +627,7 @@ namespace GifComponents
 							}
 							else
 							{
+								// TODO: test case for BadColourIndex
 								c = Color.Black;
 								string message 
 									= "Colour index: "
