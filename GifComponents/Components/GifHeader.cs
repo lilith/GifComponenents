@@ -118,6 +118,7 @@ namespace GifComponents
 				if( nextByte == -1 )
 				{
 					endOfFile = true;
+					nextByte = 0;
 				}
 				sb.Append( (char) nextByte );
 			}
