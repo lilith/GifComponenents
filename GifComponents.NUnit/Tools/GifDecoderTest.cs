@@ -20,12 +20,15 @@
 // See also the Wikipedia entry on the GNU GPL at:
 // http://en.wikipedia.org/wiki/GNU_General_Public_License
 #endregion
+
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Globalization;
+using System.Threading;
 using NUnit.Framework;
 using NUnit.Extensions;
 
@@ -51,6 +54,7 @@ namespace GifComponents.NUnit
 		{
 			string fileName = @"images\smiley\smiley.gif";
 			_decoder = new GifDecoder( fileName );
+			_decoder.Decode();
 			_lsd = _decoder.LogicalScreenDescriptor;
 			int expectedColourTableSize = 128;
 			
@@ -141,6 +145,7 @@ namespace GifComponents.NUnit
 			string fileName = @"images\smiley\smiley.gif";
 			Stream inputStream = new FileInfo( fileName ).OpenRead();
 			_decoder = new GifDecoder( inputStream );
+			_decoder.Decode();
 			_lsd = _decoder.LogicalScreenDescriptor;
 			int expectedColourTableSize = 128;
 			
@@ -230,6 +235,7 @@ namespace GifComponents.NUnit
 			string fileName 
 				= @"images\globe\spinning globe better 200px transparent background.gif";
 			_decoder = new GifDecoder( fileName );
+			_decoder.Decode();
 			_lsd = _decoder.LogicalScreenDescriptor;
 			int expectedColourTableSize = 64;
 			
@@ -316,6 +322,7 @@ namespace GifComponents.NUnit
 					Debug.WriteLine( "GifDecoderTest.BadSignature" );
 					
 					_decoder = new GifDecoder( file );
+					_decoder.Decode();
 					Assert.AreEqual( true, 
 					                 _decoder.TestState( ErrorState.BadSignature ),
 					                 file );
@@ -415,6 +422,116 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 
+		#region DecodeAllGifs
+		private string _status;
+		
+		/// <summary>
+		/// Attempts to decode every file with a .gif extension on the current
+		/// drive.
+		/// This helps to highlight any scenarios where the decoder fails to
+		/// deal gracefully with a badly encoded file.
+		/// </summary>
+		[Test]
+		[Ignore( "Takes ages to run" )]
+		public void DecodeAllGifs()
+		{
+			Thread t = new Thread( StartLooking );
+			t.IsBackground = true;
+			t.Start();
+			while( t.IsAlive )
+			{
+				Thread.Sleep( 5000 );
+				Console.WriteLine( _status );
+			}
+		}
+		
+		private void StartLooking()
+		{
+			LookIn( Path.GetPathRoot( Directory.GetCurrentDirectory() ) );
+		}
+
+		[SuppressMessage("Microsoft.Performance", 
+		                 "CA1804:RemoveUnusedLocals", 
+		                 MessageId = "decoder")]
+		private void LookIn( string path )
+		{
+			_status = "Looking in " + path;
+			string[] gifs;
+			try
+			{
+				gifs = Directory.GetFiles( path, "*.gif" );
+				foreach( string gif in gifs )
+				{
+					_status = "Decoding " + gif;
+					try
+					{
+						GifDecoder decoder = new GifDecoder( gif );
+						decoder.Dispose();
+					}
+					catch( Exception )
+					{
+						Console.WriteLine( "Exception while decoding " + gif );
+						throw;
+					}
+				}
+				
+				string[] folders = Directory.GetDirectories( path );
+				foreach( string folder in folders )
+				{
+					LookIn( folder );
+				}
+			}
+			catch( UnauthorizedAccessException ) 
+			{
+				// suppress
+			}
+		}
+		
+		#endregion
+		
+		// TODO: remove
+		#region CompareReadAheadStream
+//		[Test]
+//		public void CompareReadAheadStream()
+//		{
+//			string filename = "GifDecoderTest.CompareReadAheadStream.gif";
+//			AnimatedGifEncoder e = new AnimatedGifEncoder();
+//			Bitmap b;
+//			Size size = new Size( 500, 500 );
+//			int blockiness = 20;
+//			PixelFormat format = PixelFormat.Format32bppArgb;
+//			b = RandomBitmap.Create( size, blockiness, format );
+//			e.AddFrame( new GifFrame( b ) );
+//			b = RandomBitmap.Create( size, blockiness, format );
+//			e.AddFrame( new GifFrame( b ) );
+//			b = RandomBitmap.Create( size, blockiness, format );
+//			e.AddFrame( new GifFrame( b ) );
+//			b = RandomBitmap.Create( size, blockiness, format );
+//			e.AddFrame( new GifFrame( b ) );
+//			
+//			e.WriteToFile( filename );
+//			
+//			DateTime startTime;
+//			DateTime endTime;
+//			TimeSpan runTime;
+//			
+//			_decoder = new GifDecoder( filename, true );
+//			startTime = DateTime.Now;
+//			_decoder.Decode();
+//			endTime = DateTime.Now;
+//			runTime = endTime - startTime;
+//			Console.WriteLine( "Decoding with ReadAheadStream took " + runTime );
+//			
+//			_decoder = new GifDecoder( filename, false );
+//			startTime = DateTime.Now;
+//			_decoder.Decode();
+//			endTime = DateTime.Now;
+//			runTime = endTime - startTime;
+//			Console.WriteLine( "Decoding without ReadAheadStream took " + runTime );
+//			
+//		}
+		#endregion
+		
 		#region private void CompareFrames method
 		private void CompareFrames( string baseFileName )
 		{

@@ -38,7 +38,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the AnimatedGifEncoder class.
 	/// </summary>
 	[TestFixture]
-	public class AnimatedGifEncoderTest
+	public class AnimatedGifEncoderTest : IDisposable
 	{
 		private AnimatedGifEncoder _e;
 		private GifDecoder _d;
@@ -153,6 +153,7 @@ namespace GifComponents.NUnit
 			s.Close();
 			
 			_d = new GifDecoder( fileName );
+			_d.Decode();
 			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
 			BitmapAssert.AreEqual( WikipediaExample.ExpectedBitmap, 
 			                      (Bitmap) _d.Frames[0].TheImage,
@@ -205,6 +206,7 @@ namespace GifComponents.NUnit
 		{
 			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
 			_d = new GifDecoder( filename );
+			_d.Decode();
 			_e = new AnimatedGifEncoder();
 			_e.ColourTableStrategy = ColourTableStrategy.UseGlobal;
 			foreach( GifFrame f in _d.Frames )
@@ -215,6 +217,7 @@ namespace GifComponents.NUnit
 			_e.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			_d = new GifDecoder( s );
+			_d.Decode();
 			CheckFrames();
 		}
 		#endregion
@@ -230,6 +233,7 @@ namespace GifComponents.NUnit
 		{
 			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
 			_d = new GifDecoder( filename );
+			_d.Decode();
 			_e = new AnimatedGifEncoder();
 			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
 			foreach( GifFrame f in _d.Frames )
@@ -240,6 +244,7 @@ namespace GifComponents.NUnit
 			_e.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			_d = new GifDecoder( s );
+			_d.Decode();
 			CheckFrames();
 		}
 		#endregion
@@ -255,6 +260,7 @@ namespace GifComponents.NUnit
 		{
 			string filename = @"images/smiley/smiley.gif";
 			_d = new GifDecoder( filename );
+			_d.Decode();
 			_e = new AnimatedGifEncoder();
 			_e.ColourTableStrategy = ColourTableStrategy.UseGlobal;
 			foreach( GifFrame f in _d.Frames )
@@ -265,6 +271,7 @@ namespace GifComponents.NUnit
 			_e.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			_d = new GifDecoder( s );
+			_d.Decode();
 			CheckFrames();
 		}
 		#endregion
@@ -280,6 +287,7 @@ namespace GifComponents.NUnit
 		{
 			string filename = @"images/smiley/smiley.gif";
 			_d = new GifDecoder( filename );
+			_d.Decode();
 			_e = new AnimatedGifEncoder();
 			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
 			foreach( GifFrame f in _d.Frames )
@@ -290,6 +298,7 @@ namespace GifComponents.NUnit
 			_e.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			_d = new GifDecoder( s );
+			_d.Decode();
 			CheckFrames();
 		}
 		#endregion
@@ -321,8 +330,6 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		// TODO: test case for transparency
-
 		#region WriteToStreamNoFramesTest
 		/// <summary>
 		/// Checks that the correct exception is thrown when the WriteToStream
@@ -361,6 +368,7 @@ namespace GifComponents.NUnit
 		public void CompareQuantizers()
 		{
 			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
+			_d.Decode();
 			
 			_e = new AnimatedGifEncoder();
 			// NB OctreeQuantizer does not support global colour tables (yet!)
@@ -484,6 +492,7 @@ namespace GifComponents.NUnit
 
 			// Check the file using the decoder
 			_d = new GifDecoder( fileName );
+			_d.Decode();
 			Assert.AreEqual( ErrorState.Ok, 
 			                 _d.ConsolidatedState, 
 			                 "Decoder consolidated state" );
@@ -853,11 +862,47 @@ namespace GifComponents.NUnit
 			#endregion
 			
 			Assert.IsTrue( runTime3 < runTime2 );
-			GifDecoder decoder = new GifDecoder( "2892015-3.gif" );
-			Assert.AreEqual( 3, decoder.Frames.Count );
+			_d = new GifDecoder( "2892015-3.gif" );
+			_d.Decode();
+			Assert.AreEqual( 3, _d.Frames.Count );
 		}
 		#endregion
 		
+		#endregion
+
+		#region IDisposable implementation
+		private bool _isDisposed; // defaults to false
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( true );
+		}
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="isDisposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool isDisposing )
+		{
+			if( _isDisposed )
+			{
+				return;
+			}
+			
+			if( isDisposing )
+			{
+				_d.Dispose();
+			}
+			
+			_isDisposed = true;
+		}
 		#endregion
 	}
 }

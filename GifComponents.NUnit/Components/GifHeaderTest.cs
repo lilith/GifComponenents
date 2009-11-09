@@ -93,6 +93,23 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 
+		#region FromStreamEndOfInputStreamTest
+		/// <summary>
+		/// Checks that the correct error state is set when the input stream
+		/// does not contain enough data to form a GIF header.
+		/// </summary>
+		[Test]
+		public void FromStreamEndOfInputStreamTest()
+		{
+			MemoryStream s = new MemoryStream();
+			s.WriteByte( (byte) 'G' );
+			s.Seek( 0, SeekOrigin.Begin );
+			_header = GifHeader.FromStream( s );
+			Assert.AreEqual( ErrorState.EndOfInputStream | ErrorState.BadSignature, 
+			                 _header.ErrorState );
+		}
+		#endregion
+		
 		#region WriteToStreamTest
 		/// <summary>
 		/// Checks that the WriteToStream method works correctly.

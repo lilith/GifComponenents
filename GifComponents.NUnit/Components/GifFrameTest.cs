@@ -24,6 +24,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using NUnit.Extensions;
 using NUnit.Framework;
@@ -35,9 +36,11 @@ namespace GifComponents.NUnit
 	/// TODO: aim for 100% coverage of GifFrame class
 	/// </summary>
 	[TestFixture]
-	public class GifFrameTest
+	public class GifFrameTest : IDisposable
 	{
 		private GifFrame _frame;
+		private GifDecoder _decoder;
+		private AnimatedGifEncoder _encoder;
 		
 		#region Setup method
 		/// <summary>
@@ -160,30 +163,80 @@ namespace GifComponents.NUnit
 		
 		#region FromStreamNullGraphicControlExtensionTest
 		/// <summary>
-		/// Checks that the correct exception is thrown when the FromStream 
+		/// Checks that the correct error state is set when the FromStream 
 		/// method is passed a null graphic control extension.
 		/// </summary>
 		[Test]
-		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void FromStreamNullGraphicControlExtensionTest()
 		{
-			MemoryStream s = CreateStream();
-
-			// Extra stuff not included in the frame stream, to pass to the
-			// FromStream method
-			ColourTable colourTable = WikipediaExample.GlobalColourTable;
-			GraphicControlExtension ext = null;
-			LogicalScreenDescriptor lsd = WikipediaExample.LogicalScreenDescriptor;
-
-			try
-			{
-				_frame = GifFrame.FromStream( s, lsd, colourTable, ext, null, null );
-			}
-			catch( ArgumentNullException ex )
-			{
-				Assert.AreEqual( "gce", ex.ParamName );
-				throw;
-			}
+			_decoder = new GifDecoder( @"images\NoGraphicControlExtension.gif" );
+			_decoder.Decode();
+			Assert.AreEqual( ErrorState.NoGraphicControlExtension, 
+			                 _decoder.Frames[0].ErrorState );
+			Bitmap expected = new Bitmap( @"images\NoGraphicControlExtension.bmp" );
+			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
+			BitmapAssert.AreEqual( expected, actual );
+		}
+		#endregion
+		
+		#region TransparencyTest
+		/// <summary>
+		/// Checks that transparent pixels are encoded and decoded correctly.
+		/// </summary>
+		[Test]
+		public void TransparencyTest()
+		{
+			Color noColour = Color.FromArgb( 0, 0, 0, 0 ); // note alpha of 0
+			Color blue = Color.FromArgb( 0, 0, 255 );
+			Color transparent = Color.FromArgb( 100, 100, 100 );
+			_encoder = new AnimatedGifEncoder();
+			_encoder.Transparent = transparent;
+			
+			// transparent | transparent
+			// -------------------------
+			// blue        | blue
+			Bitmap bitmap = new Bitmap( 2, 2 );
+			bitmap.SetPixel( 0, 0, transparent );
+			bitmap.SetPixel( 1, 0, transparent );
+			bitmap.SetPixel( 0, 1, blue );
+			bitmap.SetPixel( 1, 1, blue );
+			_frame = new GifFrame( bitmap );
+			_encoder.AddFrame( _frame );
+			
+			// encode and decode
+			string filename = "GifFrameTest.TransparencyTest.gif";
+			_encoder.WriteToFile( filename );
+			_decoder = new GifDecoder( filename );
+			_decoder.Decode();
+			
+			// Result should be:
+			// black | black
+			// -------------
+			// blue  | blue
+			
+			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
+			// TODO: decoder returns transparent pixels as black - is this correct?
+			Assert.AreEqual( noColour, actual.GetPixel( 0, 0 ) );
+			Assert.AreEqual( noColour, actual.GetPixel( 1, 0 ) );
+			Assert.AreEqual( blue, actual.GetPixel( 0, 1 ) );
+			Assert.AreEqual( blue, actual.GetPixel( 1, 1 ) );
+			
+		}
+		#endregion
+		
+		#region InterlaceTest
+		/// <summary>
+		/// Checks that an interlaced image can be decoded correctly.
+		/// </summary>
+		[Test]
+		public void InterlaceTest()
+		{
+			_decoder = new GifDecoder( @"images\Interlaced.gif" );
+			_decoder.Decode();
+			Assert.AreEqual( true, _decoder.Frames[0].ImageDescriptor.IsInterlaced );
+			Bitmap expected = new Bitmap( @"images\Interlaced.bmp" );
+			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
+			BitmapAssert.AreEqual( expected, actual );
 		}
 		#endregion
 		
@@ -249,10 +302,11 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ExpectsUserInputDecodedFrameGetTest()
 		{
-			GifDecoder decoder = new GifDecoder( @"images\smiley\smiley.gif" );
-			for( int i = 0; i < decoder.Frames.Count; i++ )
+			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
+			_decoder.Decode();
+			for( int i = 0; i < _decoder.Frames.Count; i++ )
 			{
-				_frame = decoder.Frames[i];
+				_frame = _decoder.Frames[i];
 				Assert.AreEqual( _frame.GraphicControlExtension.ExpectsUserInput, 
 				                 _frame.ExpectsUserInput, 
 				                 "Frame " + i );
@@ -273,8 +327,9 @@ namespace GifComponents.NUnit
 		                 MessageId = "FrameSet")]
 		public void ExpectsUserInputDecodedFrameSetTest()
 		{
-			GifDecoder decoder = new GifDecoder( @"images\smiley\smiley.gif" );
-			_frame = decoder.Frames[0];
+			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
+			_decoder.Decode();
+			_frame = _decoder.Frames[0];
 			try
 			{
 				_frame.ExpectsUserInput = true;
@@ -319,10 +374,11 @@ namespace GifComponents.NUnit
 		[Test]
 		public void PositionDecodedFrameGetTest()
 		{
-			GifDecoder decoder = new GifDecoder( @"images\smiley\smiley.gif" );
-			for( int i = 0; i < decoder.Frames.Count; i++ )
+			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
+			_decoder.Decode();
+			for( int i = 0; i < _decoder.Frames.Count; i++ )
 			{
-				_frame = decoder.Frames[i];
+				_frame = _decoder.Frames[i];
 				Assert.AreEqual( _frame.ImageDescriptor.Position, 
 				                 _frame.Position, 
 				                 "Frame " + i );
@@ -343,8 +399,9 @@ namespace GifComponents.NUnit
 		                 MessageId = "FrameSet")]
 		public void PositionDecodedFrameSetTest()
 		{
-			GifDecoder decoder = new GifDecoder( @"images\smiley\smiley.gif" );
-			_frame = decoder.Frames[0];
+			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
+			_decoder.Decode();
+			_frame = _decoder.Frames[0];
 			try
 			{
 				_frame.Position = new Point( 1, 1 );
@@ -378,6 +435,41 @@ namespace GifComponents.NUnit
 			s.Seek( 0, SeekOrigin.Begin );
 			
 			return s;
+		}
+		#endregion
+
+		#region IDisposable implementation
+		private bool _isDisposed; // defaults to false
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( true );
+		}
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="isDisposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool isDisposing )
+		{
+			if( _isDisposed )
+			{
+				return;
+			}
+			
+			if( isDisposing )
+			{
+				_decoder.Dispose();
+			}
+			
+			_isDisposed = true;
 		}
 		#endregion
 	}
