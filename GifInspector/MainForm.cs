@@ -21,6 +21,7 @@
 // http://en.wikipedia.org/wiki/GNU_General_Public_License
 #endregion
 
+#region using directives
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -32,6 +33,7 @@ using System.Threading;
 using System.Windows.Forms;
 using GifComponents;
 using CommonForms;
+#endregion
 
 namespace GifInspector
 {
@@ -40,11 +42,12 @@ namespace GifInspector
 	/// </summary>
 	public partial class MainForm : Form
 	{
+		#region declarations
 		private GifDecoder _decoder;
 		private Thread _t;
 		private int _imageIndex;
-		private string _status;
 		private Exception _exception;
+		#endregion
 		
 		#region constructor
 		/// <summary>
@@ -73,6 +76,7 @@ namespace GifInspector
 			try
 			{
 				_decoder = new GifDecoder( openFileDialog1.FileName );
+				_decoder.Decode();
 			}
 			catch( Exception ex )
 			{
@@ -93,7 +97,8 @@ namespace GifInspector
 				for( int i = 0; i < _decoder.Frames.Count; i++ )
 				{
 					string fileName = openFileDialog1.FileName + ".frame " + i + ".bmp";
-					_status = Path.GetFileName( fileName );
+					// TODO: remove
+//					_status = Path.GetFileName( fileName );
 					_decoder.Frames[i].TheImage.Save( fileName, ImageFormat.Bmp );
 				}
 			}
@@ -104,7 +109,8 @@ namespace GifInspector
 		#region private StopTheClock method
 		private void StopTheClock()
 		{
-			_status = openFileDialog1.FileName;
+			// TODO: remove
+//			_status = openFileDialog1.FileName;
 			propertyGridFile.SelectedObject = _decoder;
 			_imageIndex = 0;
 			UpdateUI();
@@ -118,10 +124,13 @@ namespace GifInspector
 		}
 		#endregion
 		
-		#region private UpdateCurrentImage method
+		#region private UpdateUI method
 		private void UpdateUI()
 		{
-			textBoxStatus.Text = _status;
+			if( _decoder != null )
+			{
+				textBoxStatus.Text = _decoder.Status;
+			}
 			textBoxFrameNumber.Text = _imageIndex.ToString( CultureInfo.InvariantCulture );
 			if( _decoder != null )
 			{
@@ -179,7 +188,8 @@ namespace GifInspector
 			if( result == DialogResult.OK )
 			{
 				DisableControls();
-				_status = "Loading...";
+				// TODO: remove
+//				_status = "Loading...";
 				_t = new Thread( LoadGif );
 				_t.IsBackground = true;
 				_t.Start();
@@ -216,7 +226,8 @@ namespace GifInspector
 		void ButtonExtractFramesClick(object sender, EventArgs e)
 		{
 			DisableControls();
-			_status = "Extracting...";
+			// TODO: remove
+//			_status = "Extracting...";
 			_t = new Thread( ExtractFrames );
 			_t.IsBackground = true;
 			_t.Start();
