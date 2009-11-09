@@ -58,7 +58,7 @@ namespace GifComponents
 	/// 5. Removed all private declarations which are not components of a GIF
 	/// 	file.
 	/// </summary>
-	public class GifDecoder : GifComponent
+	public class GifDecoder : GifComponent, IDisposable // IDisposable due to ReadAheadStream
 	{
 
 		#region declarations
@@ -102,7 +102,18 @@ namespace GifComponents
 		/// The frames which make up the GIF file.
 		/// </summary>
 		private Collection<GifFrame> _frames;
+		
+		/// <summary>
+		/// Holds a string representing the progress through the decoding process
+		/// </summary>
+		private string _status;
 
+		/// <summary>
+		/// Holds the <see cref="System.IO.Stream"/> from which the GIF is being
+		/// read.
+		/// </summary>
+		private Stream _stream;
+		
 		#endregion
 		
 		#region constructors
@@ -128,7 +139,7 @@ namespace GifComponents
 			{
 				fileName = fileName.Trim().ToLower( CultureInfo.InvariantCulture );
 				Stream inputStream = new FileInfo( fileName ).OpenRead();
-				ReadStream( inputStream );
+				_stream = inputStream;
 			}
 		}
 		#endregion
@@ -153,10 +164,22 @@ namespace GifComponents
 					= "The supplied stream cannot be read";
 				throw new ArgumentException( message, "inputStream" );
 			}
-			ReadStream( inputStream );
+			_stream = inputStream;
 		}
 		#endregion
 		
+		#endregion
+		
+		#region Decode method
+		/// <summary>
+		/// Decodes the supplied GIF stream.
+		/// </summary>
+		public void Decode()
+		{
+			SetStatus( "Starting decoding" );
+			ReadStream( _stream );
+			SetStatus( "Finished decoding" );
+		}
 		#endregion
 		
 		#region properties
@@ -273,6 +296,17 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region Status property
+		/// <summary>
+		/// Gets a string indicating progress through the decoding process.
+		/// </summary>
+		[Browsable( false )]
+		public string Status
+		{
+			get { return _status; }
+		}
+		#endregion
+		
 		#endregion
 
 		#region private methods
@@ -293,8 +327,10 @@ namespace GifComponents
 			_applicationExtensions = new Collection<ApplicationExtension>();
 			_gct = null;
 			
+			SetStatus( "Reading GIF header" );
 			_header = GifHeader.FromStream( inputStream );
 
+			SetStatus( "Reading logical screen descriptor" );
 			_lsd = LogicalScreenDescriptor.FromStream( inputStream );
 			
 			if( TestState( ErrorState.EndOfInputStream ) )
@@ -305,6 +341,7 @@ namespace GifComponents
 			
 			if( _lsd.HasGlobalColourTable )
 			{
+				SetStatus( "Reading global colour table" );
 				_gct = ColourTable.FromStream( inputStream, 
 				                               _lsd.GlobalColourTableSize );
 			}
@@ -346,19 +383,23 @@ namespace GifComponents
 						{
 							case CodePlaintextLabel:
 								// TODO: handle plain text extension
+								SetStatus( "Skipping plain text extension" );
 								SkipBlocks( inputStream );
 								break;
 
 							case CodeGraphicControlLabel:
+								SetStatus( "Reading graphic control extension" );
 								lastGce = GraphicControlExtension.FromStream( inputStream );
 								break;
 								
 							case CodeCommentLabel:
 								// TODO: handle comment extension
+								SetStatus( "Skipping comment extension" );
 								SkipBlocks( inputStream );
 								break;
 
 							case CodeApplicationExtensionLabel:
+								SetStatus( "Reading application extension" );
 								ApplicationExtension ext 
 									= ApplicationExtension.FromStream( inputStream );
 								if( ext.ApplicationIdentifier == "NETSCAPE"
@@ -373,6 +414,7 @@ namespace GifComponents
 								break;
 	
 							default : // uninteresting extension
+									SetStatus( "Skipping uninteresting extension" );
 								SkipBlocks( inputStream );
 								break;
 						}
@@ -381,6 +423,7 @@ namespace GifComponents
 					case CodeTrailer:
 						// We've reached an explicit end-of-data marker, so stop
 						// processing the stream.
+						SetStatus( "Reached the end of data marker" );
 						done = true;
 						break;
 
@@ -432,30 +475,32 @@ namespace GifComponents
 		private void AddFrame( Stream inputStream,
 		                       GraphicControlExtension lastGce )
 		{
-				GifFrame previousFrame;
-				GifFrame previousFrameBut1;
-				if( _frames.Count > 0 )
-				{
-					previousFrame = _frames[_frames.Count - 1];
-				}
-				else
-				{
-					previousFrame = null;
-				}
-				if( _frames.Count > 1 )
-				{
-					previousFrameBut1 = _frames[_frames.Count - 2];
-				}
-				else
-				{
-					previousFrameBut1 = null;
-				}
-				_frames.Add( GifFrame.FromStream( inputStream, 
-				                                  _lsd, 
-				                                  _gct, 
-				                                  lastGce, 
-				                                  previousFrame, 
-				                                  previousFrameBut1 ) );
+			SetStatus( "Adding frame " + (_frames.Count + 1) );
+			GifFrame previousFrame;
+			GifFrame previousFrameBut1;
+			if( _frames.Count > 0 )
+			{
+				previousFrame = _frames[_frames.Count - 1];
+			}
+			else
+			{
+				previousFrame = null;
+			}
+			if( _frames.Count > 1 )
+			{
+				previousFrameBut1 = _frames[_frames.Count - 2];
+			}
+			else
+			{
+				previousFrameBut1 = null;
+			}
+			_frames.Add( GifFrame.FromStream( inputStream, 
+			                                  _lsd, 
+			                                  _gct, 
+			                                  lastGce, 
+			                                  previousFrame, 
+			                                  previousFrameBut1 ) );
+			SetStatus( "Done adding frame " + (_frames.Count + 1) );
 		}
 		#endregion
 
@@ -473,8 +518,61 @@ namespace GifComponents
 			throw new NotSupportedException();
 		}
 		#endregion
+
+		#region private SetStatus method
+		private void SetStatus( string status )
+		{
+			if( _stream != null )
+			{
+				try
+				{
+					_status = "Stream position: " + _stream.Position 
+						+ " of " +_stream.Length + ". ";
+				}
+				catch( InvalidOperationException )
+				{
+					// TODO: try catching when the stream is closed
+				}
+			}
+			_status += status;
+		}
+		#endregion
 		
 		#endregion
 
+		#region IDisposable implementation
+		private bool _isDisposed; // defaults to false
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( true );
+		}
+		
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="isDisposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool isDisposing )
+		{
+			if( _isDisposed )
+			{
+				return;
+			}
+			
+			if( isDisposing )
+			{
+				_stream.Dispose();
+			}
+			
+			_isDisposed = true;
+		}
+		#endregion
 	}
 }
