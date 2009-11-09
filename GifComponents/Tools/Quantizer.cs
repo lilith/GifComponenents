@@ -30,7 +30,7 @@
 // * Style changes (e.g. add missing curly brackets around conditional blocks)
 // * Changed constructor access modifier from public to protected
 // * Added null argument test to constructor
-// * Changed access modifier for GetPalette method from protected to public
+// * Changed various access modifiers to internal
 #endregion
 
 using System;
@@ -272,7 +272,7 @@ namespace GifComponents
 		/// This function need only be overridden if your quantize algorithm 
 		/// needs two passes, such as an Octree quantizer.
 		/// </remarks>
-		protected virtual void InitialQuantizePixel( Colour32* pixel )
+		internal virtual void InitialQuantizePixel( Colour32* pixel )
 		{
 		}
 		#endregion
@@ -283,7 +283,7 @@ namespace GifComponents
 		/// </summary>
 		/// <param name="pixel">The pixel to quantize</param>
 		/// <returns>The quantized value</returns>
-		protected abstract byte QuantizePixel( Colour32* pixel );
+		internal abstract byte QuantizePixel( Colour32* pixel );
 		#endregion
 
 		#region public abstract GetPalette method

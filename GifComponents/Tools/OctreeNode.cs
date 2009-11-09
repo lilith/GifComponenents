@@ -25,7 +25,7 @@
 //
 // Amended by Simon Bridewell, November 2009:
 // * Moved out of OctreeQuantizer.cs into its own file
-// * Changed class access modifier from private to public and marked as unsafe
+// * Changed various access modifiers to internal
 // * Small edits to XML comments
 // * Changed namespace to GifComponents
 // * Fixed / suppressed some FxCop warnings
@@ -46,7 +46,7 @@ namespace GifComponents
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Octree")]
-	public unsafe class OctreeNode
+	internal unsafe class OctreeNode
 	{
 		#region declarations
 		/// <summary>

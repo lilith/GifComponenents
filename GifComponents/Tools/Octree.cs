@@ -30,8 +30,7 @@
 // * Changed namespace to GifComponents
 // * Fixed / suppressed some FxCop warnings
 // * Style changes (e.g. add missing curly brackets around conditional blocks)
-// * Changed ReducibleNodes access modifier from protected to public
-// * Changed TrackPrevious access modifier from protected to public
+// * Changed various access modifiers to internal
 // * Moved mask ino OctreeNode.cs
 #endregion
 
@@ -47,7 +46,7 @@ namespace GifComponents
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Octree")]
-	public unsafe class Octree
+	internal unsafe class Octree
 	{
 		#region declarations
 		/// <summary>

@@ -30,7 +30,7 @@
 // * Style changes (e.g. add missing curly brackets around conditional blocks)
 // * Added test for maxColours less than 1 into constructor
 // * Moved Octree and OctreeNode classes into their own files
-// * Changed access modifier for GetPalette method from protected to public
+// * Changed various access modifiers to internal
 // * Added null argument test to GetPalette method
 // * Added array size test to GetPalette method
 #endregion
@@ -155,7 +155,7 @@ namespace GifComponents
 		/// This function need only be overridden if your quantize algorithm 
 		/// needs two passes, such as an Octree quantizer.
 		/// </remarks>
-		protected override void InitialQuantizePixel( Colour32* pixel )
+		internal override void InitialQuantizePixel( Colour32* pixel )
 		{
 			// Add the color to the octree
 			_octree.AddColour( pixel );
@@ -169,7 +169,7 @@ namespace GifComponents
 		/// </summary>
 		/// <param name="pixel">The pixel to quantize</param>
 		/// <returns>The quantized value</returns>
-		protected override byte QuantizePixel( Colour32* pixel )
+		internal override byte QuantizePixel( Colour32* pixel )
 		{
 			// The color at [_maxColors] is set to transparent
 			byte paletteIndex = (byte) _maxColors;

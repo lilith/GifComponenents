@@ -43,7 +43,7 @@ namespace GifComponents
 	/// the data is layed out in memory
 	/// </remarks>
 	[StructLayout(LayoutKind.Explicit)]
-	public struct Colour32
+	internal struct Colour32
 	{
 		/// <summary>
 		/// Holds the blue component of the colour
