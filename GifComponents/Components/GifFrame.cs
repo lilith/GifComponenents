@@ -355,6 +355,17 @@ namespace GifComponents
 			else 
 			{
 				localColourTable = null;
+				if( gct == null )
+				{
+					// We have neither local nor global colour table, so we
+					// won't be able to decode this frame.
+					Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
+					                                 lsd.LogicalScreenSize.Height );
+					GifFrame emptyFrame = new GifFrame( emptyBitmap );
+					emptyFrame.Delay = gce.DelayTime;
+					emptyFrame.SetStatus( ErrorState.FrameHasNoColourTable, "" );
+					return emptyFrame;
+				}
 				activeColourTable = gct; // make global table active
 				if( lsd.BackgroundColourIndex == transparentColourIndex )
 				{
