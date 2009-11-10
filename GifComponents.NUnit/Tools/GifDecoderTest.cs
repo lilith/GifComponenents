@@ -489,49 +489,6 @@ namespace GifComponents.NUnit
 		
 		#endregion
 		
-		// TODO: remove
-		#region CompareReadAheadStream
-//		[Test]
-//		public void CompareReadAheadStream()
-//		{
-//			string filename = "GifDecoderTest.CompareReadAheadStream.gif";
-//			AnimatedGifEncoder e = new AnimatedGifEncoder();
-//			Bitmap b;
-//			Size size = new Size( 500, 500 );
-//			int blockiness = 20;
-//			PixelFormat format = PixelFormat.Format32bppArgb;
-//			b = RandomBitmap.Create( size, blockiness, format );
-//			e.AddFrame( new GifFrame( b ) );
-//			b = RandomBitmap.Create( size, blockiness, format );
-//			e.AddFrame( new GifFrame( b ) );
-//			b = RandomBitmap.Create( size, blockiness, format );
-//			e.AddFrame( new GifFrame( b ) );
-//			b = RandomBitmap.Create( size, blockiness, format );
-//			e.AddFrame( new GifFrame( b ) );
-//			
-//			e.WriteToFile( filename );
-//			
-//			DateTime startTime;
-//			DateTime endTime;
-//			TimeSpan runTime;
-//			
-//			_decoder = new GifDecoder( filename, true );
-//			startTime = DateTime.Now;
-//			_decoder.Decode();
-//			endTime = DateTime.Now;
-//			runTime = endTime - startTime;
-//			Console.WriteLine( "Decoding with ReadAheadStream took " + runTime );
-//			
-//			_decoder = new GifDecoder( filename, false );
-//			startTime = DateTime.Now;
-//			_decoder.Decode();
-//			endTime = DateTime.Now;
-//			runTime = endTime - startTime;
-//			Console.WriteLine( "Decoding without ReadAheadStream took " + runTime );
-//			
-//		}
-		#endregion
-		
 		#region private void CompareFrames method
 		private void CompareFrames( string baseFileName )
 		{

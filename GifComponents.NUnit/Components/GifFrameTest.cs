@@ -179,6 +179,20 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region FromStreamNoColourTableTest
+		/// <summary>
+		/// Checks that the correct error status is set when decoding a frame
+		/// which has neither local nor global colour table.
+		/// </summary>
+		[Test]
+		public void FromStreamNoColourTableTest()
+		{
+			_decoder = new GifDecoder( @"images\NoColourTable.gif" );
+			_decoder.Decode();
+			Assert.AreEqual( ErrorState.FrameHasNoColourTable, _decoder.ConsolidatedState );
+		}
+		#endregion
+		
 		#region TransparencyTest
 		/// <summary>
 		/// Checks that transparent pixels are encoded and decoded correctly.

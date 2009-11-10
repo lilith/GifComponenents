@@ -154,6 +154,9 @@
     <None Include="images\MinCodeSizeTooLarge.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\NoColourTable.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\NoGraphicControlExtension.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
