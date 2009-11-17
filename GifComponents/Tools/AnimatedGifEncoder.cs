@@ -78,6 +78,11 @@ namespace GifComponents
 		private ColourTableStrategy _strategy;
 		
 		/// <summary>
+		/// The global colour table, if used.
+		/// </summary>
+		private ColourTable _globalColourTable;
+		
+		/// <summary>
 		/// Size, in pixels, of the animated GIF file.
 		/// </summary>
 		private Size _logicalScreenSize;
@@ -363,6 +368,7 @@ namespace GifComponents
 		#region WriteToStream method
 		/// <summary>
 		/// Writes the GIF animation to the supplied stream.
+		/// TODO: this method is too long - break it down into smaller bits
 		/// </summary>
 		/// <param name="outputStream">
 		/// The stream to write the animation to.
@@ -383,51 +389,14 @@ namespace GifComponents
 			}
 			
 			_processingFrame = 0;
-			_status = "Writing GIF header";
 
-			GifHeader header = new GifHeader( "GIF", "89a" );
-			header.WriteToStream( outputStream );
+			WriteGifHeader( outputStream );
 			
-			ColourTable gct = null; // global colour table
-			if( _strategy == ColourTableStrategy.UseGlobal )
-			{
-				// Analyze the pixels in all the images to build the
-				// global colour table.
-				Collection<Image> images = new Collection<Image>();
-				foreach( GifFrame thisFrame in _frames )
-				{
-					Image thisImage = thisFrame.TheImage;
-					images.Add( thisImage );
-				}
-				_status = "Building global colour table - analysing pixels";
-				_pixelAnalysis = new PixelAnalysis( images, _quality );
-				gct = _pixelAnalysis.ColourTable;
-				_status = "Writing logical screen descriptor";
-				WriteLogicalScreenDescriptor( _logicalScreenSize, 
-				                              _strategy,
-				                              gct.SizeBits,
-				                              outputStream );
-				_status = "Writing global colour table";
-				gct.WriteToStream( outputStream );
-			}
-			else
-			{
-				_status = "Writing logical screen descriptor";
-				WriteLogicalScreenDescriptor( _logicalScreenSize, 
-				                              _strategy,
-				                              7,
-				                              outputStream );
-			}
+			WriteLogicalScreenDescriptor( outputStream );
 			
-			// Repeat count -1 means don't repeat the animation, so don't add
-			// a Netscape extension.
-			if( _repeatCount >= 0 ) 
-			{
-				// use NS app extension to indicate repeating animation
-				_status = "Writing Netscape extension";
-				WriteNetscapeExt( _repeatCount, outputStream );
-			}
+			WriteNetscapeExtension( outputStream );
 			
+			#region looping through the frames
 			for( int i = 0; i < _frames.Count; i++ )
 			{
 				_processingFrame = i + 1;
@@ -442,7 +411,9 @@ namespace GifComponents
 						= "Frame " + _processingFrame 
 						+ " of " + _frames.Count 
 						+ ": building local colour table - analysing pixels";
-					_pixelAnalysis = new PixelAnalysis( thisImage, _quality, _quantizerType );
+					_pixelAnalysis = new PixelAnalysis( thisImage, 
+					                                    _quality, 
+					                                    _quantizerType );
 					lct = _pixelAnalysis.ColourTable;
 					// make local colour table active
 					act = lct;
@@ -450,7 +421,7 @@ namespace GifComponents
 				else
 				{
 					// make global colour table active
-					act = gct;
+					act = _globalColourTable;
 				}
 				int transparentColourIndex;
 				if( _transparent == Color.Empty )
@@ -494,6 +465,7 @@ namespace GifComponents
 						= "Frame " + _processingFrame 
 						+ " of " + _frames.Count 
 						+ ": encoding pixel data";
+					// FIXME: null reference exception when using QuantizerType.UseSuppliedPalette
 					WritePixels( _pixelAnalysis.IndexedPixels, 
 					             outputStream ); // encode and write pixel data
 				}
@@ -507,6 +479,7 @@ namespace GifComponents
 					             outputStream ); // encode and write pixel data
 				}
 			}
+			#endregion
 			
 			// GIF trailer
 			_status = "Writing GIF trailer";
@@ -572,7 +545,17 @@ namespace GifComponents
 			return minpos;
 		}
 		#endregion
-	
+
+		#region private WriteGifHeader method
+		private void WriteGifHeader( Stream outputStream )
+		{
+			_status = "Writing GIF header";
+			GifHeader header = new GifHeader( "GIF", "89a" );
+			header.WriteToStream( outputStream );
+			_status = "Done writing GIF header";
+		}
+		#endregion
+		
 		#region private WriteGraphicCtrlExt method
 		/// <summary>
 		/// Writes a Graphic Control Extension to the supplied output stream.
@@ -667,65 +650,84 @@ namespace GifComponents
 		}
 		#endregion
 	
-		#region private static WriteLogicalScreenDescriptor method
+		#region private WriteLogicalScreenDescriptor method
 		/// <summary>
 		/// Writes a Logical Screen Descriptor to the supplied stream.
+		/// Also writes a global colour table if required.
 		/// </summary>
-		/// <param name="screenSize">
-		/// The size, in pixels, of the logical screen on which the animation
-		/// will be displayed.
-		/// </param>
-		/// <param name="strategy">
-		/// Indicates whether the stream has a global colour table.
-		/// </param>
-		/// <param name="globalColourTableSizeBits">
-		/// The number of bits required to hold the size of the global colour
-		/// table, minus 1.
-		/// </param>
 		/// <param name="outputStream">
 		/// The stream to write to.
 		/// </param>
-		private static void WriteLogicalScreenDescriptor( Size screenSize, 
-		                                                  ColourTableStrategy strategy,
-		                                                  int globalColourTableSizeBits,
-		                                                  Stream outputStream )
+		private void WriteLogicalScreenDescriptor( Stream outputStream )
 		{
-			bool hasGlobalColourTable = ( strategy == ColourTableStrategy.UseGlobal );
+			bool hasGlobalColourTable = ( _strategy == ColourTableStrategy.UseGlobal );
 			int colourResolution = 7; // TODO: parameterise colourResolution?
 			bool globalColourTableIsSorted = false; // Sorting of colour tables is not currently supported
 			int backgroundColorIndex = 0; // TODO: parameterise backgroundColourIndex?
 			int pixelAspectRatio = 0; // TODO: parameterise pixelAspectRatio?
-			LogicalScreenDescriptor lsd = 
-				new LogicalScreenDescriptor( screenSize, 
-				                             hasGlobalColourTable, 
-				                             colourResolution, 
-				                             globalColourTableIsSorted, 
-				                             globalColourTableSizeBits, 
-				                             backgroundColorIndex, 
-				                             pixelAspectRatio );
-			
-			lsd.WriteToStream( outputStream );
+			if( _strategy == ColourTableStrategy.UseGlobal )
+			{
+				// Analyse the pixels in all the images to build the
+				// global colour table.
+				Collection<Image> images = new Collection<Image>();
+				foreach( GifFrame thisFrame in _frames )
+				{
+					Image thisImage = thisFrame.TheImage;
+					images.Add( thisImage );
+				}
+				_status = "Building global colour table - analysing pixels";
+				_pixelAnalysis = new PixelAnalysis( images, _quality );
+				_globalColourTable = _pixelAnalysis.ColourTable;
+				_status = "Writing logical screen descriptor (global)";
+				LogicalScreenDescriptor lsd = 
+					new LogicalScreenDescriptor( _logicalScreenSize, 
+					                             hasGlobalColourTable, 
+					                             colourResolution, 
+					                             globalColourTableIsSorted, 
+					                             _globalColourTable.SizeBits,
+					                             backgroundColorIndex, 
+					                             pixelAspectRatio );
+				lsd.WriteToStream( outputStream );
+				_status = "Writing global colour table";
+				_globalColourTable.WriteToStream( outputStream );
+			}
+			else
+			{
+				_status = "Writing logical screen descriptor (local)";
+				LogicalScreenDescriptor lsd = 
+					new LogicalScreenDescriptor( _logicalScreenSize, 
+					                             hasGlobalColourTable, 
+					                             colourResolution, 
+					                             globalColourTableIsSorted, 
+				// TODO: global colour table size for a UseLocal GIF is irrelevant - pass 7 instead?
+					                             7, 
+					                             backgroundColorIndex, 
+					                             pixelAspectRatio );
+				lsd.WriteToStream( outputStream );
+			}
 		}
 		#endregion
 	
-		#region private static WriteNetscapeExt method
+		#region private WriteNetscapeExtension method
 		/// <summary>
 		/// Writes a Netscape application extension defining the repeat count
-		/// to the supplied output stream.
+		/// to the supplied output stream, if the repeat count is greater than
+		/// or equal to zero.
 		/// </summary>
-		/// <param name="repeatCount">
-		/// The number of times to repeat the animation. 0 to repeat 
-		/// indefinitely.
-		/// </param>
 		/// <param name="outputStream">
 		/// The stream to write to.
 		/// </param>
-		private static void WriteNetscapeExt( int repeatCount, Stream outputStream )
+		private void WriteNetscapeExtension( Stream outputStream )
 		{
-			outputStream.WriteByte( GifComponent.CodeExtensionIntroducer );
-			outputStream.WriteByte( GifComponent.CodeApplicationExtensionLabel );
-			NetscapeExtension ne = new NetscapeExtension( repeatCount );
-			ne.WriteToStream( outputStream );
+			// Repeat count -1 means don't repeat the animation, so don't add
+			// a Netscape extension.
+			if( _repeatCount >= 0 ) 
+			{
+				outputStream.WriteByte( GifComponent.CodeExtensionIntroducer );
+				outputStream.WriteByte( GifComponent.CodeApplicationExtensionLabel );
+				NetscapeExtension ne = new NetscapeExtension( _repeatCount );
+				ne.WriteToStream( outputStream );
+			}
 		}
 		#endregion
 	
