@@ -222,6 +222,7 @@ namespace GifComponents.NUnit
 			_encoder.WriteToFile( filename );
 			_decoder = new GifDecoder( filename );
 			_decoder.Decode();
+			Assert.AreEqual( ErrorState.Ok, _decoder.ConsolidatedState );
 			
 			// Result should be:
 			// black | black
@@ -229,7 +230,6 @@ namespace GifComponents.NUnit
 			// blue  | blue
 			
 			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
-			// TODO: decoder returns transparent pixels as black - is this correct?
 			Assert.AreEqual( noColour, actual.GetPixel( 0, 0 ) );
 			Assert.AreEqual( noColour, actual.GetPixel( 1, 0 ) );
 			Assert.AreEqual( blue, actual.GetPixel( 0, 1 ) );
