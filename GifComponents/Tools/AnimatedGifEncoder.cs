@@ -368,7 +368,6 @@ namespace GifComponents
 		#region WriteToStream method
 		/// <summary>
 		/// Writes the GIF animation to the supplied stream.
-		/// TODO: this method is too long - break it down into smaller bits
 		/// </summary>
 		/// <param name="outputStream">
 		/// The stream to write the animation to.
@@ -388,98 +387,18 @@ namespace GifComponents
 				_logicalScreenSize = _frames[0].TheImage.Size;
 			}
 			
-			_processingFrame = 0;
-
 			WriteGifHeader( outputStream );
 			
 			WriteLogicalScreenDescriptor( outputStream );
 			
 			WriteNetscapeExtension( outputStream );
 			
-			#region looping through the frames
-			for( int i = 0; i < _frames.Count; i++ )
+			for( _processingFrame = 0; 
+			     _processingFrame < _frames.Count; 
+			     _processingFrame++ )
 			{
-				_processingFrame = i + 1;
-				_status = "Frame " + _processingFrame + " of " + _frames.Count;
-				GifFrame thisFrame = _frames[i];
-				Image thisImage = thisFrame.TheImage;
-				ColourTable act; // active colour table
-				ColourTable lct = null; // local colour table
-				if( _strategy == ColourTableStrategy.UseLocal )
-				{
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": building local colour table - analysing pixels";
-					_pixelAnalysis = new PixelAnalysis( thisImage, 
-					                                    _quality, 
-					                                    _quantizerType );
-					lct = _pixelAnalysis.ColourTable;
-					// make local colour table active
-					act = lct;
-				}
-				else
-				{
-					// make global colour table active
-					act = _globalColourTable;
-				}
-				int transparentColourIndex;
-				if( _transparent == Color.Empty )
-				{
-					transparentColourIndex = 0;
-				}
-				else
-				{
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": finding closest to transparent colour";
-					// TODO: test case for this once transparency is understood
-					transparentColourIndex = FindClosest( _transparent, act );
-				}
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": writing graphic control extension";
-				WriteGraphicCtrlExt( thisFrame, 
-				                     transparentColourIndex, 
-				                     outputStream );
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": writing image descriptor";
-				WriteImageDescriptor( thisImage.Size, 
-				                      _frames[i].Position, 
-				                      lct, 
-				                      outputStream );
-				
-				// Write a local colour table if the strategy is to do so
-				if( _strategy == ColourTableStrategy.UseLocal )
-				{
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": writing local colour table";
-					lct.WriteToStream( outputStream );
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": encoding pixel data";
-					// FIXME: null reference exception when using QuantizerType.UseSuppliedPalette
-					WritePixels( _pixelAnalysis.IndexedPixels, 
-					             outputStream ); // encode and write pixel data
-				}
-				else
-				{
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": encoding pixel data";
-					WritePixels( _pixelAnalysis.IndexedPixelsCollection[i],
-					             outputStream ); // encode and write pixel data
-				}
+				WriteFrame( outputStream );
 			}
-			#endregion
 			
 			// GIF trailer
 			_status = "Writing GIF trailer";
@@ -553,6 +472,106 @@ namespace GifComponents
 			GifHeader header = new GifHeader( "GIF", "89a" );
 			header.WriteToStream( outputStream );
 			_status = "Done writing GIF header";
+		}
+		#endregion
+
+		#region private WriteFrame method
+		private void WriteFrame( Stream outputStream )
+		{
+			_status = "Frame " + _processingFrame + " of " + _frames.Count;
+			GifFrame thisFrame = _frames[_processingFrame];
+			Image thisImage = thisFrame.TheImage;
+			ColourTable act = SetActiveColourTable();
+			int transparentColourIndex;
+			if( _transparent == Color.Empty )
+			{
+				transparentColourIndex = 0;
+			}
+			else
+			{
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": finding closest to transparent colour";
+				// TODO: test case for this once transparency is understood
+				transparentColourIndex = FindClosest( _transparent, act );
+			}
+			_status 
+				= "Frame " + _processingFrame 
+				+ " of " + _frames.Count 
+				+ ": writing graphic control extension";
+			WriteGraphicCtrlExt( thisFrame, 
+			                     transparentColourIndex, 
+			                     outputStream );
+			_status 
+				= "Frame " + _processingFrame 
+				+ " of " + _frames.Count 
+				+ ": writing image descriptor";
+			ColourTable lct;
+			if( _strategy == ColourTableStrategy.UseLocal )
+			{
+				lct = act;
+			}
+			else
+			{
+				lct = null;
+			}
+			WriteImageDescriptor( thisImage.Size, 
+			                      thisFrame.Position,
+			                      lct, 
+			                      outputStream );
+			
+			// Write a local colour table if the strategy is to do so
+			if( _strategy == ColourTableStrategy.UseLocal )
+			{
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": writing local colour table";
+				act.WriteToStream( outputStream );
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": encoding pixel data";
+				// FIXME: null reference exception when using QuantizerType.UseSuppliedPalette
+				WritePixels( _pixelAnalysis.IndexedPixels, 
+				             outputStream ); // encode and write pixel data
+			}
+			else
+			{
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": encoding pixel data";
+				WritePixels( _pixelAnalysis.IndexedPixelsCollection[_processingFrame],
+				             outputStream ); // encode and write pixel data
+			}
+		}
+		#endregion
+		
+		#region private SetActiveColourTable method
+		private ColourTable SetActiveColourTable()
+		{
+			ColourTable act; // active colour table
+			if( _strategy == ColourTableStrategy.UseLocal )
+			{
+				_status 
+					= "Frame " + _processingFrame 
+					+ " of " + _frames.Count 
+					+ ": building local colour table - analysing pixels";
+				Image thisImage = _frames[_processingFrame].TheImage;
+				_pixelAnalysis = new PixelAnalysis( thisImage, 
+				                                    _quality, 
+				                                    _quantizerType );
+				// make local colour table active
+				act = _pixelAnalysis.ColourTable;
+			}
+			else
+			{
+				// make global colour table active
+				act = _globalColourTable;
+			}
+			return act;
 		}
 		#endregion
 		
@@ -637,6 +656,7 @@ namespace GifComponents
 				hasLocalColourTable = true;
 				localColourTableSize = localColourTable.SizeBits;
 			}
+			
 			bool isInterlaced = false; // encoding of interlaced images not currently supported
 			bool localColourTableIsSorted = false; // sorting of colour tables not currently supported
 			ImageDescriptor id = new ImageDescriptor( position, 
@@ -660,7 +680,7 @@ namespace GifComponents
 		/// </param>
 		private void WriteLogicalScreenDescriptor( Stream outputStream )
 		{
-			bool hasGlobalColourTable = ( _strategy == ColourTableStrategy.UseGlobal );
+			bool hasGlobalColourTable = _strategy == ColourTableStrategy.UseGlobal;
 			int colourResolution = 7; // TODO: parameterise colourResolution?
 			bool globalColourTableIsSorted = false; // Sorting of colour tables is not currently supported
 			int backgroundColorIndex = 0; // TODO: parameterise backgroundColourIndex?
@@ -699,7 +719,6 @@ namespace GifComponents
 					                             hasGlobalColourTable, 
 					                             colourResolution, 
 					                             globalColourTableIsSorted, 
-				// TODO: global colour table size for a UseLocal GIF is irrelevant - pass 7 instead?
 					                             7, 
 					                             backgroundColorIndex, 
 					                             pixelAspectRatio );
