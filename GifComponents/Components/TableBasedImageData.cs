@@ -190,14 +190,13 @@ namespace GifComponents
 								break;
 							}
 							
-							// TODO: believe this test is unnecessary but leave it in for now even though commented out
-//							if( bytesToExtract == 0 )
-//							{
-//								// then it's a block terminator, end of the
-//								// image data (this is a data block other than
-//								// the first one)
-//								break;
-//							}
+							if( bytesToExtract == 0 )
+							{
+								// then it's a block terminator, end of the
+								// image data (this is a data block other than
+								// the first one)
+								break;
+							}
 							#endregion
 						}
 						// Append the contents of the current byte in the data 
