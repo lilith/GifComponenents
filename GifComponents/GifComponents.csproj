@@ -82,6 +82,7 @@
     <Compile Include="Types\GifComponentStatus.cs" />
     <Compile Include="Types\IndexedPixels.cs" />
     <Compile Include="Types\PackedFields.cs" />
+    <Compile Include="Types\Palette.cs" />
     <None Include="CPOL.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
