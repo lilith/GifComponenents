@@ -338,6 +338,27 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region EmptyDataBlock
+		/// <summary>
+		/// Checks the scenario where the table based image data contains an
+		/// empty data block.
+		/// </summary>
+		[Test]
+		public void EmptyDataBlock()
+		{
+			MemoryStream s = new MemoryStream();
+			s.WriteByte( 8 ); // write a valid LZW min code size
+			s.WriteByte( 0 );
+			s.WriteByte( 0 );
+			s.Seek( 0, SeekOrigin.Begin );
+
+			_tbid = new TableBasedImageData( s, 1000000 );
+
+			Assert.AreEqual( ErrorState.TooFewPixelsInImageData, 
+			                 _tbid.ConsolidatedState );
+		}
+		#endregion
+		
 		#region HandleRubbish
 		/// <summary>
 		/// Checks that no exception is thrown when the constructor is passed
@@ -358,7 +379,14 @@ namespace GifComponents.NUnit
 				s.WriteByte( 8 ); // write a valid LZW min code size
 				s.Write( bytes, 0, bytes.Length );
 				s.Seek( 0, SeekOrigin.Begin );
-				_tbid = new TableBasedImageData( s, 1000000 );
+				try 
+				{
+					_tbid = new TableBasedImageData( s, 1000000 );
+				} 
+				catch( Exception ex )
+				{
+					throw new InvalidOperationException( file + ": ", ex );
+				}
 				Console.WriteLine( file + " " + _tbid.ConsolidatedState );
 			}
 		}
