@@ -361,6 +361,10 @@ namespace GifComponents.NUnit
 		/// Compares the results of encoding an animation using the NeuQuant and
 		/// Octree quantizers.
 		/// </summary>
+		/// <remarks>
+		/// This test fails at the moment because the Octree quantizer has not
+		/// been implemented.
+		/// </remarks>
 		[Test]
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
@@ -408,6 +412,35 @@ namespace GifComponents.NUnit
 				                      otDecoder.Frames[i].TheImage,
 				                      "frame " + i );
 			}
+		}
+		#endregion
+		
+		/// <summary>
+		/// Tests the encoder using a user-supplied palette.
+		/// </summary>
+		#region UseSuppliedPalette
+		[Test]
+		public void UseSuppliedPalette()
+		{
+			_e = new AnimatedGifEncoder();
+			_e.Palette = Palette.FromFile( @"ColourTables\grayscale.act" );
+			Assert.AreEqual( ColourTableStrategy.UseGlobal, _e.ColourTableStrategy );
+			Assert.AreEqual( QuantizerType.UseSuppliedPalette, _e.QuantizerType );
+			
+			_e.AddFrame( new GifFrame( Image.FromFile( @"images\smiley.bmp" ) ) );
+			
+			string fileName = "AnimatedGifEncoderTest.UseSuppliedPalette.gif";
+			_e.WriteToFile( fileName );
+			
+			_d = new GifDecoder( fileName );
+			_d.Decode();
+			
+			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
+			Assert.AreEqual( 1, _d.Frames.Count );
+			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
+			
+			Image expected = Image.FromFile( @"images\SmileyGrayscale.bmp" );
+			ImageAssert.AreEqual( expected, _d.Frames[0].TheImage );
 		}
 		#endregion
 		
