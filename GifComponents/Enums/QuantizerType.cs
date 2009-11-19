@@ -50,6 +50,13 @@ namespace GifComponents
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 		                 MessageId = "Octree")]
-		Octree
+		Octree,
+		
+		/// <summary>
+		/// Do not call a quantizer, instead use the user-supplied palette as
+		/// the colour table, and find the closest colour within that palette
+		/// for each pixel
+		/// </summary>
+		UseSuppliedPalette
 	}
 }
