@@ -116,6 +116,8 @@ namespace GifComponents
 		/// </summary>
 		private QuantizerType _quantizerType;
 		
+		private Palette _palette;
+		
 		private string _status;
 		private int _processingFrame;
 		private PixelAnalysis _pixelAnalysis;
@@ -277,6 +279,27 @@ namespace GifComponents
 			set { _quantizerType = value; }
 		}
 		#endregion
+
+		#region Palette property
+		/// <summary>
+		/// Gets and sets a user-defined palette to use as a global colour table.
+		/// When setting this property, the ColourTableStrategy property is set
+		/// to UseGlobal, and the QuantizerType property is set to 
+		/// UseSuppliedPalette.
+		/// </summary>
+		[SuppressMessage("Microsoft.Usage", 
+		                 "CA2227:CollectionPropertiesShouldBeReadOnly")]
+		public Palette Palette
+		{
+			get { return _palette; }
+			set
+			{
+				_palette = value;
+				_quantizerType = QuantizerType.UseSuppliedPalette;
+				_strategy = ColourTableStrategy.UseGlobal;
+			}
+		}
+		#endregion
 		
 		#region Status property
 		/// <summary>
@@ -385,6 +408,24 @@ namespace GifComponents
 			{
 				// use first frame's size if logical screen size hasn't been set
 				_logicalScreenSize = _frames[0].TheImage.Size;
+			}
+			
+			if( _quantizerType == QuantizerType.UseSuppliedPalette )
+			{
+				if( _palette == null )
+				{
+					string message
+						= "You have chosen to encode this animation using a "
+						+ "supplied palette, but you have not supplied a palette!";
+					throw new InvalidOperationException( message );
+				}
+				if( _strategy == ColourTableStrategy.UseLocal )
+				{
+					string message
+						= "Use of user-supplied palettes with local colour "
+						+ "tables is not currently supported";
+					throw new NotImplementedException( message );
+				}
 			}
 			
 			WriteGifHeader( outputStream );
@@ -543,8 +584,26 @@ namespace GifComponents
 					= "Frame " + _processingFrame 
 					+ " of " + _frames.Count 
 					+ ": encoding pixel data";
-				WritePixels( _pixelAnalysis.IndexedPixelsCollection[_processingFrame],
-				             outputStream ); // encode and write pixel data
+				IndexedPixels ip;
+				if( _quantizerType == QuantizerType.UseSuppliedPalette )
+				{
+					Bitmap thisBitmap = (Bitmap) thisImage;
+					ip = new IndexedPixels();
+					for( int y = 0; y < thisImage.Height; y++ )
+					{
+						for( int x = 0; x < thisImage.Width; x++ )
+						{
+							Color c = thisBitmap.GetPixel( x, y );
+							int index = FindClosest( c, act );
+							ip.Add( (byte) index );
+						}
+					}
+				}
+				else
+				{
+					ip = _pixelAnalysis.IndexedPixelsCollection[_processingFrame];
+				}
+				WritePixels( ip, outputStream );
 			}
 		}
 		#endregion
@@ -687,17 +746,31 @@ namespace GifComponents
 			int pixelAspectRatio = 0; // TODO: parameterise pixelAspectRatio?
 			if( _strategy == ColourTableStrategy.UseGlobal )
 			{
-				// Analyse the pixels in all the images to build the
-				// global colour table.
-				Collection<Image> images = new Collection<Image>();
-				foreach( GifFrame thisFrame in _frames )
+				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
-					Image thisImage = thisFrame.TheImage;
-					images.Add( thisImage );
+					_status = "Creating global colour table from supplied palette";
+					// use supplied palette
+					_globalColourTable = new ColourTable();
+					foreach( Color c in _palette )
+					{
+						_globalColourTable.Add( c );
+					}
+					_globalColourTable.Pad();
 				}
-				_status = "Building global colour table - analysing pixels";
-				_pixelAnalysis = new PixelAnalysis( images, _quality );
-				_globalColourTable = _pixelAnalysis.ColourTable;
+				else
+				{
+					_status = "Building global colour table - analysing pixels";
+					// Analyse the pixels in all the images to build the
+					// global colour table.
+					Collection<Image> images = new Collection<Image>();
+					foreach( GifFrame thisFrame in _frames )
+					{
+						Image thisImage = thisFrame.TheImage;
+						images.Add( thisImage );
+					}
+					_pixelAnalysis = new PixelAnalysis( images, _quality );
+					_globalColourTable = _pixelAnalysis.ColourTable;
+				}
 				_status = "Writing logical screen descriptor (global)";
 				LogicalScreenDescriptor lsd = 
 					new LogicalScreenDescriptor( _logicalScreenSize, 
