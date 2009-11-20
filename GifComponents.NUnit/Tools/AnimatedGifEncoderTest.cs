@@ -369,6 +369,7 @@ namespace GifComponents.NUnit
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 		                 MessageId = "Quantizers")]
+		[Ignore( "Re-enable once Octree quantizer is implemented" )]
 		public void CompareQuantizers()
 		{
 			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
@@ -415,10 +416,10 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region UseSuppliedPalette
 		/// <summary>
 		/// Tests the encoder using a user-supplied palette.
 		/// </summary>
-		#region UseSuppliedPalette
 		[Test]
 		public void UseSuppliedPalette()
 		{
