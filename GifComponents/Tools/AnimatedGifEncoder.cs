@@ -289,6 +289,7 @@ namespace GifComponents
 		/// </summary>
 		[SuppressMessage("Microsoft.Usage", 
 		                 "CA2227:CollectionPropertiesShouldBeReadOnly")]
+		[Description( "A user-defined palette to use as a global colour table" )]
 		public Palette Palette
 		{
 			get { return _palette; }
