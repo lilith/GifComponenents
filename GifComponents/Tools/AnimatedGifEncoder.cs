@@ -28,6 +28,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
+using GifComponents.Palettes;
 
 namespace GifComponents
 {
@@ -139,6 +140,7 @@ namespace GifComponents
 			_quality = 10;
 			_quantizerType = QuantizerType.NeuQuant;
 			_logicalScreenSize = Size.Empty;
+			_palette = new Palette();
 		}
 		#endregion
 		
@@ -148,6 +150,7 @@ namespace GifComponents
 		/// <summary>
 		/// Gets a collection of the GifFrames which make up the animation.
 		/// </summary>
+		[Browsable( false )]
 		public Collection<GifFrame> Frames
 		{
 			get { return _frames; }
