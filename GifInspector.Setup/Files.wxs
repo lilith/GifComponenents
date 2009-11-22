@@ -64,6 +64,85 @@
 						      Name="GifBuilder.AboutFormParameters.xml"
 						      Source="..\GifBuilder\GifBuilder.AboutFormParameters.xml"/>
 					</Component>
+					<Directory Id="ColourTables" Name="ColourTables">
+						<Component Id="ColourTableC64" 
+						           Guid="6C4373C0-152D-4162-B95E-5025E4E76B61" 
+						           DiskId="1">
+							<File Id="ColourTableC64" 
+							      Name="C64.act" 
+							      Source="..\GifComponents\ColourTables\C64.act"/>
+						</Component>
+						<Component Id="ColourTableCga" 
+						           Guid="93E93AD5-6362-4AA2-976B-924214F1C4BD" 
+						           DiskId="1">
+							<File Id="ColourTableCga" 
+							      Name="cga.act" 
+							      Source="..\GifComponents\ColourTables\cga.act"/>
+						</Component>
+						<Component Id="ColourTableEmpty" 
+						           Guid="9613008C-DB80-4B47-B556-97CEC98A832E" 
+						           DiskId="1">
+							<File Id="ColourTableEmpty" 
+							      Name="empty.act" 
+							      Source="..\GifComponents\ColourTables\empty.act"/>
+						</Component>
+						<Component Id="ColourTableGameboy" 
+						           Guid="E0FD0765-573F-4A5E-89DD-D625B3889636" 
+						           DiskId="1">
+							<File Id="ColourTableGameboy" 
+							      Name="gameboy.act" 
+							      Source="..\GifComponents\ColourTables\gameboy.act"/>
+						</Component>
+						<Component Id="ColourTableGrayscale" 
+						           Guid="A06385FE-5ACD-4358-8F9D-8DABA2A4C91B" 
+						           DiskId="1">
+							<File Id="ColourTableGrayscale" 
+							      Name="grayscale.act" 
+							      Source="..\GifComponents\ColourTables\grayscale.act"/>
+						</Component>
+						<Component Id="ColourTableMacintosh" 
+						           Guid="9DA15B66-56D6-4D58-8490-258641902FC4" 
+						           DiskId="1">
+							<File Id="ColourTableMacintosh" 
+							      Name="macintosh.act" 
+							      Source="..\GifComponents\ColourTables\macintosh.act"/>
+						</Component>
+						<Component Id="ColourTableTest" 
+						           Guid="4C38F33D-89BD-46CA-AC85-96BF5E75D394" 
+						           DiskId="1">
+							<File Id="ColourTableTest" 
+							      Name="test.act" 
+							      Source="..\GifComponents\ColourTables\test.act"/>
+						</Component>
+						<Component Id="ColourTableUglyMix" 
+						           Guid="D9AE42E4-2AE3-45DA-95EE-378EFD3D1BBB" 
+						           DiskId="1">
+							<File Id="ColourTableUglyMix" 
+							      Name="Uglymix.act" 
+							      Source="..\GifComponents\ColourTables\Uglymix.act"/>
+						</Component>
+						<Component Id="ColourTableUniform" 
+						           Guid="EBADD384-7286-4BEA-B38D-CF6F9148FE43" 
+						           DiskId="1">
+							<File Id="ColourTableUniform" 
+							      Name="uniform.act" 
+							      Source="..\GifComponents\ColourTables\uniform.act"/>
+						</Component>
+						<Component Id="ColourTableWeb216" 
+						           Guid="E1C76132-DCC1-4A15-A33C-B6047C559391" 
+						           DiskId="1">
+							<File Id="ColourTableWeb216" 
+							      Name="web216.act" 
+							      Source="..\GifComponents\ColourTables\web216.act"/>
+						</Component>
+						<Component Id="ColourTableWindows" 
+						           Guid="3ADCF300-85A7-4D54-A597-4FDCDC5CC4DB" 
+						           DiskId="1">
+							<File Id="ColourTableWindows" 
+							      Name="windows.act" 
+							      Source="..\GifComponents\ColourTables\windows.act"/>
+						</Component>
+					</Directory>
 				</Directory>
 			</Directory>
 		</DirectoryRef>

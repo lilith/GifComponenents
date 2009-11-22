@@ -30,6 +30,17 @@
 			<ComponentRef Id="CommonForms"/>
 			<ComponentRef Id="GifInspectorAboutFormParameters"/>
 			<ComponentRef Id="GifBuilderAboutFormParameters"/>
+			<ComponentRef Id="ColourTableC64"/>
+			<ComponentRef Id="ColourTableCga"/>
+			<ComponentRef Id="ColourTableEmpty"/>
+			<ComponentRef Id="ColourTableGameboy"/>
+			<ComponentRef Id="ColourTableGrayscale"/>
+			<ComponentRef Id="ColourTableMacintosh"/>
+			<ComponentRef Id="ColourTableTest"/>
+			<ComponentRef Id="ColourTableUglyMix"/>
+			<ComponentRef Id="ColourTableUniform"/>
+			<ComponentRef Id="ColourTableWeb216"/>
+			<ComponentRef Id="ColourTableWindows"/>
 		</Feature>
 		
 		<!-- 
