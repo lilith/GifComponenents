@@ -46,8 +46,10 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
+    <Reference Include="CommonForms" />
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +67,16 @@
     <Compile Include="Enums\DisposalMethod.cs" />
     <Compile Include="Enums\ErrorState.cs" />
     <Compile Include="Enums\QuantizerType.cs" />
+    <Compile Include="Palettes\PaletteControl.cs" />
+    <Compile Include="Palettes\PaletteControl.Designer.cs">
+      <DependentUpon>PaletteControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Palettes\PaletteConverter.cs" />
+    <Compile Include="Palettes\PaletteEditor.cs" />
+    <Compile Include="Palettes\PaletteForm.cs" />
+    <Compile Include="Palettes\PaletteForm.Designer.cs">
+      <DependentUpon>PaletteForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools\AnimatedGifEncoder.cs" />
     <Compile Include="Tools\Colour32.cs" />
@@ -83,13 +95,54 @@
     <Compile Include="Types\IndexedPixels.cs" />
     <Compile Include="Types\PackedFields.cs" />
     <Compile Include="Types\Palette.cs" />
+    <None Include="ColourTables\C64.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\cga.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\empty.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\gameboy.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\grayscale.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\macintosh.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\test.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\Uglymix.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\uniform.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\web216.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\windows.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="CPOL.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Palettes\PaletteControl.resx">
+      <DependentUpon>PaletteControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Palettes\PaletteForm.resx">
+      <DependentUpon>PaletteForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ColourTables" />
     <Folder Include="Components" />
     <Folder Include="Enums" />
+    <Folder Include="Palettes" />
     <Folder Include="Tools" />
     <Folder Include="Types" />
   </ItemGroup>
