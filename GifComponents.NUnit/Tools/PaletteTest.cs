@@ -26,6 +26,7 @@ using System.Drawing;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Palettes;
 
 namespace GifComponents.NUnit
 {
@@ -49,7 +50,7 @@ namespace GifComponents.NUnit
 		[SetUp]
 		public void Setup()
 		{
-			_paletteFiles = Directory.GetFiles( "ColourTables" );
+			_paletteFiles = Directory.GetFiles( "ColourTables", "*.act" );
 			if( _paletteFiles.Length == 0 )
 			{
 				throw new InvalidOperationException( "No sample palette files!" );
@@ -258,6 +259,42 @@ namespace GifComponents.NUnit
 					+ "colours allowed.";
 				StringAssert.Contains( message, ex.Message );
 				throw;
+			}
+		}
+		#endregion
+
+		#region ToStringTest
+		/// <summary>
+		/// Test case for the ToString method.
+		/// </summary>
+		[Test]
+		public void ToStringTest()
+		{
+			_actual = new Palette();
+			
+			for( int i = 0; i < 256; i++ )
+			{
+				Color c = Color.FromArgb( i, i, i );
+				_actual.Add( c );
+				Assert.AreEqual( (i + 1) + " colours", _actual.ToString() );
+			}
+		}
+		#endregion
+
+		#region ToBitmapTest
+		/// <summary>
+		/// Test case for the ToBitmap method.
+		/// </summary>
+		[Test]
+		public void ToBitmapTest()
+		{
+			foreach( string file in _paletteFiles )
+			{
+				_actual = Palette.FromFile( file );
+				Bitmap b = _actual.ToBitmap();
+				
+				Bitmap expected = new Bitmap( file.Replace( "ColourTables", "images/PaletteBitmaps" ).Replace( ".act", ".bmp" ) );
+				BitmapAssert.AreEqual( expected, b, file );
 			}
 		}
 		#endregion

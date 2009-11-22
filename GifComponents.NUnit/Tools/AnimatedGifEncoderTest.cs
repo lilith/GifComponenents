@@ -31,6 +31,7 @@ using System.Globalization;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Palettes;
 
 namespace GifComponents.NUnit
 {

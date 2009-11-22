@@ -80,36 +80,6 @@
     <Compile Include="Types\IndexedPixelsTest.cs" />
     <Compile Include="Types\PackedFieldsTest.cs" />
     <Compile Include="WikipediaExample.cs" />
-    <None Include="ColourTables\cga.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\empty.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\gameboy.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\grayscale.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\macintosh.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\test.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\Uglymix.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\uniform.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\web216.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ColourTables\windows.act">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="images\bmp.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -194,6 +164,39 @@
     <None Include="images\NoGraphicControlExtension.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\PaletteBitmaps\C64.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\cga.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\empty.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\gameboy.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\grayscale.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\macintosh.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\test.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\Uglymix.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\uniform.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\web216.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\PaletteBitmaps\windows.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\smiley.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -223,8 +226,8 @@
     <Folder Include="Components" />
     <Folder Include="images" />
     <Folder Include="images\globe" />
+    <Folder Include="images\PaletteBitmaps" />
     <Folder Include="images\smiley" />
-    <Folder Include="ColourTables" />
     <Folder Include="Types" />
     <Folder Include="Tools" />
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">
