@@ -186,7 +186,7 @@ namespace GifComponents
 		/// </summary>
 		public int LocalColourTableSize
 		{
-			get { return (int) Math.Pow( 2, _localColourTableSizeBits + 1 ); }
+			get { return 2 << _localColourTableSizeBits; }
 		}
 		#endregion
 		
