@@ -51,7 +51,7 @@ namespace GifComponents
 		private bool _hasGlobalColourTable;
 		private int _colourResolution;
 		private bool _gctIsSorted;
-		private int _gctSize;
+		private int _gctSizeBits;
 		private int _backgroundColourIndex;
 		private int _pixelAspectRatio;
 		
@@ -178,7 +178,7 @@ namespace GifComponents
 			_hasGlobalColourTable = hasGlobalColourTable;
 			_colourResolution = colourResolution;
 			_gctIsSorted = globalColourTableIsSorted;
-			_gctSize = globalColourTableSizeBits;
+			_gctSizeBits = globalColourTableSizeBits;
 			_backgroundColourIndex = backgroundColourIndex;
 			_pixelAspectRatio = pixelAspectRatio;
 		}
@@ -301,7 +301,7 @@ namespace GifComponents
 		             "the stream in." )]
 		public int GlobalColourTableSizeBits
 		{
-			get { return _gctSize; }
+			get { return _gctSizeBits; }
 		}
 		#endregion
 		
@@ -311,7 +311,7 @@ namespace GifComponents
 		/// </summary>
 		public int GlobalColourTableSize
 		{
-			get { return 2 << _gctSize; }
+			get { return 2 << _gctSizeBits; }
 		}
 		#endregion
 		
@@ -430,7 +430,7 @@ namespace GifComponents
 			packed.SetBit( 0, _hasGlobalColourTable );
 			packed.SetBits( 1, 3, _colourResolution );
 			packed.SetBit( 4, _gctIsSorted );
-			packed.SetBits( 5, 3, _gctSize );
+			packed.SetBits( 5, 3, _gctSizeBits );
 			WriteByte( packed.Byte, outputStream );
 			
 			WriteByte( _backgroundColourIndex, outputStream );
