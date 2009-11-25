@@ -55,6 +55,22 @@ namespace GifComponents.Palettes
 		private const int _expectedBytes = _maxColours * 3;
 		#endregion
 		
+		#region Validate method
+		/// <summary>
+		/// Throws an exception if the current Palette is not in a suitable
+		/// state for encoding a GIF.
+		/// </summary>
+		public void Validate()
+		{
+			if( this.Count < 2 )
+			{
+				string message
+					= "A palette with less than two colours is not valid.";
+				throw new InvalidOperationException( message );
+			}
+		}
+		#endregion
+		
 		#region static FromFile method
 		/// <summary>
 		/// Returns a Palette object read from the specified Adobe Colour Table
