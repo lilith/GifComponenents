@@ -57,6 +57,7 @@
     <Compile Include="Components\ApplicationExtensionTest.cs" />
     <Compile Include="Components\ColourTableTest.cs" />
     <Compile Include="Components\DataBlockTest.cs" />
+    <Compile Include="Components\GifComponentTest.cs" />
     <Compile Include="Components\GifComponentTestFixtureBase.cs" />
     <Compile Include="Components\GifFrameTest.cs" />
     <Compile Include="Components\GifHeaderTest.cs" />
@@ -77,7 +78,6 @@
     <Compile Include="Tools\NeuQuantTest.cs" />
     <Compile Include="Tools\PixelAnalysisTest.cs" />
     <Compile Include="Types\GifComponentStatusTest.cs" />
-    <Compile Include="Types\GifComponentTest.cs" />
     <Compile Include="Types\IndexedPixelsTest.cs" />
     <Compile Include="Types\PackedFieldsTest.cs" />
     <Compile Include="WikipediaExample.cs" />
