@@ -1,0 +1,32 @@
+﻿<ApplicationExtension>
+  <IdentificationData>
+    <DataBlock>
+  <BlockSize>11</BlockSize>
+  <BytesRead>
+    <ByteGroup>42 49 47 50 41 4E 54 53 31 2E 33 </ByteGroup>
+  </BytesRead>
+</DataBlock>
+    <ApplicationIdentifier>BIGPANTS</ApplicationIdentifier>
+    <ApplicationAuthenticationCode>1.3</ApplicationAuthenticationCode>
+  </IdentificationData>
+  <ApplicationData>
+    <DataBlock>
+  <BlockSize>5</BlockSize>
+  <BytesRead>
+    <ByteGroup>48 45 4C 4C 4F </ByteGroup>
+  </BytesRead>
+</DataBlock>
+    <DataBlock>
+  <BlockSize>5</BlockSize>
+  <BytesRead>
+    <ByteGroup>57 4F 52 4C 44 </ByteGroup>
+  </BytesRead>
+</DataBlock>
+    <DataBlock>
+  <BlockSize>0</BlockSize>
+  <BytesRead>
+    <ByteGroup></ByteGroup>
+  </BytesRead>
+</DataBlock>
+  </ApplicationData>
+</ApplicationExtension>

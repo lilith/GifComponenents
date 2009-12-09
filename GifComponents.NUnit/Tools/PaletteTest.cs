@@ -34,7 +34,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the Palette class.
 	/// </summary>
 	[TestFixture]
-	public class PaletteTest
+	public class PaletteTest : TestFixtureBase
 	{
 		#region declarations
 		private Palette _actual;
@@ -66,6 +66,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void FromFileTest()
 		{
+			ReportStart();
 			foreach( string file in _paletteFiles )
 			{
 				_actual = Palette.FromFile( file );
@@ -86,9 +87,12 @@ namespace GifComponents.NUnit
 					                       file + " Colour number " + i );
 				}
 			}
+			ReportEnd();
 		}
 		#endregion
 
+		#region FromStream tests
+		
 		#region FromStreamNullStreamTest
 		/// <summary>
 		/// Checks that the correct exception is thrown when the FromStream is
@@ -98,6 +102,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void FromStreamNullStreamTest()
 		{
+			ReportStart();
 			try
 			{
 				_actual = Palette.FromStream( null );
@@ -105,6 +110,7 @@ namespace GifComponents.NUnit
 			catch( ArgumentNullException ex )
 			{
 				Assert.AreEqual( "inputStream", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -118,6 +124,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void FromStreamTooLongTest()
 		{
+			ReportStart();
 			MemoryStream s = new MemoryStream();
 			for( int i = 0; i < 769; i++ )
 			{
@@ -136,6 +143,7 @@ namespace GifComponents.NUnit
 				Color c = Color.FromArgb( s.ReadByte(), s.ReadByte(), s.ReadByte() );
 				ColourAssert.AreEqual( c, _actual[i], "Colour index " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -148,6 +156,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void FromStreamTooShortTest()
 		{
+			ReportStart();
 			MemoryStream s = new MemoryStream();
 			for( int i = 0; i < 767; i++ )
 			{
@@ -169,9 +178,12 @@ namespace GifComponents.NUnit
 					+ "767 bytes long";
 				Assert.AreEqual( "inputStream", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
+		#endregion
+
 		#endregion
 		
 		#region WriteToFileTest
@@ -184,6 +196,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToFileTest()
 		{
+			ReportStart();
 			foreach( string file in _paletteFiles )
 			{
 				_expected = Palette.FromFile( file );
@@ -194,6 +207,7 @@ namespace GifComponents.NUnit
 				byte[] actual = File.ReadAllBytes( saveFile );
 				CollectionAssert.AreEqual( expected, actual, saveFile );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -204,6 +218,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void AddTest()
 		{
+			ReportStart();
 			_actual = new Palette();
 			
 			// Add a first colour and check it's the only one in the palette
@@ -229,6 +244,7 @@ namespace GifComponents.NUnit
 			ColourAssert.AreEqual( Color.AliceBlue, _actual[0] );
 			ColourAssert.AreEqual( Color.AntiqueWhite, _actual[1] );
 			ColourAssert.AreEqual( Color.Aqua, _actual[2] );
+			ReportEnd();
 		}
 		#endregion
 
@@ -241,6 +257,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( InvalidOperationException ) )]
 		public void AddTestMaxColours()
 		{
+			ReportStart();
 			_actual = new Palette();
 			for( int i = 0; i < 256; i++ )
 			{
@@ -258,6 +275,7 @@ namespace GifComponents.NUnit
 					= "This palette already contains the maximum number of "
 					+ "colours allowed.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -270,6 +288,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ToStringTest()
 		{
+			ReportStart();
 			_actual = new Palette();
 			
 			for( int i = 0; i < 256; i++ )
@@ -278,6 +297,7 @@ namespace GifComponents.NUnit
 				_actual.Add( c );
 				Assert.AreEqual( (i + 1) + " colours", _actual.ToString() );
 			}
+			ReportEnd();
 		}
 		#endregion
 
@@ -288,6 +308,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ToBitmapTest()
 		{
+			ReportStart();
 			foreach( string file in _paletteFiles )
 			{
 				_actual = Palette.FromFile( file );
@@ -296,6 +317,7 @@ namespace GifComponents.NUnit
 				Bitmap expected = new Bitmap( file.Replace( "ColourTables", "images/PaletteBitmaps" ).Replace( ".act", ".bmp" ) );
 				BitmapAssert.AreEqual( expected, b, file );
 			}
+			ReportEnd();
 		}
 		#endregion
 	}

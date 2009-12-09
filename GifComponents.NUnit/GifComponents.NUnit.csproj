@@ -31,7 +31,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
-    <DebugSymbols>False</DebugSymbols>
+    <DebugSymbols>false</DebugSymbols>
     <DebugType>None</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
@@ -41,7 +41,7 @@
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
@@ -57,6 +57,7 @@
     <Compile Include="Components\ApplicationExtensionTest.cs" />
     <Compile Include="Components\ColourTableTest.cs" />
     <Compile Include="Components\DataBlockTest.cs" />
+    <Compile Include="Components\GifComponentTestFixtureBase.cs" />
     <Compile Include="Components\GifFrameTest.cs" />
     <Compile Include="Components\GifHeaderTest.cs" />
     <Compile Include="Components\GraphicControlExtensionTest.cs" />
@@ -80,7 +81,88 @@
     <Compile Include="Types\IndexedPixelsTest.cs" />
     <Compile Include="Types\PackedFieldsTest.cs" />
     <Compile Include="WikipediaExample.cs" />
+    <None Include="DebugXml\ApplicationExtensionTest.ConstructorStreamTestNoBlockTerminator.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\ApplicationExtensionTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\ColourTableTest.ConstructorStreamTestColourTableTooShort.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\ColourTableTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\DataBlockTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\DataBlockTest.ConstructorStreamTestBlockSizeTooLarge.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\DataBlockTest.ConstructorStreamTestEmptyBlock.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\DataBlockTest.ConstructorStreamTestEndOfStream.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifComponentTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifComponentTest.SetStatusTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifDecoderTest.DecodeRotatingGlobe.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifDecoderTest.DecodeSmiley.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifFrameTest.ConstructorStreamNoImageDataTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifFrameTest.ConstructorStreamNullGraphicControlExtensionTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifFrameTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifHeaderTest.ConstructorStreamEndOfInputStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GraphicControlExtensionTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GraphicControlExtensionTest.ConstructorStreamTestDisposalMethodNotSpecified.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\ImageDescriptorTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\LogicalScreenDescriptorTest.ConstructorEndOfStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\LogicalScreenDescriptorTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\TableBasedImageDataTest.CodeNotInDictionary.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\TableBasedImageDataTest.ConstructorTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\TableBasedImageDataTest.DataBlockTooShort.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\TableBasedImageDataTest.EmptyDataBlock.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\TableBasedImageDataTest.MinimumCodeSizeTooLarge.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\bmp.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\GifDecoderTest.LsdEndOfInputStream.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="images\globe\spinning globe better 200px transparent background.gif">
@@ -218,8 +300,44 @@
     <None Include="images\smiley\smiley.gif.frame 3.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\smiley\Smiley-C64.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-cga.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-empty.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-gameboy.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-grayscale.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-macintosh.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-test.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-Uglymix.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-uniform.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-web216.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\smiley\Smiley-windows.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\wikipedia example.bmp">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="DebugXml\GifHeaderTest.ConstructorStreamTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +346,7 @@
     <Folder Include="images\globe" />
     <Folder Include="images\PaletteBitmaps" />
     <Folder Include="images\smiley" />
+    <Folder Include="DebugXml" />
     <Folder Include="Types" />
     <Folder Include="Tools" />
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">

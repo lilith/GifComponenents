@@ -24,29 +24,34 @@
 using System;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the GifHeader class.
 	/// </summary>
 	[TestFixture]
-	public class GifHeaderTest
+	public class GifHeaderTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private GifHeader _header;
-		
-		#region ConstructorTest
+
+		#region ConstructorPropertiesTest
 		/// <summary>
 		/// Checks that the constructor works correctly under normal 
 		/// circumstances.
 		/// </summary>
 		[Test]
-		public void ConstructorTest()
+		public void ConstructorPropertiesTest()
 		{
+			ReportStart();
+			
 			_header = new GifHeader( "GIF", "89A" );
 			Assert.AreEqual( "GIF", _header.Signature );
 			Assert.AreEqual( "89A", _header.Version );
 			Assert.AreEqual( ErrorState.Ok, _header.ConsolidatedState );
+			
+			ReportEnd();
 		}
 		#endregion
 		
@@ -58,20 +63,26 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTestBadSignature()
 		{
+			ReportStart();
+			
 			_header = new GifHeader( "FIG", "89A" );
 			Assert.AreEqual( "FIG", _header.Signature );
 			Assert.AreEqual( "89A", _header.Version );
 			Assert.AreEqual( ErrorState.BadSignature, _header.ErrorState );
+			
+			ReportEnd();
 		}
 		#endregion
 
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly.
+		/// Checks that the constructor( Stream ) method works correctly.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
 		{
+			ReportStart();
+			
 			byte[] bytes = new byte[]
 			{
 				(byte) 'G',
@@ -85,28 +96,99 @@ namespace GifComponents.NUnit
 			s.Write( bytes, 0, bytes.Length );
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_header = GifHeader.FromStream( s );
-			Assert.AreEqual( ErrorState.Ok, _header.ConsolidatedState );
-			Assert.AreEqual( "GIF", _header.Signature );
-			Assert.AreEqual( "89A", _header.Version );
-			Assert.AreEqual( ErrorState.Ok, _header.ConsolidatedState );
+			string expectedSignature = "GIF";
+			string expectedVersion = "89A";
+			ErrorState expectedErrorState = ErrorState.Ok;
+			string expectedErrorMessage = "";
+			CheckConstructorStream( s, 
+			                        expectedSignature,
+			                        expectedVersion,
+			                        expectedErrorState,
+			                        expectedErrorMessage,
+			                        ExpectedDebugXml );
+			
+			ReportEnd();
 		}
 		#endregion
 
-		#region FromStreamEndOfInputStreamTest
+		#region ConstructorStreamEndOfInputStreamTest
 		/// <summary>
 		/// Checks that the correct error state is set when the input stream
 		/// does not contain enough data to form a GIF header.
 		/// </summary>
 		[Test]
-		public void FromStreamEndOfInputStreamTest()
+		public void ConstructorStreamEndOfInputStreamTest()
 		{
+			ReportStart();
+			
 			MemoryStream s = new MemoryStream();
 			s.WriteByte( (byte) 'G' );
 			s.Seek( 0, SeekOrigin.Begin );
-			_header = GifHeader.FromStream( s );
-			Assert.AreEqual( ErrorState.EndOfInputStream | ErrorState.BadSignature, 
-			                 _header.ErrorState );
+			string expectedSignature = "G\0\0"; // ends with 2 nulls
+			string expectedVersion = "\0\0\0"; // 3 nulls
+			ErrorState expectedErrorState
+				= ErrorState.EndOfInputStream | ErrorState.BadSignature;
+			string expectedErrorMessage 
+				= "Bytes read: 1"
+				+ Environment.NewLine
+				+ "Bad signature: G\0\0";
+			CheckConstructorStream( s, 
+			                        expectedSignature,
+			                        expectedVersion,
+			                        expectedErrorState,
+			                        expectedErrorMessage,
+			                        ExpectedDebugXml );
+			
+			ReportEnd();
+		}
+		#endregion
+		
+		#region private CheckConstructorStream method
+		private void CheckConstructorStream( Stream s, 
+		                                     string expectedSignature,
+		                                     string expectedVersion,
+		                                     ErrorState expectedErrorState,
+		                                     string expectedErrorMessage,
+		                                     string expectedXml )
+		{
+			// Save our current position in the stream, in case we want to go
+			// back and read it again later.
+			long streamPosition = s.Position;
+			
+			// Without XML debugging
+			_header = new GifHeader( s );
+			CheckProperties( expectedSignature, 
+			                 expectedVersion, 
+			                 expectedErrorState, 
+			                 expectedErrorMessage );
+			string message
+				= "<Message>There is no DebugXml because XML debugging has not "
+				+ "been enabled for this GifHeader instance.</Message>";
+			Assert.AreEqual( message, _header.DebugXml );
+			
+			// Go back to where we were in the stream before we try reading it again
+			s.Seek( streamPosition, SeekOrigin.Begin );
+			
+			// With XML debugging
+			_header = new GifHeader( s, true );
+			CheckProperties( expectedSignature, 
+			                 expectedVersion, 
+			                 expectedErrorState, 
+			                 expectedErrorMessage );
+			Assert.AreEqual( expectedXml, _header.DebugXml, "DebugXml" );
+		}
+		#endregion
+		
+		#region private CheckProperties method
+		private void CheckProperties( string expectedSignature, 
+		                              string expectedVersion, 
+		                              ErrorState expectedErrorState, 
+		                              string expectedErrorMessage )
+		{
+			Assert.AreEqual( expectedSignature, _header.Signature, "Signature" );
+			Assert.AreEqual( expectedVersion, _header.Version, "Version" );
+			Assert.AreEqual( expectedErrorState, _header.ErrorState, "ErrorState" );
+			Assert.AreEqual( expectedErrorMessage, _header.ErrorMessage, "ErrorMessage" );
 		}
 		#endregion
 		
@@ -117,14 +199,68 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
+			
 			_header = new GifHeader( "GIF", "87a" );
 			MemoryStream s = new MemoryStream();
 			_header.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
-			_header = GifHeader.FromStream( s );
+			_header = new GifHeader( s );
 			Assert.AreEqual( ErrorState.Ok, _header.ConsolidatedState );
 			Assert.AreEqual( "GIF", _header.Signature );
 			Assert.AreEqual( "87a", _header.Version );
+			
+			ReportEnd();
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~GifHeaderTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_header.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

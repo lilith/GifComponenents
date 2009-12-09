@@ -28,15 +28,16 @@ using System.Drawing.Imaging;
 using System.IO;
 using NUnit.Extensions;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the GifFrame class.
 	/// TODO: aim for 100% coverage of GifFrame class
 	/// </summary>
 	[TestFixture]
-	public class GifFrameTest : IDisposable
+	public class GifFrameTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private GifFrame _frame;
 		private GifDecoder _decoder;
@@ -57,23 +58,31 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly under normal
+		/// Checks that the constructor( Stream )works correctly under normal
 		/// circumstances.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			MemoryStream s = CreateStream();
 
 			// Extra stuff not included in the frame stream, to pass to the
-			// FromStream method
+			// constructor.
 			ColourTable colourTable = WikipediaExample.GlobalColourTable;
 			GraphicControlExtension ext = WikipediaExample.GraphicControlExtension;
 			LogicalScreenDescriptor lsd = WikipediaExample.LogicalScreenDescriptor;
 
-			_frame = GifFrame.FromStream( s, lsd, colourTable, ext, null, null );
+			_frame = new GifFrame( s, lsd, colourTable, ext, null, null, xmlDebugging );
 			
 			Assert.AreEqual( ErrorState.Ok, _frame.ConsolidatedState );
 
@@ -84,18 +93,29 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 0, _frame.BackgroundColour.R );
 			Assert.AreEqual( 0, _frame.BackgroundColour.G );
 			Assert.AreEqual( 0, _frame.BackgroundColour.B );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _frame.DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamNoImageDataTest
+		#region ConstructorStreamNoImageDataTest
 		/// <summary>
-		/// Checks that the FromStream method sets the correct status when
+		/// Checks that the constructor( Stream ) sets the correct status when
 		/// decoding a stream which contains no image data.
-		/// FIXME: unable to cause a NoImageData status at the moment
 		/// </summary>
 		[Test]
-		[Ignore( "Causes an IndexOutOfRangeException in TableBasedImageData constructor" )]
-		public void FromStreamNoImageDataTest()
+		public void ConstructorStreamNoImageDataTest()
+		{
+			ReportStart();
+			ConstructorStreamNoImageDataTest( true );
+			ConstructorStreamNoImageDataTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamNoImageDataTest( bool xmlDebugging )
 		{
 			MemoryStream s = new MemoryStream();
 			
@@ -103,7 +123,7 @@ namespace GifComponents.NUnit
 			byte[] idBytes = WikipediaExample.ImageDescriptorBytes;
 			s.Write( idBytes, 0, idBytes.Length );
 
-			// TODO: remove (this is how we miss out the image data)
+			// miss out the image data
 //			// Table-based image data
 //			byte[] imageData = WikipediaExample.ImageDataBytes;
 //			s.Write( imageData, 0, imageData.Length );
@@ -120,38 +140,43 @@ namespace GifComponents.NUnit
 			s.Seek( 0, SeekOrigin.Begin );
 			
 			// Extra stuff not included in the frame stream, to pass to the
-			// FromStream method
+			// constructor
 			ColourTable colourTable = WikipediaExample.GlobalColourTable;
 			GraphicControlExtension ext = WikipediaExample.GraphicControlExtension;
 			LogicalScreenDescriptor lsd = WikipediaExample.LogicalScreenDescriptor;
 
-			_frame = GifFrame.FromStream( s, lsd, colourTable, ext, null, null );
+			_frame = new GifFrame( s, lsd, colourTable, ext, null, null, xmlDebugging );
 			
-			Assert.AreEqual( ErrorState.FrameHasNoImageData, 
+			Assert.AreEqual( ErrorState.TooFewPixelsInImageData, 
 			                 _frame.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _frame.DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamNullLogicalScreenDescriptorTest
+		#region ConstructorStreamNullLogicalScreenDescriptorTest
 		/// <summary>
-		/// Checks that the correct exception is thrown when the FromStream 
-		/// method is passed a null logical screen descriptor.
+		/// Checks that the correct exception is thrown when the 
+		/// constructor( Stream ) is passed a null logical screen descriptor.
 		/// </summary>
 		[Test]
 		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void FromStreamNullLogicalScreenDescriptorTest()
+		public void ConstructorStreamNullLogicalScreenDescriptorTest()
 		{
 			MemoryStream s = CreateStream();
 
 			// Extra stuff not included in the frame stream, to pass to the
-			// FromStream method
+			// constructor
 			ColourTable colourTable = WikipediaExample.GlobalColourTable;
 			GraphicControlExtension ext = WikipediaExample.GraphicControlExtension;
 			LogicalScreenDescriptor lsd = null;
 
 			try
 			{
-				_frame = GifFrame.FromStream( s, lsd, colourTable, ext, null, null );
+				_frame = new GifFrame( s, lsd, colourTable, ext, null, null );
 			}
 			catch( ArgumentNullException ex )
 			{
@@ -161,35 +186,51 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
-		#region FromStreamNullGraphicControlExtensionTest
+		#region ConstructorStreamNullGraphicControlExtensionTest
 		/// <summary>
-		/// Checks that the correct error state is set when the FromStream 
-		/// method is passed a null graphic control extension.
+		/// Checks that the correct error state is set when the  
+		/// constructor( Stream ) is passed a null graphic control extension.
 		/// </summary>
 		[Test]
-		public void FromStreamNullGraphicControlExtensionTest()
+		public void ConstructorStreamNullGraphicControlExtensionTest()
 		{
-			_decoder = new GifDecoder( @"images\NoGraphicControlExtension.gif" );
+			ReportStart();
+			ConstructorStreamNullGraphicControlExtensionTest( true );
+			ConstructorStreamNullGraphicControlExtensionTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamNullGraphicControlExtensionTest( bool xmlDebugging )
+		{
+			_decoder = new GifDecoder( @"images\NoGraphicControlExtension.gif", 
+			                           xmlDebugging );
 			_decoder.Decode();
 			Assert.AreEqual( ErrorState.NoGraphicControlExtension, 
 			                 _decoder.Frames[0].ErrorState );
 			Bitmap expected = new Bitmap( @"images\NoGraphicControlExtension.bmp" );
 			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
 			BitmapAssert.AreEqual( expected, actual );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _decoder.Frames[0].DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamNoColourTableTest
+		#region DecoderStreamNoColourTableTest
 		/// <summary>
 		/// Checks that the correct error status is set when decoding a frame
 		/// which has neither local nor global colour table.
 		/// </summary>
 		[Test]
-		public void FromStreamNoColourTableTest()
+		public void ConstructorStreamNoColourTableTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\NoColourTable.gif" );
 			_decoder.Decode();
 			Assert.AreEqual( ErrorState.FrameHasNoColourTable, _decoder.ConsolidatedState );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -200,6 +241,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void TransparencyTest()
 		{
+			ReportStart();
 			Color noColour = Color.FromArgb( 0, 0, 0, 0 ); // note alpha of 0
 			Color blue = Color.FromArgb( 0, 0, 255 );
 			Color transparent = Color.FromArgb( 100, 100, 100 );
@@ -235,6 +277,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( blue, actual.GetPixel( 0, 1 ) );
 			Assert.AreEqual( blue, actual.GetPixel( 1, 1 ) );
 			
+			ReportEnd();
 		}
 		#endregion
 		
@@ -245,12 +288,14 @@ namespace GifComponents.NUnit
 		[Test]
 		public void InterlaceTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\Interlaced.gif" );
 			_decoder.Decode();
 			Assert.AreEqual( true, _decoder.Frames[0].ImageDescriptor.IsInterlaced );
 			Bitmap expected = new Bitmap( @"images\Interlaced.bmp" );
 			Bitmap actual = (Bitmap) _decoder.Frames[0].TheImage;
 			BitmapAssert.AreEqual( expected, actual );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -263,6 +308,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void BackgroundColourTest()
 		{
+			ReportStart();
 			for( int r = 0; r < 255; r += 3 )
 			{
 				for( int g = 0; g < 255; g += 7 )
@@ -275,6 +321,7 @@ namespace GifComponents.NUnit
 					}
 				}
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -285,11 +332,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DelayTest()
 		{
+			ReportStart();
 			for( int delay = 0; delay < 200; delay++ )
 			{
 				_frame.Delay = delay;
 				Assert.AreEqual( delay, _frame.Delay );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -300,10 +349,12 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ExpectsUserInputNewFrameTest()
 		{
+			ReportStart();
 			_frame.ExpectsUserInput = true;
 			Assert.AreEqual( true, _frame.ExpectsUserInput );
 			_frame.ExpectsUserInput = false;
 			Assert.AreEqual( false, _frame.ExpectsUserInput );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -316,6 +367,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ExpectsUserInputDecodedFrameGetTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
 			_decoder.Decode();
 			for( int i = 0; i < _decoder.Frames.Count; i++ )
@@ -325,6 +377,7 @@ namespace GifComponents.NUnit
 				                 _frame.ExpectsUserInput, 
 				                 "Frame " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -341,6 +394,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "FrameSet")]
 		public void ExpectsUserInputDecodedFrameSetTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
 			_decoder.Decode();
 			_frame = _decoder.Frames[0];
@@ -354,6 +408,7 @@ namespace GifComponents.NUnit
 					= "This GifFrame was returned by a GifDecoder so this "
 					+ "property is read-only";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -367,6 +422,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void PositionTest()
 		{
+			ReportStart();
 			for( int x = 0; x < 100; x += 7 )
 			{
 				for( int y = 0; y < 200; y += 11 )
@@ -376,6 +432,7 @@ namespace GifComponents.NUnit
 					Assert.AreEqual( position, _frame.Position );
 				}
 			}
+			ReportEnd();
 		}
 		#endregion
 
@@ -388,6 +445,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void PositionDecodedFrameGetTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
 			_decoder.Decode();
 			for( int i = 0; i < _decoder.Frames.Count; i++ )
@@ -397,6 +455,7 @@ namespace GifComponents.NUnit
 				                 _frame.Position, 
 				                 "Frame " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -413,6 +472,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "FrameSet")]
 		public void PositionDecodedFrameSetTest()
 		{
+			ReportStart();
 			_decoder = new GifDecoder( @"images\smiley\smiley.gif" );
 			_decoder.Decode();
 			_frame = _decoder.Frames[0];
@@ -426,6 +486,7 @@ namespace GifComponents.NUnit
 					= "This GifFrame was returned by a GifDecoder so this "
 					+ "property is read-only";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -453,37 +514,54 @@ namespace GifComponents.NUnit
 		#endregion
 
 		#region IDisposable implementation
-		private bool _isDisposed; // defaults to false
-		
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~GifFrameTest()
+		{
+			Dispose( false );
+		}
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
 		public void Dispose()
 		{
 			Dispose( true );
-			GC.SuppressFinalize( true );
+			GC.SuppressFinalize( this );
 		}
-		
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
-		/// <param name="isDisposing">
+		/// <param name="disposing">
 		/// Indicates whether this method is being called by the class's Dispose
 		/// method (true) or by the garbage collector (false).
 		/// </param>
-		protected virtual void Dispose( bool isDisposing )
+		protected virtual void Dispose( bool disposing )
 		{
-			if( _isDisposed )
+			if( !_disposed )
 			{
-				return;
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_frame.Dispose();
+					_decoder.Dispose();
+					_encoder.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
 			}
-			
-			if( isDisposing )
-			{
-				_decoder.Dispose();
-			}
-			
-			_isDisposed = true;
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

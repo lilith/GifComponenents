@@ -26,6 +26,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
+using GifComponents.Components;
 
 namespace GifComponents
 {
@@ -42,7 +43,7 @@ namespace GifComponents
 	/// supplied image(s), both suitable for use by the 
 	/// <see cref="AnimatedGifEncoder"/>.
 	/// </summary>
-	public class PixelAnalysis
+	public class PixelAnalysis : IDisposable
 	{
 		#region declarations
 		private NeuQuant _nq;
@@ -463,6 +464,56 @@ namespace GifComponents
 		}
 		#endregion
 
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~PixelAnalysis()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_colourTable.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
+		}
 		#endregion
 		
 	}

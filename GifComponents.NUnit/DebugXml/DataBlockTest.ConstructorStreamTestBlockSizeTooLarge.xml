@@ -1,0 +1,8 @@
+﻿<DataBlock>
+  <BlockSize>5</BlockSize>
+  <BytesRead>
+    <ByteGroup>0C 10 05 07 00 </ByteGroup>
+  </BytesRead>
+  <ErrorState>DataBlockTooShort</ErrorState>
+  <ErrorMessage>Supplied block size: 5. Actual block size: 4</ErrorMessage>
+</DataBlock>

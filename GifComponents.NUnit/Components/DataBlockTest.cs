@@ -25,14 +25,15 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the DataBlock class.
 	/// </summary>
 	[TestFixture]
-	public class DataBlockTest
+	public class DataBlockTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private DataBlock _block;
 		private byte[] _data;
@@ -58,6 +59,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
 			_block = new DataBlock( 4, _data );
 			Assert.AreEqual( 4, _block.ActualBlockSize );
 			Assert.AreEqual( 4, _block.DeclaredBlockSize );
@@ -68,6 +70,7 @@ namespace GifComponents.NUnit
 				Assert.AreEqual( _data[i], _block.Data[i], i );
 				Assert.AreEqual( _data[i], _block[i], i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -79,6 +82,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTestBlockSizeTooSmall()
 		{
+			ReportStart();
 			_block = new DataBlock( 5, _data );
 			Assert.AreEqual( 4, _block.ActualBlockSize );
 			Assert.AreEqual( 5, _block.DeclaredBlockSize );
@@ -88,6 +92,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( _data[i], _block.Data[i], i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -99,6 +104,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTestBlockSizeTooLarge()
 		{
+			ReportStart();
 			_block = new DataBlock( 3, _data );
 			Assert.AreEqual( 4, _block.ActualBlockSize );
 			Assert.AreEqual( 3, _block.DeclaredBlockSize );
@@ -108,6 +114,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( _data[i], _block.Data[i], i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -120,6 +127,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void ConstructorTestNullArgument()
 		{
+			ReportStart();
 			try
 			{
 				_block = new DataBlock( 1, null );
@@ -127,6 +135,7 @@ namespace GifComponents.NUnit
 			catch( ArgumentNullException ex )
 			{
 				Assert.AreEqual( "data", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -134,22 +143,30 @@ namespace GifComponents.NUnit
 		
 		#endregion
 
-		#region FromStream tests
+		#region ConstructorStream tests
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly under normal
+		/// Checks that the constructor( Stream ) works correctly under normal
 		/// circumstances.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			s.WriteByte( 4 ); // write block size
 			s.Write( _data, 0, _data.Length ); // write data block
 			s.Seek( 0, SeekOrigin.Begin ); // go to start of stream
 			
-			_block = DataBlock.FromStream( s );
+			_block = new DataBlock( s, xmlDebugging );
 			Assert.AreEqual( 4, _block.ActualBlockSize );
 			Assert.AreEqual( 4, _block.DeclaredBlockSize );
 			Assert.AreEqual( ErrorState.Ok, _block.ConsolidatedState );
@@ -159,23 +176,36 @@ namespace GifComponents.NUnit
 				Assert.AreEqual( _data[i], _block.Data[i], i );
 				Assert.AreEqual( _data[i], _block[i], i );
 			}
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _block.DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamTestBlockSizeTooSmall
+		#region ConstructorStreamTestBlockSizeTooSmall
 		/// <summary>
 		/// Checks that the correct error status is set when the data block
 		/// is shorter than its declared size.
 		/// </summary>
 		[Test]
-		public void FromStreamTestBlockSizeTooLarge()
+		public void ConstructorStreamTestBlockSizeTooLarge()
+		{
+			ReportStart();
+			ConstructorStreamTestBlockSizeTooLarge( true );
+			ConstructorStreamTestBlockSizeTooLarge( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTestBlockSizeTooLarge( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			s.WriteByte( 5 ); // write block size
 			s.Write( _data, 0, _data.Length ); // write data block
 			s.Seek( 0, SeekOrigin.Begin ); // go to start of stream
 			
-			_block = DataBlock.FromStream( s );
+			_block = new DataBlock( s, xmlDebugging );
 			Assert.AreEqual( 5, _block.ActualBlockSize );
 			Assert.AreEqual( 5, _block.DeclaredBlockSize );
 			Assert.AreEqual( ErrorState.DataBlockTooShort, _block.ErrorState );
@@ -184,63 +214,94 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( _data[i], _block.Data[i], i );
 			}
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _block.DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamTestNullArgument
+		#region ConstructorStreamTestNullArgument
 		/// <summary>
-		/// Checks that the correct exception is thrown when the FromStream
-		/// method is passed a null stream.
+		/// Checks that the correct exception is thrown when the 
+		/// constructor( Stream )is passed a null stream.
 		/// </summary>
 		[Test]
 		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void FromStreamTestNullArgument()
+		public void ConstructorStreamTestNullArgument()
 		{
+			ReportStart();
 			try
 			{
-				_block = DataBlock.FromStream( null );
+				_block = new DataBlock( null );
 			}
 			catch( ArgumentNullException ex )
 			{
 				Assert.AreEqual( "inputStream", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
 		#endregion
 
-		#region FromStreamTestEmptyBlock
+		#region ConstructorStreamTestEmptyBlock
 		/// <summary>
-		/// Tests that the FromStream method reads an empty block (i.e. just
+		/// Tests that the constructor( Stream ) reads an empty block (i.e. just
 		/// one byte containing a block length of zero) correctly.
 		/// </summary>
 		[Test]
-		public void FromStreamTestEmptyBlock()
+		public void ConstructorStreamTestEmptyBlock()
+		{
+			ReportStart();
+			ConstructorStreamTestEmptyBlock( true );
+			ConstructorStreamTestEmptyBlock( false );
+			ReportEnd();
+		}
+		private void ConstructorStreamTestEmptyBlock( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			s.WriteByte( 0 ); // write length (0 bytes)
 			s.Seek( 0, SeekOrigin.Begin ); // go to start of stream
-			
-			_block = DataBlock.FromStream( s );
+
+			_block = new DataBlock( s, xmlDebugging );
 			Assert.AreEqual( 0, _block.DeclaredBlockSize );
 			Assert.AreEqual( 0, _block.ActualBlockSize );
 			Assert.AreEqual( 0, _block.Data.Length );
 			Assert.AreEqual( ErrorState.Ok, _block.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _block.DebugXml );
+			}
 		}
 		#endregion
 
-		#region FromStreamTestEndOfStream
+		#region ConstructorStreamTestEndOfStream
 		/// <summary>
-		/// Checks that the correct error status is set when the FromStream
-		/// method is passed a stream which is already at its end.
+		/// Checks that the correct error status is set when the 
+		/// constructor( Stream ) is passed a stream which is already at its end.
 		/// </summary>
 		[Test]
-		public void FromStreamTestEndOfStream()
+		public void ConstructorStreamTestEndOfStream()
+		{
+			ReportStart();
+			ConstructorStreamTestEndOfStream( true );
+			ConstructorStreamTestEndOfStream( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTestEndOfStream( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_block = DataBlock.FromStream( s );
+			_block = new DataBlock( s, xmlDebugging );
 			Assert.AreEqual( ErrorState.EndOfInputStream, _block.ErrorState );
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _block.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -253,11 +314,12 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
 			MemoryStream s = new MemoryStream();
 			_block.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			DataBlock d = DataBlock.FromStream( s );
+			DataBlock d = new DataBlock( s );
 			Assert.AreEqual( ErrorState.Ok, d.ConsolidatedState );
 			Assert.AreEqual( _block.DeclaredBlockSize, d.DeclaredBlockSize );
 			Assert.AreEqual( _block.ActualBlockSize, d.ActualBlockSize );
@@ -265,6 +327,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( _block.Data[i], d.Data[i], "byte " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 
@@ -280,6 +343,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "b")]
 		public void IndexerTestArgumentOutOfRange()
 		{
+			ReportStart();
 			_block = new DataBlock( 4, _data );
 			try
 			{
@@ -291,8 +355,59 @@ namespace GifComponents.NUnit
 					= "Supplied index: 4. Array length: 4";
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "index", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~DataBlockTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_block.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

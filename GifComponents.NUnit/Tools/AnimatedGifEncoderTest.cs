@@ -31,6 +31,8 @@ using System.Globalization;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Components;
+using GifComponents.NUnit.Components;
 using GifComponents.Palettes;
 
 namespace GifComponents.NUnit
@@ -39,7 +41,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the AnimatedGifEncoder class.
 	/// </summary>
 	[TestFixture]
-	public class AnimatedGifEncoderTest : IDisposable
+	public class AnimatedGifEncoderTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private AnimatedGifEncoder _e;
 		private GifDecoder _d;
@@ -57,6 +59,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "Wikipedia")]
 		public void WikipediaExampleTest()
 		{
+			ReportStart();
 			_e = new AnimatedGifEncoder();
 			GifFrame frame = new GifFrame( WikipediaExample.ExpectedBitmap );
 			frame.Delay = WikipediaExample.DelayTime;
@@ -70,16 +73,17 @@ namespace GifComponents.NUnit
 			int code;
 
 			// check GIF header
-			GifHeader gh = GifHeader.FromStream( s );
+			GifHeader gh = new GifHeader( s );
 			Assert.AreEqual( ErrorState.Ok, gh.ConsolidatedState );
 
 			// check logical screen descriptor
-			LogicalScreenDescriptor lsd = LogicalScreenDescriptor.FromStream( s );
+			LogicalScreenDescriptor lsd = new LogicalScreenDescriptor( s );
 			Assert.AreEqual( ErrorState.Ok, lsd.ConsolidatedState );
 			WikipediaExample.CheckLogicalScreenDescriptor( lsd );
 			
 			// read global colour table
-			ColourTable gct = ColourTable.FromStream( s, WikipediaExample.GlobalColourTableSize );
+			ColourTable gct 
+				= new ColourTable( s, WikipediaExample.GlobalColourTableSize );
 			Assert.AreEqual( ErrorState.Ok, gct.ConsolidatedState );
 			// cannot compare global colour table as different encoders will
 			// produce difference colour tables.
@@ -94,7 +98,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( GifComponent.CodeApplicationExtensionLabel, code );
 			
 			// check netscape extension
-			ApplicationExtension ae = ApplicationExtension.FromStream( s );
+			ApplicationExtension ae = new ApplicationExtension( s );
 			Assert.AreEqual( ErrorState.Ok, ae.ConsolidatedState );
 			NetscapeExtension ne = new NetscapeExtension( ae );
 			Assert.AreEqual( ErrorState.Ok, ne.ConsolidatedState );
@@ -109,7 +113,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( GifComponent.CodeGraphicControlLabel, code );
 			
 			// check graphic control extension
-			GraphicControlExtension gce = GraphicControlExtension.FromStream( s );
+			GraphicControlExtension gce = new GraphicControlExtension( s );
 			Assert.AreEqual( ErrorState.Ok, gce.ConsolidatedState );
 			WikipediaExample.CheckGraphicControlExtension( gce );
 
@@ -118,7 +122,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( GifComponent.CodeImageSeparator, code );
 			
 			// check for image descriptor
-			ImageDescriptor id = ImageDescriptor.FromStream( s );
+			ImageDescriptor id = new ImageDescriptor( s );
 			Assert.AreEqual( ErrorState.Ok, id.ConsolidatedState );
 			WikipediaExample.CheckImageDescriptor( id );
 
@@ -159,6 +163,7 @@ namespace GifComponents.NUnit
 			BitmapAssert.AreEqual( WikipediaExample.ExpectedBitmap, 
 			                      (Bitmap) _d.Frames[0].TheImage,
 			                       "" );
+			ReportEnd();
 		}
 		#endregion
 
@@ -170,12 +175,14 @@ namespace GifComponents.NUnit
 		[Test]
 		public void UseGlobal()
 		{
+			ReportStart();
 			_frames = new Collection<GifFrame>();
 			_frames.Add( new GifFrame( (Image) Bitmap1() ) );
 			_frames.Add( new GifFrame( (Image) Bitmap2() ) );
 			TestAnimatedGifEncoder( ColourTableStrategy.UseGlobal, 
 			                        8, 
 			                        Bitmap1().Size );
+			ReportEnd();
 		}
 		#endregion
 
@@ -187,12 +194,14 @@ namespace GifComponents.NUnit
 		[Test]
 		public void UseLocal()
 		{
+			ReportStart();
 			_frames = new Collection<GifFrame>();
 			_frames.Add( new GifFrame( (Image) Bitmap1() ) );
 			_frames.Add( new GifFrame( (Image) Bitmap2() ) );
 			TestAnimatedGifEncoder( ColourTableStrategy.UseLocal, 
 			                        11, 
 			                        Bitmap1().Size );
+			ReportEnd();
 		}
 		#endregion
 
@@ -205,6 +214,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeEncodeGlobeGlobal()
 		{
+			ReportStart();
 			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
 			_d = new GifDecoder( filename );
 			_d.Decode();
@@ -220,6 +230,7 @@ namespace GifComponents.NUnit
 			_d = new GifDecoder( s );
 			_d.Decode();
 			CheckFrames();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -232,6 +243,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeEncodeGlobeLocal()
 		{
+			ReportStart();
 			string filename = @"images/globe/spinning globe better 200px transparent background.gif";
 			_d = new GifDecoder( filename );
 			_d.Decode();
@@ -247,6 +259,7 @@ namespace GifComponents.NUnit
 			_d = new GifDecoder( s );
 			_d.Decode();
 			CheckFrames();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -259,6 +272,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeEncodeSmileyGlobal()
 		{
+			ReportStart();
 			string filename = @"images/smiley/smiley.gif";
 			_d = new GifDecoder( filename );
 			_d.Decode();
@@ -274,6 +288,7 @@ namespace GifComponents.NUnit
 			_d = new GifDecoder( s );
 			_d.Decode();
 			CheckFrames();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -286,6 +301,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeEncodeSmileyLocal()
 		{
+			ReportStart();
 			string filename = @"images/smiley/smiley.gif";
 			_d = new GifDecoder( filename );
 			_d.Decode();
@@ -301,6 +317,7 @@ namespace GifComponents.NUnit
 			_d = new GifDecoder( s );
 			_d.Decode();
 			CheckFrames();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -325,9 +342,11 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ColourQualityTooLow()
 		{
+			ReportStart();
 			_e = new AnimatedGifEncoder();
 			_e.ColourQuality = 0;
 			Assert.AreEqual( 1, _e.ColourQuality );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -341,6 +360,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( InvalidOperationException ) )]
 		public void WriteToStreamNoFramesTest()
 		{
+			ReportStart();
 			_e = new AnimatedGifEncoder();
 			MemoryStream s = new MemoryStream();
 			try
@@ -352,6 +372,7 @@ namespace GifComponents.NUnit
 				string message
 					= "The AnimatedGifEncoder has no frames to write!";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -373,6 +394,7 @@ namespace GifComponents.NUnit
 		[Ignore( "Re-enable once Octree quantizer is implemented" )]
 		public void CompareQuantizers()
 		{
+			ReportStart();
 			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
 			_d.Decode();
 			
@@ -395,7 +417,7 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( fileName );
 			endTime = DateTime.Now;
 			encodingTime = endTime - startTime;
-			Console.WriteLine( "Encoding using NeuQuant took " + encodingTime );
+			WriteMessage( "Encoding using NeuQuant took " + encodingTime );
 			
 			fileName = "Octree.gif";
 			_e.QuantizerType = QuantizerType.Octree;
@@ -403,7 +425,7 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( fileName );
 			endTime = DateTime.Now;
 			encodingTime = endTime - startTime;
-			Console.WriteLine( "Encoding using Octree took " + encodingTime );
+			WriteMessage( "Encoding using Octree took " + encodingTime );
 			
 			GifDecoder nqDecoder = new GifDecoder( "NeuQuant.gif" );
 			GifDecoder otDecoder = new GifDecoder( "Octree.gif" );
@@ -414,35 +436,141 @@ namespace GifComponents.NUnit
 				                      otDecoder.Frames[i].TheImage,
 				                      "frame " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
-		#region UseSuppliedPalette
+		#region UseSuppliedPaletteGlobal
 		/// <summary>
-		/// Tests the encoder using a user-supplied palette.
+		/// Tests the encoder using a user-supplied palette and a global colour 
+		/// table.
 		/// </summary>
 		[Test]
-		public void UseSuppliedPalette()
+		public void UseSuppliedPaletteGlobal()
 		{
-			_e = new AnimatedGifEncoder();
-			_e.Palette = Palette.FromFile( @"ColourTables\grayscale.act" );
-			Assert.AreEqual( ColourTableStrategy.UseGlobal, _e.ColourTableStrategy );
-			Assert.AreEqual( QuantizerType.UseSuppliedPalette, _e.QuantizerType );
+			ReportStart();
+			TestUseSuppliedPalette( ColourTableStrategy.UseGlobal );
+			ReportEnd();
+		}
+		#endregion
+		
+		#region UseSuppliedPaletteLocal
+		/// <summary>
+		/// Tests the encoder using a user-supplied palette and local colour 
+		/// tables.
+		/// </summary>
+		[Test]
+		public void UseSuppliedPaletteLocal()
+		{
+			ReportStart();
+			TestUseSuppliedPalette( ColourTableStrategy.UseLocal );
+			ReportEnd();
+		}
+		#endregion
+		
+		#region private TestUseSuppliedPalette method
+		private void TestUseSuppliedPalette( ColourTableStrategy strategy )
+		{
+			string globalLocal 
+				= strategy == ColourTableStrategy.UseGlobal 
+				? "Global"
+				: "Local";
+			// First, create and check a series of single-frame GIFs, one for
+			// each of the available colour tables.
+			string[] files = Directory.GetFiles( @"ColourTables", "*.act" );
+			foreach( string act in files )
+			{
+				string actFileWithoutExtension 
+					= Path.GetFileNameWithoutExtension( act );
+				_e = new AnimatedGifEncoder();
+				if( strategy == ColourTableStrategy.UseGlobal )
+				{
+					_e.Palette = Palette.FromFile( act );
+					Assert.AreEqual( ColourTableStrategy.UseGlobal, 
+					                 _e.ColourTableStrategy );
+					// QuantizerType should default to UseSuppliedPalette when
+					// the encoder's Palette property is set.
+					Assert.AreEqual( QuantizerType.UseSuppliedPalette, 
+					                 _e.QuantizerType );
+				}
+				else
+				{
+					_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
+					Assert.AreEqual( ColourTableStrategy.UseLocal, 
+					                 _e.ColourTableStrategy );
+					_e.QuantizerType = QuantizerType.UseSuppliedPalette;
+					Assert.AreEqual( QuantizerType.UseSuppliedPalette, 
+					                 _e.QuantizerType );
+				}
+				
+				GifFrame frame 
+					= new GifFrame( Image.FromFile( @"images\smiley.bmp" ) );
+				if( strategy == ColourTableStrategy.UseLocal )
+				{
+					frame.Palette = Palette.FromFile( act );
+				}
+				_e.AddFrame( frame );
+				
+				string fileName 
+					= "AnimatedGifEncoderTest.UseSuppliedPalette"
+					+ globalLocal
+					+ "-"
+					+ actFileWithoutExtension 
+					+ ".gif";
+				_e.WriteToFile( fileName );
+				
+				_d = new GifDecoder( fileName, true );
+				_d.Decode();
+				
+				Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState, 
+				                 actFileWithoutExtension );
+				Assert.AreEqual( 1, _d.Frames.Count, actFileWithoutExtension );
+				
+				if( strategy == ColourTableStrategy.UseGlobal )
+				{
+					Assert.AreEqual( true, 
+					                 _d.LogicalScreenDescriptor.HasGlobalColourTable,
+					                 actFileWithoutExtension );
+					Assert.IsNotNull( _d.GlobalColourTable, 
+					                  actFileWithoutExtension );
+				}
+				else
+				{
+					Assert.AreEqual( false, 
+					                 _d.LogicalScreenDescriptor.HasGlobalColourTable, 
+					                 actFileWithoutExtension );
+					Assert.IsNull( _d.GlobalColourTable, actFileWithoutExtension );
+				}
+				
+				string expectedFileName 
+					= @"images\Smiley\Smiley"
+					+ "-"
+					+ actFileWithoutExtension 
+					+ ".bmp";
+				Image expected = Image.FromFile( expectedFileName );
+				ImageAssert.AreEqual( expected, _d.Frames[0].TheImage );
+			}
 			
-			_e.AddFrame( new GifFrame( Image.FromFile( @"images\smiley.bmp" ) ) );
-			
-			string fileName = "AnimatedGifEncoderTest.UseSuppliedPalette.gif";
-			_e.WriteToFile( fileName );
-			
-			_d = new GifDecoder( fileName );
+			// now encode a multi-frame animation with a user-supplied palette
+			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
 			_d.Decode();
+			_e = new AnimatedGifEncoder();
+			_e.QuantizerType = QuantizerType.UseSuppliedPalette;
+			_e.Palette = Palette.FromFile( @"ColourTables\C64.act" );
+			foreach( GifFrame f in _d.Frames )
+			{
+				_e.AddFrame( f );
+			}
+			string globeFileName 
+				= "AnimatedGifEncoderTest.UseSuppliedPalette"
+				+ globalLocal
+				+ ".gif";
+			_e.WriteToFile( globeFileName );
 			
+			_d = new GifDecoder( globeFileName );
+			_d.Decode();
 			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
-			Assert.AreEqual( 1, _d.Frames.Count );
-			Assert.AreEqual( true, _d.LogicalScreenDescriptor.HasGlobalColourTable );
-			
-			Image expected = Image.FromFile( @"images\SmileyGrayscale.bmp" );
-			ImageAssert.AreEqual( expected, _d.Frames[0].TheImage );
+			Assert.AreEqual( _e.Frames.Count, _d.Frames.Count );
 		}
 		#endregion
 		
@@ -616,7 +744,7 @@ namespace GifComponents.NUnit
 		private static void CheckGifHeader( Stream s )
 		{
 			// check GIF header
-			GifHeader gh = GifHeader.FromStream( s );
+			GifHeader gh = new GifHeader( s );
 			Assert.AreEqual( ErrorState.Ok, gh.ConsolidatedState );
 			Assert.AreEqual( "GIF", gh.Signature );
 			Assert.AreEqual( "89a", gh.Version );
@@ -629,7 +757,7 @@ namespace GifComponents.NUnit
 			                              bool shouldHaveGlobalColourTable )
 		{
 			// check logical screen descriptor
-			LogicalScreenDescriptor lsd = LogicalScreenDescriptor.FromStream( s );
+			LogicalScreenDescriptor lsd = new LogicalScreenDescriptor( s );
 			Assert.AreEqual( ErrorState.Ok, 
 			                 lsd.ConsolidatedState,
 			                 "Logical screen descriptor consolidated state" );
@@ -651,7 +779,7 @@ namespace GifComponents.NUnit
 		                                             int colourTableSize )
 		{
 			// read colour table
-			ColourTable ct = ColourTable.FromStream( s, colourTableSize );
+			ColourTable ct = new ColourTable( s, colourTableSize );
 			Assert.AreEqual( ErrorState.Ok, ct.ConsolidatedState );
 			return ct;
 		}
@@ -679,7 +807,7 @@ namespace GifComponents.NUnit
 		private static void CheckNetscapeExtension( Stream s, int loopCount )
 		{
 			// check netscape extension
-			ApplicationExtension ae = ApplicationExtension.FromStream( s );
+			ApplicationExtension ae = new ApplicationExtension( s );
 			Assert.AreEqual( ErrorState.Ok, ae.ConsolidatedState );
 			NetscapeExtension ne = new NetscapeExtension( ae );
 			Assert.AreEqual( ErrorState.Ok, ne.ConsolidatedState );
@@ -706,7 +834,7 @@ namespace GifComponents.NUnit
 		                                                  Color transparentColour )
 		{
 			// check graphic control extension
-			GraphicControlExtension gce = GraphicControlExtension.FromStream( s );
+			GraphicControlExtension gce = new GraphicControlExtension( s );
 			Assert.AreEqual( ErrorState.Ok, gce.ConsolidatedState );
 			Assert.AreEqual( 10, gce.DelayTime );
 			if( transparentColour == Color.Empty )
@@ -742,7 +870,7 @@ namespace GifComponents.NUnit
 			                      int localColourTableSizeBits )
 		{
 			// check for image descriptor
-			ImageDescriptor id = ImageDescriptor.FromStream( s );
+			ImageDescriptor id = new ImageDescriptor( s );
 			Assert.AreEqual( ErrorState.Ok, 
 			                 id.ConsolidatedState, 
 			                 "Image descriptor consolidated state" );
@@ -836,13 +964,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Bug2892015()
 		{
+			ReportStart();
 			_e = new AnimatedGifEncoder();
 			
 			#region create 10 random bitmaps
 			Collection<Bitmap> bitmaps = new Collection<Bitmap>();
 			for( int i = 0; i < 10; i++ )
 			{
-				Console.WriteLine( "Creating bitmap " + i );
 				Bitmap bitmap = RandomBitmap.Create( new Size( 50, 50 ),
 				                                     10,
 				                                     PixelFormat.Format32bppRgb );
@@ -863,7 +991,7 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( "2892015-1.gif" );
 			endTime = DateTime.Now;
 			TimeSpan runTime1 = endTime - startTime;
-			Console.WriteLine( runTime1 );
+			WriteMessage( "Encoding 3 frames took " + runTime1 );
 			#endregion
 			
 			_e.Frames.Clear();
@@ -878,7 +1006,7 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( "2892015-2.gif" );
 			endTime = DateTime.Now;
 			TimeSpan runTime2 = endTime - startTime;
-			Console.WriteLine( runTime2 );
+			WriteMessage( "Encoding all " + bitmaps.Count + " frames took " + runTime2 );
 			#endregion
 			
 			_e.Frames.Clear();
@@ -893,50 +1021,111 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( "2892015-3.gif" );
 			endTime = DateTime.Now;
 			TimeSpan runTime3 = endTime - startTime;
-			Console.WriteLine( runTime3 );
+			WriteMessage( "Encoding 3 frames took " + runTime3 );
 			#endregion
 			
 			Assert.IsTrue( runTime3 < runTime2 );
 			_d = new GifDecoder( "2892015-3.gif" );
 			_d.Decode();
 			Assert.AreEqual( 3, _d.Frames.Count );
+			
+			ReportEnd();
+		}
+		#endregion
+		
+		#region BadEncodingUsingGameboyPaletteLocal
+		/// <summary>
+		/// Reproduces the problem whereby using the gameboy.act as a 
+		/// user-supplied palette to encode a GIF with local colour tables,
+		/// results in a corrupt GIF.
+		/// Solution: when building the local colour table from the .act file
+		/// in AnimatedGifEncoder.SetActiveColourTable, remember to pad the
+		/// colour table out to a number of colours which is a whole power of 2.
+		/// </summary>
+		[Test]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Gameboy")]
+		public void BadEncodingUsingGameboyPaletteLocal()
+		{
+			ReportStart();
+			_e = new AnimatedGifEncoder();
+			_e.ColourTableStrategy = ColourTableStrategy.UseLocal;
+			_e.QuantizerType = QuantizerType.UseSuppliedPalette;
+			
+			GifFrame frame 
+				= new GifFrame( Image.FromFile( @"images\smiley.bmp" ) );
+			_e.AddFrame( frame );
+			
+			Assert.AreEqual( ColourTableStrategy.UseLocal, _e.ColourTableStrategy );
+			Assert.AreEqual( QuantizerType.UseSuppliedPalette, _e.QuantizerType );
+			
+			frame.Palette = Palette.FromFile( @"ColourTables\gameboy.act" );
+			
+			Assert.AreEqual( ColourTableStrategy.UseLocal, _e.ColourTableStrategy );
+			Assert.AreEqual( QuantizerType.UseSuppliedPalette, _e.QuantizerType );
+			
+			_e.WriteToFile( GifFileName );
+			
+			_d = new GifDecoder( GifFileName );
+			_d.Decode();
+			
+			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
+			
+			ReportEnd();
 		}
 		#endregion
 		
 		#endregion
 
 		#region IDisposable implementation
-		private bool _isDisposed; // defaults to false
-		
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~AnimatedGifEncoderTest()
+		{
+			Dispose( false );
+		}
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
 		public void Dispose()
 		{
 			Dispose( true );
-			GC.SuppressFinalize( true );
+			GC.SuppressFinalize( this );
 		}
-		
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
-		/// <param name="isDisposing">
+		/// <param name="disposing">
 		/// Indicates whether this method is being called by the class's Dispose
 		/// method (true) or by the garbage collector (false).
 		/// </param>
-		protected virtual void Dispose( bool isDisposing )
+		protected virtual void Dispose( bool disposing )
 		{
-			if( _isDisposed )
+			if( !_disposed )
 			{
-				return;
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_d.Dispose();
+					_e.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
 			}
-			
-			if( isDisposing )
-			{
-				_d.Dispose();
-			}
-			
-			_isDisposed = true;
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

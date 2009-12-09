@@ -25,14 +25,15 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the NetscapeExtension class.
 	/// </summary>
 	[TestFixture]
-	public class NetscapeExtensionTest
+	public class NetscapeExtensionTest : IDisposable
 	{
 		private NetscapeExtension _ne;
 		
@@ -193,6 +194,56 @@ namespace GifComponents.NUnit
 				Assert.AreEqual( "applicationExtension", ex.ParamName );
 				throw;
 			}
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~NetscapeExtensionTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_ne.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

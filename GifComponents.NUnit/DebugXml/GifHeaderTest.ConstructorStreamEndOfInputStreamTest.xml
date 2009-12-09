@@ -1,0 +1,11 @@
+﻿<GifHeader>
+  <ErrorState>EndOfInputStream</ErrorState>
+  <ErrorMessage>Bytes read: 1</ErrorMessage>
+  <BytesRead>
+    <ByteGroup>47 00 00 00 00 00 </ByteGroup>
+  </BytesRead>
+  <Signature>G</Signature>
+  <GifVersion />
+  <ErrorState>BadSignature</ErrorState>
+  <ErrorMessage>Bad signature: G</ErrorMessage>
+</GifHeader>

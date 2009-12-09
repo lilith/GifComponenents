@@ -26,25 +26,34 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the TableBasedImageData class.
 	/// TODO: aim for 100% coverage of TableBasedImageData.cs
 	/// </summary>
 	[TestFixture]
-	public class TableBasedImageDataTest
+	public class TableBasedImageDataTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private TableBasedImageData _tbid;
 		
 		#region ConstructorTest
 		/// <summary>
-		/// Tests the FromStream method using the example from
+		/// Tests the constructor( Stream ) using the example from
 		/// http://en.wikipedia.org/wiki/Gif#Example_.gif_file
 		/// </summary>
 		[Test]
 		public void ConstructorTest()
+		{
+			ReportStart();
+			ConstructorTest( true );
+			ConstructorTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorTest( bool xmlDebugging )
 		{
 			byte[] bytes = WikipediaExample.ImageDataBytes;
 			MemoryStream s = new MemoryStream();
@@ -53,10 +62,15 @@ namespace GifComponents.NUnit
 			
 			int pixelCount = WikipediaExample.FrameSize.Width
 							* WikipediaExample.FrameSize.Height;
-			_tbid = new TableBasedImageData( s, pixelCount );
+			_tbid = new TableBasedImageData( s, pixelCount, xmlDebugging );
 
 			Assert.AreEqual( ErrorState.Ok, _tbid.ConsolidatedState );
 			WikipediaExample.CheckImageData( _tbid );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _tbid.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -69,6 +83,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void PixelCountTooSmall()
 		{
+			ReportStart();
 			int pixelCount = 0;
 			try
 			{
@@ -81,6 +96,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value was " + pixelCount;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "pixelCount", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -88,12 +104,13 @@ namespace GifComponents.NUnit
 		
 		#region BlockTerminatorTest
 		/// <summary>
-		/// Tests the FromStream method where the end of the data is marked by
-		/// a block terminator because no end-of-information code is supplied.
+		/// Tests the constructor( Stream ) where the end of the data is marked 
+		/// by a block terminator because no end-of-information code is supplied.
 		/// </summary>
 		[Test]
 		public void BlockTerminatorTest()
 		{
+			ReportStart();
 			byte[] bytes = new byte[]
 			{
 				0x08, // LZW minimum code size
@@ -144,6 +161,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( expectedIndices[i], _tbid.Pixels[i], "pixel " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -155,6 +173,14 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MinimumCodeSizeTooLarge()
 		{
+			ReportStart();
+			MinimumCodeSizeTooLarge( true );
+			MinimumCodeSizeTooLarge( false );
+			ReportEnd();
+		}
+		
+		private void MinimumCodeSizeTooLarge( bool xmlDebugging )
+		{
 			byte[] bytes = new byte[]
 			{
 				12, // LZW minimum code size
@@ -163,7 +189,7 @@ namespace GifComponents.NUnit
 			s.Write( bytes, 0, bytes.Length );
 			s.Seek( 0, SeekOrigin.Begin );
 
-			_tbid = new TableBasedImageData( s, 25 );
+			_tbid = new TableBasedImageData( s, 25, xmlDebugging );
 			
 			// Processing will be abandoned before any pixels are set
 			Assert.AreEqual( ErrorState.LzwMinimumCodeSizeTooLarge, 
@@ -176,6 +202,11 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 13, _tbid.InitialCodeSize );
 			Assert.AreEqual( Math.Pow( 2, 12 ), _tbid.ClearCode );
 			Assert.AreEqual( Math.Pow( 2, 12 ) + 1, _tbid.EndOfInformation );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _tbid.DebugXml );
+			}
 		}
 		#endregion
 
@@ -188,13 +219,21 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MissingPixels()
 		{
+			ReportStart();
+			MissingPixels( true );
+			MissingPixels( false );
+			ReportEnd();
+		}
+		
+		private void MissingPixels( bool xmlDebugging )
+		{
 			byte[] bytes = WikipediaExample.ImageDataBytes;
 			MemoryStream s = new MemoryStream();
 			s.Write( bytes, 0, bytes.Length );
 			s.Seek( 0, SeekOrigin.Begin );
 			
 			// The stream contains 15 pixels, this image size implies 18 pixels
-			_tbid = new TableBasedImageData( s, 18 );
+			_tbid = new TableBasedImageData( s, 18, xmlDebugging );
 			
 			Assert.AreEqual( 18, _tbid.Pixels.Count );
 			Assert.AreEqual( ErrorState.TooFewPixelsInImageData, _tbid.ConsolidatedState );
@@ -239,6 +278,14 @@ namespace GifComponents.NUnit
 		[Test]
 		public void CodeNotInDictionary()
 		{
+			ReportStart();
+			CodeNotInDictionary( true );
+			CodeNotInDictionary( false );
+			ReportEnd();
+		}
+		
+		private void CodeNotInDictionary( bool xmlDebugging )
+		{
 			byte[] bytes = WikipediaExample.ImageDataBytes;
 			bytes[4] = 0xFF; // put an unexpected code into the stream
 			MemoryStream s = new MemoryStream();
@@ -247,7 +294,7 @@ namespace GifComponents.NUnit
 			
 			int pixelCount = WikipediaExample.FrameSize.Width
 							* WikipediaExample.FrameSize.Height;
-			_tbid = new TableBasedImageData( s, pixelCount );
+			_tbid = new TableBasedImageData( s, pixelCount, xmlDebugging );
 			
 			Assert.IsTrue( _tbid.TestState( ErrorState.CodeNotInDictionary ) );
 			Assert.AreEqual( 15, _tbid.Pixels.Count );
@@ -279,6 +326,11 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( expectedIndices[i], _tbid.Pixels[i], "pixel " + i );
 			}
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _tbid.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -289,6 +341,14 @@ namespace GifComponents.NUnit
 		/// </summary>
 		[Test]
 		public void DataBlockTooShort()
+		{
+			ReportStart();
+			DataBlockTooShort( true );
+			DataBlockTooShort( false );
+			ReportEnd();
+		}
+		
+		private void DataBlockTooShort( bool xmlDebugging )
 		{
 			byte[] bytes = new byte[]
 			{
@@ -304,7 +364,7 @@ namespace GifComponents.NUnit
 			
 			int pixelCount = WikipediaExample.FrameSize.Width
 							* WikipediaExample.FrameSize.Height;
-			_tbid = new TableBasedImageData( s, pixelCount );
+			_tbid = new TableBasedImageData( s, pixelCount, xmlDebugging );
 			
 			Assert.AreEqual( 15, _tbid.Pixels.Count );
 			Assert.AreEqual( ErrorState.DataBlockTooShort | ErrorState.TooFewPixelsInImageData, _tbid.ConsolidatedState );
@@ -335,6 +395,11 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( expectedIndices[i], _tbid.Pixels[i], "pixel " + i );
 			}
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _tbid.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -346,16 +411,29 @@ namespace GifComponents.NUnit
 		[Test]
 		public void EmptyDataBlock()
 		{
+			ReportStart();
+			EmptyDataBlock( true );
+			EmptyDataBlock( false );
+			ReportEnd();
+		}
+		
+		private void EmptyDataBlock( bool xmlDebugging )
+		{
 			MemoryStream s = new MemoryStream();
 			s.WriteByte( 8 ); // write a valid LZW min code size
 			s.WriteByte( 0 );
 			s.WriteByte( 0 );
 			s.Seek( 0, SeekOrigin.Begin );
 
-			_tbid = new TableBasedImageData( s, 1000000 );
+			_tbid = new TableBasedImageData( s, 100, xmlDebugging );
 
 			Assert.AreEqual( ErrorState.TooFewPixelsInImageData, 
 			                 _tbid.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _tbid.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -371,6 +449,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void HandleRubbish()
 		{
+			ReportStart();
 			string[] files = Directory.GetFiles( Directory.GetCurrentDirectory() );
 			foreach( string file in files )
 			{
@@ -387,11 +466,12 @@ namespace GifComponents.NUnit
 				{
 					throw new InvalidOperationException( file + ": ", ex );
 				}
-				Console.WriteLine( file + " " + _tbid.ConsolidatedState );
 			}
+			ReportEnd();
 		}
 		#endregion
 
+		// TODO: replace this test with one specific to TBID
 		#region RotatingGlobeTest
 		/// <summary>
 		/// Calls the RotatingGlobeTest from the GifDecoder test framework
@@ -399,11 +479,61 @@ namespace GifComponents.NUnit
 		/// </summary>
 		[Test]
 		[SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
-//		[Ignore( "Don't run when checking code coverage by this test fixture" )]
+		[Ignore( "Don't run when checking code coverage by this test fixture" )]
 		public void RotatingGlobeTest()
 		{
 			GifDecoderTest t = new GifDecoderTest();
 			t.DecodeRotatingGlobe();
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~TableBasedImageDataTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_tbid.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

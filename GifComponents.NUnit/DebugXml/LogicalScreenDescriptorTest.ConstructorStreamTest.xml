@@ -1,0 +1,6 @@
+﻿<LogicalScreenDescriptor>
+  <LogicalScreenSize Width="15" Height="20" />
+  <PackedFields ByteRead="E3" HasGlobalColourTable="True" ColourResolution="6" GlobalColourTableIsSorted="False" GlobalColourTableSizeBits="3" />
+  <BackgroundColourIndex>12</BackgroundColourIndex>
+  <PixelAspectRatio>2</PixelAspectRatio>
+</LogicalScreenDescriptor>

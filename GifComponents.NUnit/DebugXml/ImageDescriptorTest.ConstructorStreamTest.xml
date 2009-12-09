@@ -1,0 +1,5 @@
+﻿<ImageDescriptor>
+  <Position X="1" Y="2" />
+  <Size Width="20" Height="30" />
+  <PackedFields ByteRead="07" HasLocalColourTable="False" IsInterlaced="False" LocalColourTableIsSorted="False" LocalColourTableSizeBits="7" />
+</ImageDescriptor>

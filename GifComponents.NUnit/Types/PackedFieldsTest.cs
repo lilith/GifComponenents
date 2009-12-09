@@ -23,6 +23,7 @@
 
 using System;
 using NUnit.Framework;
+using NUnit.Extensions;
 
 namespace GifComponents.NUnit
 {
@@ -30,7 +31,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the PackedFields class.
 	/// </summary>
 	[TestFixture]
-	public class PackedFieldsTest
+	public class PackedFieldsTest : TestFixtureBase
 	{
 		private PackedFields _pf;
 		
@@ -42,6 +43,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
 			_pf = new PackedFields( 0 ); // 00000000
 			Assert.AreEqual( 0, _pf.Byte );
 			for( int i = 0; i < 8; i++ )
@@ -66,8 +68,11 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( true, _pf.GetBit( 5 ) );
 			Assert.AreEqual( false, _pf.GetBit( 6 ) );
 			Assert.AreEqual( false, _pf.GetBit( 7 ) );
+			ReportEnd();
 		}
 		#endregion
+
+		#region test cases for the GetBit and SetBit methods
 		
 		#region GetSetBitTest
 		/// <summary>
@@ -76,14 +81,124 @@ namespace GifComponents.NUnit
 		[Test]
 		public void GetSetBitTest()
 		{
+			ReportStart();
 			for( int i = 0; i < 8; i++ )
 			{
 				_pf = new PackedFields();
 				_pf.SetBit( i, true );
 				Assert.AreEqual( true, _pf.GetBit( i ) );
 			}
+			ReportEnd();
 		}
 		#endregion
+		
+		#region GetBitTestIndexTooSmall
+		/// <summary>
+		/// Checks that the correct exception is thrown when the GetBit method
+		/// is passed an index which is too small.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void GetBitTestIndexTooSmall()
+		{
+			ReportStart();
+			try
+			{
+				_pf.GetBit( -1 );
+			}
+			catch( ArgumentOutOfRangeException ex )
+			{
+				string message
+					= "Index must be between 0 and 7. Supplied index: -1";
+				Assert.AreEqual( "index", ex.ParamName );
+				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
+				throw;
+			}
+		}
+		#endregion
+		
+		#region GetBitTestIndexTooLarge
+		/// <summary>
+		/// Checks that the correct exception is thrown when the GetBit method
+		/// is passed an index which is too large.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void GetBitTestIndexTooLarge()
+		{
+			ReportStart();
+			try
+			{
+				_pf.GetBit( 8 );
+			}
+			catch( ArgumentOutOfRangeException ex )
+			{
+				string message
+					= "Index must be between 0 and 7. Supplied index: 8";
+				Assert.AreEqual( "index", ex.ParamName );
+				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
+				throw;
+			}
+		}
+		#endregion
+		
+		#region SetBitTestIndexTooSmall
+		/// <summary>
+		/// Checks that the correct exception is thrown when the SetBit method
+		/// is passed an index which is too small.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void SetBitTestIndexTooSmall()
+		{
+			ReportStart();
+			try
+			{
+				_pf.SetBit( -1, true );
+			}
+			catch( ArgumentOutOfRangeException ex )
+			{
+				string message
+					= "Index must be between 0 and 7. Supplied index: -1";
+				Assert.AreEqual( "index", ex.ParamName );
+				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
+				throw;
+			}
+		}
+		#endregion
+		
+		#region SetBitTestIndexTooLarge
+		/// <summary>
+		/// Checks that the correct exception is thrown when the SetBit method
+		/// is passed an index which is too large.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void SetBitTestIndexTooLarge()
+		{
+			ReportStart();
+			try
+			{
+				_pf.SetBit( 8, true );
+			}
+			catch( ArgumentOutOfRangeException ex )
+			{
+				string message
+					= "Index must be between 0 and 7. Supplied index: 8";
+				Assert.AreEqual( "index", ex.ParamName );
+				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
+				throw;
+			}
+		}
+		#endregion
+
+		#endregion
+		
+		#region test cases for the GetBits and SetBits methods
 		
 		#region GetSetBitsTest
 		/// <summary>
@@ -92,6 +207,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void GetSetBitsTest()
 		{
+			ReportStart();
 			_pf = new PackedFields();
 			_pf.SetBits( 2, 3, 4 );
 			Assert.AreEqual( false, _pf.GetBit( 0 ) );
@@ -109,6 +225,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 16, _pf.GetBits( 0, 7 ) );
 			Assert.AreEqual( 32, _pf.GetBits( 0, 8 ) );
 			Assert.AreEqual( 32, _pf.Byte );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -119,6 +236,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void GetSetBitsTest2()
 		{
+			ReportStart();
 			_pf = new PackedFields();
 			_pf.SetBits( 1, 5, 13 );
 			Assert.AreEqual( false, _pf.GetBit( 0 ) );
@@ -137,105 +255,10 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 26, _pf.GetBits( 0, 7 ) );
 			Assert.AreEqual( 52, _pf.GetBits( 0, 8 ) );
 			Assert.AreEqual( 52, _pf.Byte );
+			ReportEnd();
 		}
 		#endregion
 		
-		#region GetBitTestIndexTooSmall
-		/// <summary>
-		/// Checks that the correct exception is thrown when the GetBit method
-		/// is passed an index which is too small.
-		/// </summary>
-		[Test]
-		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
-		public void GetBitTestIndexTooSmall()
-		{
-			try
-			{
-				_pf.GetBit( -1 );
-			}
-			catch( ArgumentOutOfRangeException ex )
-			{
-				string message
-					= "Index must be between 0 and 7. Supplied index: -1";
-				Assert.AreEqual( "index", ex.ParamName );
-				StringAssert.Contains( message, ex.Message );
-				throw;
-			}
-		}
-		#endregion
-		
-		#region GetBitTestIndexTooLarge
-		/// <summary>
-		/// Checks that the correct exception is thrown when the GetBit method
-		/// is passed an index which is too large.
-		/// </summary>
-		[Test]
-		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
-		public void GetBitTestIndexTooLarge()
-		{
-			try
-			{
-				_pf.GetBit( 8 );
-			}
-			catch( ArgumentOutOfRangeException ex )
-			{
-				string message
-					= "Index must be between 0 and 7. Supplied index: 8";
-				Assert.AreEqual( "index", ex.ParamName );
-				StringAssert.Contains( message, ex.Message );
-				throw;
-			}
-		}
-		#endregion
-		
-		#region SetBitTestIndexTooSmall
-		/// <summary>
-		/// Checks that the correct exception is thrown when the SetBit method
-		/// is passed an index which is too small.
-		/// </summary>
-		[Test]
-		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
-		public void SetBitTestIndexTooSmall()
-		{
-			try
-			{
-				_pf.SetBit( -1, true );
-			}
-			catch( ArgumentOutOfRangeException ex )
-			{
-				string message
-					= "Index must be between 0 and 7. Supplied index: -1";
-				Assert.AreEqual( "index", ex.ParamName );
-				StringAssert.Contains( message, ex.Message );
-				throw;
-			}
-		}
-		#endregion
-		
-		#region SetBitTestIndexTooLarge
-		/// <summary>
-		/// Checks that the correct exception is thrown when the SetBit method
-		/// is passed an index which is too large.
-		/// </summary>
-		[Test]
-		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
-		public void SetBitTestIndexTooLarge()
-		{
-			try
-			{
-				_pf.SetBit( 8, true );
-			}
-			catch( ArgumentOutOfRangeException ex )
-			{
-				string message
-					= "Index must be between 0 and 7. Supplied index: 8";
-				Assert.AreEqual( "index", ex.ParamName );
-				StringAssert.Contains( message, ex.Message );
-				throw;
-			}
-		}
-		#endregion
-
 		#region GetBitsTestIndexTooSmall
 		/// <summary>
 		/// Checks that the correct exception is thrown when the GetBits method
@@ -245,6 +268,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void GetBitsTestIndexTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_pf.GetBits( -1, 4 );
@@ -255,6 +279,7 @@ namespace GifComponents.NUnit
 					= "Start index must be between 0 and 7. Supplied index: -1";
 				Assert.AreEqual( "startIndex", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -269,6 +294,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void GetBitsTestIndexTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_pf.GetBits( 8, 4 );
@@ -279,6 +305,7 @@ namespace GifComponents.NUnit
 					= "Start index must be between 0 and 7. Supplied index: 8";
 				Assert.AreEqual( "startIndex", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -293,6 +320,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void SetBitsTestIndexTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_pf.SetBits( -1, 4, 6 );
@@ -303,6 +331,7 @@ namespace GifComponents.NUnit
 					= "Start index must be between 0 and 7. Supplied index: -1";
 				Assert.AreEqual( "startIndex", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -317,6 +346,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void SetBitsTestIndexTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_pf.SetBits( 8, 4, 6 );
@@ -327,6 +357,7 @@ namespace GifComponents.NUnit
 					= "Start index must be between 0 and 7. Supplied index: 8";
 				Assert.AreEqual( "startIndex", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -341,6 +372,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void GetBitsTestLengthTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_pf.GetBits( 1, 0 );
@@ -353,6 +385,7 @@ namespace GifComponents.NUnit
 					+ "0. Supplied start index: 1";
 				Assert.AreEqual( "length", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -367,6 +400,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void GetBitsTestLengthTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_pf.GetBits( 4, 5 );
@@ -379,6 +413,7 @@ namespace GifComponents.NUnit
 					+ "5. Supplied start index: 4";
 				Assert.AreEqual( "length", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -393,6 +428,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void SetBitsTestLengthTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_pf.SetBits( 1, 0, 5 );
@@ -405,6 +441,7 @@ namespace GifComponents.NUnit
 					+ "0. Supplied start index: 1";
 				Assert.AreEqual( "length", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -419,6 +456,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void SetBitsTestLengthTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_pf.SetBits( 4, 5, 6 );
@@ -431,10 +469,13 @@ namespace GifComponents.NUnit
 					+ "5. Supplied start index: 4";
 				Assert.AreEqual( "length", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
 		#endregion
 
+		#endregion
+		
 	}
 }

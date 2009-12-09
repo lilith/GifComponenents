@@ -25,7 +25,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// A data sub-block to form part of a Graphics Interchange Format data
@@ -60,6 +60,90 @@ namespace GifComponents
 		/// </param>
 		public DataBlock( int blockSize, byte[] data )
 		{
+			SaveData( blockSize, data );
+		}
+		#endregion
+		
+		#region constructor( Stream )
+		/// <summary>
+		/// Reads the next variable length data block from the input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		public DataBlock( Stream inputStream ) : this( inputStream, false )
+		{}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Reads the next variable length data block from the input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
+		public DataBlock( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			if( inputStream == null )
+			{
+				throw new ArgumentNullException( "inputStream" );
+			}
+			
+			int blockSize = Read( inputStream );
+			
+			if( blockSize == -1 )
+			{
+				// then we're at the end of the stream
+				SaveData( 0, new byte[0] );
+				string message
+					= "The end of the input stream was reached whilst "
+					+ "attempting to read a DataBlock.";
+				SetStatus( ErrorState.EndOfInputStream, message );
+				WriteDebugXmlFinish();
+				return;
+			}
+			
+			int bytesRead = 0;
+			byte[] buffer;
+			buffer = new byte[blockSize];
+			if( blockSize > 0 )
+			{
+				// keep reading until we've read the entire block
+				int count = 0;
+				while( bytesRead < blockSize ) 
+				{
+					count = inputStream.Read( buffer, bytesRead, blockSize - bytesRead );
+					if( count == 0 )
+					{
+						// then we've reached the end of the file
+						break;
+					}
+					bytesRead += count;
+				}
+			}
+
+			SaveData( blockSize, buffer );
+			
+			WriteDebugXmlElement( "BlockSize", blockSize );
+			WriteDebugXmlByteValues( "BytesRead", buffer );
+
+			if( bytesRead < blockSize )
+			{
+				string message
+					= "Supplied block size: " + blockSize
+					+ ". Actual block size: " + bytesRead;
+				SetStatus( ErrorState.DataBlockTooShort, message );
+			}
+			
+			WriteDebugXmlFinish();
+		}
+		#endregion
+
+		#region private SaveData method
+		private void SaveData( int blockSize, byte[] data )
+		{
 			if( data == null )
 			{
 				throw new ArgumentNullException( "data" );
@@ -78,7 +162,7 @@ namespace GifComponents
 			{
 				SetStatus( ErrorState.DataBlockTooLong, message );
 			}
-
+			
 			_blockSize = blockSize;
 			_data = data;
 		}
@@ -140,69 +224,6 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region public static FromStream method
-		/// <summary>
-		/// Reads the next variable length data block from the input stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <returns>
-		/// The next variable length data block in the input stream.
-		/// </returns>
-		public static DataBlock FromStream( Stream inputStream )
-		{
-			if( inputStream == null )
-			{
-				throw new ArgumentNullException( "inputStream" );
-			}
-			
-			int blockSize = Read( inputStream );
-			
-			if( blockSize == -1 )
-			{
-				// then we're at the end of the stream
-				DataBlock emptyBlock = new DataBlock( 0, new byte[0] );
-				string message
-					= "The end of the input stream was reached whilst "
-					+ "attempting to read a DataBlock.";
-				emptyBlock.SetStatus( ErrorState.EndOfInputStream, message );
-				return emptyBlock;
-			}
-			
-			int bytesRead = 0;
-			byte[] buffer;
-			buffer = new byte[blockSize];
-			if( blockSize > 0 )
-			{
-				// keep reading until we've read the entire block
-				int count = 0;
-				while( bytesRead < blockSize ) 
-				{
-					count = inputStream.Read( buffer, bytesRead, blockSize - bytesRead );
-					if( count == 0 )
-					{
-						// then we've reached the end of the file
-						break;
-					}
-					bytesRead += count;
-				}
-			}
-
-			DataBlock block = new DataBlock( blockSize, buffer );
-
-			if( bytesRead < blockSize )
-			{
-				string message
-					= "Supplied block size: " + blockSize
-					+ ". Actual block size: " + bytesRead;
-				block.SetStatus( ErrorState.DataBlockTooShort, message );
-			}
-			
-			return block;
-		}
-		#endregion
-
 		#region public WriteToStream method
 		/// <summary>
 		/// Writes this component to the supplied output stream.

@@ -1,0 +1,8 @@
+﻿<LogicalScreenDescriptor>
+  <LogicalScreenSize Width="12" Height="4" />
+  <PackedFields ByteRead="3C" HasGlobalColourTable="False" ColourResolution="3" GlobalColourTableIsSorted="True" GlobalColourTableSizeBits="4" />
+  <BackgroundColourIndex>2</BackgroundColourIndex>
+  <PixelAspectRatio>-1</PixelAspectRatio>
+  <ErrorState>EndOfInputStream</ErrorState>
+  <ErrorMessage />
+</LogicalScreenDescriptor>

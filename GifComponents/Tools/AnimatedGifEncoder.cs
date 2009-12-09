@@ -28,6 +28,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
+using GifComponents.Components;
 using GifComponents.Palettes;
 
 namespace GifComponents
@@ -63,6 +64,8 @@ namespace GifComponents
 	/// 	* Added support for colour tables with fewer than 256 colours
 	/// 	* Colour quantization only performed for animations with more than 
 	/// 	  256 colours.
+	/// 	* User can now supply their own palette as a global or local colour
+	/// 	  table.
 	/// </summary>
 	public class AnimatedGifEncoder : GifComponent
 	{
@@ -416,19 +419,16 @@ namespace GifComponents
 			
 			if( _quantizerType == QuantizerType.UseSuppliedPalette )
 			{
-				if( _palette == null )
+				if( _strategy == ColourTableStrategy.UseGlobal )
 				{
-					string message
-						= "You have chosen to encode this animation using a "
-						+ "supplied palette, but you have not supplied a palette!";
-					throw new InvalidOperationException( message );
-				}
-				if( _strategy == ColourTableStrategy.UseLocal )
-				{
-					string message
-						= "Use of user-supplied palettes with local colour "
-						+ "tables is not currently supported";
-					throw new NotImplementedException( message );
+					if( _palette == null )
+					{
+						string message
+							= "You have chosen to encode this animation using "
+							+ "a global colour table and a supplied palette, "
+							+ "but you have not supplied a palette!";
+						throw new InvalidOperationException( message );
+					}
 				}
 			}
 			
@@ -578,11 +578,18 @@ namespace GifComponents
 					= "Frame " + _processingFrame 
 					+ " of " + _frames.Count 
 					+ ": encoding pixel data";
-				// FIXME: null reference exception when using QuantizerType.UseSuppliedPalette
-				WritePixels( _pixelAnalysis.IndexedPixels, 
-				             outputStream ); // encode and write pixel data
+				IndexedPixels ip;
+				if( _quantizerType == QuantizerType.UseSuppliedPalette )
+				{
+					ip = MakeIndexedPixels( act, thisImage );
+				}
+				else
+				{
+					ip = _pixelAnalysis.IndexedPixels;
+				}
+				WritePixels( ip, outputStream );
 			}
-			else
+			else // global colour table
 			{
 				_status 
 					= "Frame " + _processingFrame 
@@ -591,17 +598,7 @@ namespace GifComponents
 				IndexedPixels ip;
 				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
-					Bitmap thisBitmap = (Bitmap) thisImage;
-					ip = new IndexedPixels();
-					for( int y = 0; y < thisImage.Height; y++ )
-					{
-						for( int x = 0; x < thisImage.Width; x++ )
-						{
-							Color c = thisBitmap.GetPixel( x, y );
-							int index = FindClosest( c, act );
-							ip.Add( (byte) index );
-						}
-					}
+					ip = MakeIndexedPixels( act, thisImage );
 				}
 				else
 				{
@@ -612,22 +609,74 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region private static MakeIndexedPixels method
+		/// <summary>
+		/// Converts the supplied image to a collection of pixel indices using
+		/// the supplied colour table.
+		/// </summary>
+		/// <param name="act">The active colour table</param>
+		/// <param name="image">The image</param>
+		/// <returns></returns>
+		private static IndexedPixels MakeIndexedPixels( ColourTable act, Image image )
+		{
+			Bitmap bitmap = (Bitmap) image;
+			IndexedPixels ip = new IndexedPixels();
+			for( int y = 0; y < image.Height; y++ )
+			{
+				for( int x = 0; x < image.Width; x++ )
+				{
+					Color c = bitmap.GetPixel( x, y );
+					int index = FindClosest( c, act );
+					ip.Add( (byte) index );
+				}
+			}
+			return ip;
+		}
+		#endregion
+		
 		#region private SetActiveColourTable method
 		private ColourTable SetActiveColourTable()
 		{
 			ColourTable act; // active colour table
 			if( _strategy == ColourTableStrategy.UseLocal )
 			{
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": building local colour table - analysing pixels";
-				Image thisImage = _frames[_processingFrame].TheImage;
-				_pixelAnalysis = new PixelAnalysis( thisImage, 
-				                                    _quality, 
-				                                    _quantizerType );
-				// make local colour table active
-				act = _pixelAnalysis.ColourTable;
+				if( _quantizerType == QuantizerType.UseSuppliedPalette )
+				{
+					if( _frames[_processingFrame].Palette == null )
+					{
+						string message
+							= "You have opted to use a local colour table built "
+							+ "from a supplied palette, but frame "
+							+ _processingFrame
+							+ "does not have a palette.";
+						throw new InvalidOperationException( message );
+					}
+					else
+					{
+						// Build local colour table from colours in the frame's
+						// supplied palette.
+						act = new ColourTable();
+						foreach( Color c in _frames[_processingFrame].Palette )
+						{
+							act.Add( c );
+						}
+						act.Pad();
+					}
+				}
+				else
+				{
+					// Build local colour table based on colours in the image.
+					_status 
+						= "Frame " + _processingFrame 
+						+ " of " + _frames.Count 
+						+ ": building local colour table - analysing pixels";
+					Image thisImage = _frames[_processingFrame].TheImage;
+					_pixelAnalysis = new PixelAnalysis( thisImage, 
+					                                    _quality, 
+					                                    _quantizerType );
+					// make local colour table active
+					act = _pixelAnalysis.ColourTable;
+				}
 			}
 			else
 			{

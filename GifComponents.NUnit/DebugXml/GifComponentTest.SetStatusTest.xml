@@ -1,0 +1,12 @@
+<SubComponent>
+  <Bytes>
+    <ByteGroup>01 04 </ByteGroup>
+  </Bytes>
+  <ErrorState>ColourTableTooShort</ErrorState>
+  <ErrorMessage>Bother!</ErrorMessage>
+  <Integers>
+    <ByteGroup>16 22 38 </ByteGroup>
+  </Integers>
+  <NullString />
+  <WithAttributes IsSet="True" Number="56" Text="Hello world" />
+</SubComponent>

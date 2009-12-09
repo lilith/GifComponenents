@@ -27,6 +27,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using NUnit.Framework;
+using NUnit.Extensions;
+using GifComponents.Components;
 
 namespace GifComponents.NUnit
 {
@@ -35,7 +37,7 @@ namespace GifComponents.NUnit
 	/// which bits are causing the slowness.
 	/// </summary>
 	[TestFixture]
-	public class AnimatedGifEncoderSpeedTests
+	public class AnimatedGifEncoderSpeedTests : TestFixtureBase, IDisposable
 	{
 		private AnimatedGifEncoder _encoder;
 		
@@ -48,6 +50,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ProfileTest()
 		{
+			ReportStart();
 			_encoder = new AnimatedGifEncoder();
 			_encoder.AddFrame( new GifFrame( RandomBitmap.Create( new Size( 500, 500 ), 
 			                                                10, 
@@ -58,12 +61,11 @@ namespace GifComponents.NUnit
 			t.Start();
 			while( t.IsAlive )
 			{
-				Console.WriteLine( DateTime.Now.ToString( CultureInfo.InvariantCulture ) 
-				                   + ": " + _encoder.Status 
-				                   + " / " + _encoder.PixelAnalysisStatus );
+				WriteMessage( _encoder.Status 
+				              + " / " + _encoder.PixelAnalysisStatus );
 				System.Threading.Thread.Sleep( 100 );
 			}
-			Console.WriteLine( "Finished" );
+			ReportEnd();
 		}
 		
 		private void EncodeBigFile()
@@ -79,12 +81,15 @@ namespace GifComponents.NUnit
 		/// depth).
 		/// </summary>
 		[Test]
+		[Ignore( "Takes a while to run")]
 		public void RunColourDepthTest()
 		{
+			ReportStart();
 			for( int i = 0; i < 10; i++ )
 			{
 				TryDifferentPixelFormats();
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -123,9 +128,59 @@ namespace GifComponents.NUnit
 				_encoder.WriteToFile( formatName + ".gif" );
 				DateTime endTime = DateTime.Now;
 				TimeSpan timeToEncode8bit = endTime - startTime;
-				Console.WriteLine( "Encoding " + formatName + " took " + timeToEncode8bit );
+				WriteMessage( "Encoding " + formatName + " took " + timeToEncode8bit );
 			}
 			
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~AnimatedGifEncoderSpeedTests()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_encoder.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

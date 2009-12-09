@@ -28,6 +28,8 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Extensions;
+using GifComponents.Components;
 
 namespace GifComponents.NUnit
 {
@@ -43,7 +45,7 @@ namespace GifComponents.NUnit
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Lzw")]
-	public class LzwEncoderTest
+	public class LzwEncoderTest : TestFixtureBase
 	{
 		private LzwEncoder _e;
 		private IndexedPixels _ip;
@@ -66,8 +68,10 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test1Pixel1()
 		{
+			ReportStart();
 			_ip.Add( 0 );
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -78,8 +82,10 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test1Pixel2()
 		{
+			ReportStart();
 			_ip.Add( 255 );
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -93,11 +99,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test4Pixels1()
 		{
+			ReportStart();
 			_ip.Add( 9 );
 			_ip.Add( 255 );
 			_ip.Add( 255 );
 			_ip.Add( 9 );
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -109,11 +117,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test4Pixels2()
 		{
+			ReportStart();
 			_ip.Add( 0 );
 			_ip.Add( 0 );
 			_ip.Add( 0 );
 			_ip.Add( 0 );
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -125,11 +135,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test4Pixels3()
 		{
+			ReportStart();
 			_ip.Add( 255 );
 			_ip.Add( 255 );
 			_ip.Add( 255 );
 			_ip.Add( 255 );
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -144,6 +156,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test15Pixels1()
 		{
+			ReportStart();
 			_ip.Add( 40 );
 			_ip.Add( 255 );
 			_ip.Add( 255 );
@@ -165,6 +178,7 @@ namespace GifComponents.NUnit
 			_ip.Add( 255 );
 			
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -179,6 +193,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test15Pixels2()
 		{
+			ReportStart();
 			_ip.Add( 0 );
 			_ip.Add( 0 );
 			_ip.Add( 0 );
@@ -200,6 +215,7 @@ namespace GifComponents.NUnit
 			_ip.Add( 0 );
 
 			TestIt();
+			ReportEnd();
 		}
 		#endregion
 		
@@ -210,7 +226,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test100Pixels()
 		{
+			ReportStart();
 			RandomFill( 100 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -221,7 +239,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test1000Pixels()
 		{
+			ReportStart();
 			RandomFill( 1000 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -232,7 +252,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test10000Pixels()
 		{
+			ReportStart();
 			RandomFill( 10000 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -243,7 +265,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void Test100000Pixels()
 		{
+			ReportStart();
 			RandomFill( 100000 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -254,7 +278,9 @@ namespace GifComponents.NUnit
 //		[Test]
 //		public void Test1000000Pixels()
 //		{
+//			ReportStart();
 //			RandomFill( 1000000 );
+//			ReportEnd();
 //		}
 		#endregion
 		
@@ -323,9 +349,9 @@ namespace GifComponents.NUnit
 			}
 			
 			float compression = 100 - (100 * encodedByteCount / _ip.Count);
-			Console.WriteLine( "Original byte count: " + _ip.Count 
-			                   + ". Encoded byte count: " + encodedByteCount
-			                   + ". Compression rate: " + compression + "%" );
+			WriteMessage( "Original byte count: " + _ip.Count 
+			              + ". Encoded byte count: " + encodedByteCount
+			              + ". Compression rate: " + compression + "%" );
 		}
 		#endregion
 

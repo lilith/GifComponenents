@@ -26,6 +26,7 @@ using System.Drawing;
 using System.IO;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Components;
 
 namespace GifComponents.NUnit
 {
@@ -186,9 +187,9 @@ namespace GifComponents.NUnit
 		{
 			get
 			{
-				ColourTable ct = 
-					ColourTable.FromStream( GlobalColourTableStream,
-					                        GlobalColourTableSize );
+				ColourTable ct = new ColourTable( GlobalColourTableStream,
+				                                  GlobalColourTableSize );
+				// TODO: is CheckGlobalColourTable needed? Why is it commented out?
 //				CheckGlobalColourTable( ct );
 				return ct;
 			}
@@ -268,8 +269,7 @@ namespace GifComponents.NUnit
 		{
 			get
 			{
-				ImageDescriptor id 
-					= ImageDescriptor.FromStream( ImageDescriptorStream );
+				ImageDescriptor id = new ImageDescriptor( ImageDescriptorStream );
 				CheckImageDescriptor( id );
 				return id;
 			}

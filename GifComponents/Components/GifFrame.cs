@@ -26,8 +26,9 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using GifComponents.Palettes;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// A single image frame from a GIF file.
@@ -35,12 +36,12 @@ namespace GifComponents
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	///
-	/// Amended by Simon Bridewell June-November 2009:
+	/// Amended by Simon Bridewell June-December 2009:
 	/// 1. Made member variables private.
 	/// 2. Added various properties to expose all the elements of the GifFrame.
 	/// 3. Added constructors for use in both encoding and decoding.
 	/// 4. Derive from GifComponent.
-	/// 5. Added FromStream method
+	/// 5. Added constructor( Stream... )
 	/// </summary>
 	[TypeConverter( typeof( ExpandableObjectConverter ) )]
 	public class GifFrame : GifComponent
@@ -50,6 +51,7 @@ namespace GifComponents
 		private int _delay;
 		private bool _expectsUserInput;
 		private Point _position;
+		private Palette _palette;
 		private ColourTable _localColourTable;
 		private GraphicControlExtension _extension;
 		private ImageDescriptor _imageDescriptor;
@@ -58,12 +60,6 @@ namespace GifComponents
 		#endregion
 
 		#region constructors
-		/// <summary>
-		/// Private constructor for internal use only.
-		/// </summary>
-		private GifFrame()
-		{
-		}
 		
 		/// <summary>
 		/// Constructor.
@@ -76,6 +72,224 @@ namespace GifComponents
 			_image = theImage;
 			_delay = 10; // 10 1/100ths of a second, i.e. 1/10 of a second.
 		}
+		
+		#region constructor( Stream, , , , ,  )
+		/// <summary>
+		/// Creates and returns a GifFrame by reading its data from the supplied
+		/// input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// A stream containing the data which makes the GifStream, starting 
+		/// with the image descriptor for this frame.
+		/// </param>
+		/// <param name="lsd">
+		/// The logical screen descriptor for the GIF stream.
+		/// </param>
+		/// <param name="gct">
+		/// The global colour table for the GIF stream.
+		/// </param>
+		/// <param name="gce">
+		/// The graphic control extension, if any, which precedes this image in
+		/// the input stream.
+		/// </param>
+		/// <param name="previousFrame">
+		/// The frame which precedes this one in the GIF stream, if present.
+		/// </param>
+		/// <param name="previousFrameBut1">
+		/// The frame which precedes the frame before this one in the GIF stream,
+		/// if present.
+		/// </param>
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "2#gct")]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "3#gce")]
+		public GifFrame( Stream inputStream,
+		                 LogicalScreenDescriptor lsd,
+		                 ColourTable gct,
+		                 GraphicControlExtension gce,
+		                 GifFrame previousFrame,
+		                 GifFrame previousFrameBut1 )
+			: this( inputStream, lsd, gct, gce, previousFrame, previousFrameBut1, false )
+		{}
+		#endregion
+		
+		#region constructor( Stream, , , , , bool )
+		/// <summary>
+		/// Creates and returns a GifFrame by reading its data from the supplied
+		/// input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// A stream containing the data which makes the GifStream, starting 
+		/// with the image descriptor for this frame.
+		/// </param>
+		/// <param name="lsd">
+		/// The logical screen descriptor for the GIF stream.
+		/// </param>
+		/// <param name="gct">
+		/// The global colour table for the GIF stream.
+		/// </param>
+		/// <param name="gce">
+		/// The graphic control extension, if any, which precedes this image in
+		/// the input stream.
+		/// </param>
+		/// <param name="previousFrame">
+		/// The frame which precedes this one in the GIF stream, if present.
+		/// </param>
+		/// <param name="previousFrameBut1">
+		/// The frame which precedes the frame before this one in the GIF stream,
+		/// if present.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "2#gct")]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "3#gce")]
+		public GifFrame( Stream inputStream,
+		                 LogicalScreenDescriptor lsd,
+		                 ColourTable gct,
+		                 GraphicControlExtension gce,
+		                 GifFrame previousFrame,
+		                 GifFrame previousFrameBut1, 
+		                 bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			#region guard against null arguments
+			if( lsd == null )
+			{
+				throw new ArgumentNullException( "lsd" );
+			}
+			
+			if( gce == null )
+			{
+				SetStatus( ErrorState.NoGraphicControlExtension, "" );
+				// use a default GCE
+				gce = new GraphicControlExtension( GraphicControlExtension.ExpectedBlockSize, 
+				                                   DisposalMethod.NotSpecified, 
+				                                   false, 
+				                                   false, 
+				                                   100, 
+				                                   0 );
+			}
+			#endregion
+			
+			int transparentColourIndex = gce.TransparentColourIndex;
+
+			ImageDescriptor imageDescriptor = new ImageDescriptor( inputStream, 
+			                                                       XmlDebugging );
+			WriteDebugXmlNode( imageDescriptor.DebugXmlReader );
+			
+			#region determine the colour table to use for this frame
+			Color backgroundColour = Color.FromArgb( 0 ); // TODO: is this the right background colour?
+			// TODO: use backgroundColourIndex from the logical screen descriptor?
+			ColourTable activeColourTable;
+			ColourTable localColourTable;
+			if( imageDescriptor.HasLocalColourTable ) 
+			{
+				// TODO: test case for local colour table
+				localColourTable 
+					= new ColourTable( inputStream,
+					                   imageDescriptor.LocalColourTableSize, 
+					                   XmlDebugging );
+				WriteDebugXmlNode( localColourTable.DebugXmlReader );
+				activeColourTable = localColourTable; // make local table active
+			} 
+			else 
+			{
+				localColourTable = null;
+				if( gct == null )
+				{
+					// We have neither local nor global colour table, so we
+					// won't be able to decode this frame.
+					Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
+					                                 lsd.LogicalScreenSize.Height );
+					_image = emptyBitmap;
+					_delay = gce.DelayTime;
+					SetStatus( ErrorState.FrameHasNoColourTable, "" );
+					return;
+				}
+				activeColourTable = gct; // make global table active
+				if( lsd.BackgroundColourIndex == transparentColourIndex )
+				{
+					backgroundColour = Color.FromArgb( 0 );
+				}
+			}
+			#endregion
+
+			// If this frame has a transparent colour then replace its entry in
+			// the active colour table with black // TODO: (why?)
+			Color savedTransparentColour = Color.FromArgb( 0 );
+			if( gce.HasTransparentColour )
+			{
+				savedTransparentColour = activeColourTable[transparentColourIndex];
+				activeColourTable[transparentColourIndex] = Color.FromArgb( 0 );
+			}
+
+			// decode pixel data
+			int pixelCount = imageDescriptor.Size.Width * imageDescriptor.Size.Height;
+			TableBasedImageData indexedPixels 
+				= new TableBasedImageData( inputStream, pixelCount, XmlDebugging );
+			WriteDebugXmlNode( indexedPixels.DebugXmlReader );
+			
+			// TODO: can this ever happen? Test case needed
+			if( indexedPixels.Pixels.Count == 0 )
+			{
+				Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
+				                                 lsd.LogicalScreenSize.Height );
+				_image = emptyBitmap;
+				_delay = gce.DelayTime;
+				SetStatus( ErrorState.FrameHasNoImageData, "" );
+				WriteDebugXmlFinish();
+				return;
+			}
+			
+			// Skip any remaining blocks up to the next block terminator (in
+			// case there is any surplus data before the next frame)
+			SkipBlocks( inputStream );
+
+			// If we replaced the transparent colour's entry in the active 
+			// colour table with black, then restore its original colour.
+			if( gce.HasTransparentColour )
+			{
+				activeColourTable[transparentColourIndex] = savedTransparentColour;
+			}
+
+			_indexedPixels = indexedPixels;
+
+			if( imageDescriptor.HasLocalColourTable )
+			{
+				// TODO: test case for this condition
+				_localColourTable = activeColourTable;
+			}
+			else
+			{
+				_localColourTable = null;
+			}
+
+			_extension = gce;
+			if( gce != null )
+			{
+				_delay = gce.DelayTime;
+			}
+			_imageDescriptor = imageDescriptor;
+			_backgroundColour = backgroundColour;
+			GifComponentStatus status;
+			_image = CreateBitmap( indexedPixels, 
+			                       lsd,
+			                       imageDescriptor,
+			                       activeColourTable,
+			                       gce,
+			                       previousFrame,
+			                       previousFrameBut1,
+			                       out status );
+			
+			WriteDebugXmlFinish();
+		}
+		#endregion
+
 		#endregion
 		
 		#region properties
@@ -198,6 +412,28 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region Palette property
+		/// <summary>
+		/// Gets and sets a <see cref="Palette"/> to be used as the frame's
+		/// local colour table.
+		/// </summary>
+		[SuppressMessage("Microsoft.Usage", 
+		                 "CA2227:CollectionPropertiesShouldBeReadOnly")]
+		public Palette Palette
+		{
+			get { return _palette; }
+			set 
+			{ 
+				if( value == null )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				value.Validate();
+				_palette = value; 
+			}
+		}
+		#endregion
+		
 		#endregion
 		
 		#region read-only properties
@@ -273,183 +509,6 @@ namespace GifComponents
 		
 		#endregion
 		
-		#region public methods
-		
-		#region public static FromStream method
-		/// <summary>
-		/// Creates and returns a GifFrame by reading its data from the supplied
-		/// input stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// A stream containing the data which makes the GifStream, starting 
-		/// with the image descriptor for this frame.
-		/// </param>
-		/// <param name="lsd">
-		/// The logical screen descriptor for the GIF stream.
-		/// </param>
-		/// <param name="gct">
-		/// The global colour table for the GIF stream.
-		/// </param>
-		/// <param name="gce">
-		/// The graphic control extension, if any, which precedes this image in
-		/// the input stream.
-		/// </param>
-		/// <param name="previousFrame">
-		/// The frame which precedes this one in the GIF stream, if present.
-		/// </param>
-		/// <param name="previousFrameBut1">
-		/// The frame which precedes the frame before this one in the GIF stream,
-		/// if present.
-		/// </param>
-		/// <returns>
-		/// The GIF frame read from the input stream.
-		/// </returns>
-		[SuppressMessage("Microsoft.Naming", 
-		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
-		                 MessageId = "2#gct")]
-		[SuppressMessage("Microsoft.Naming", 
-		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
-		                 MessageId = "3#gce")]
-		public static GifFrame FromStream( Stream inputStream,
-		                                   LogicalScreenDescriptor lsd,
-		                                   ColourTable gct,
-		                                   GraphicControlExtension gce,
-		                                   GifFrame previousFrame,
-		                                   GifFrame previousFrameBut1 )
-		{
-			#region guard against null arguments
-			if( lsd == null )
-			{
-				throw new ArgumentNullException( "lsd" );
-			}
-			
-			bool gceNull = false;
-			if( gce == null )
-			{
-				// use a default GCE
-				gce = new GraphicControlExtension( GraphicControlExtension.ExpectedBlockSize, 
-				                                   DisposalMethod.NotSpecified, 
-				                                   false, 
-				                                   false, 
-				                                   100, 
-				                                   0 );
-				gceNull = true;
-			}
-			#endregion
-			
-			int transparentColourIndex = gce.TransparentColourIndex;
-
-			ImageDescriptor imageDescriptor = ImageDescriptor.FromStream( inputStream );
-			
-			#region determine the colour table to use for this frame
-			Color backgroundColour = Color.FromArgb( 0 ); // TODO: is this the right background colour?
-			// TODO: use backgroundColourIndex from the logical screen descriptor?
-			ColourTable activeColourTable;
-			ColourTable localColourTable;
-			if( imageDescriptor.HasLocalColourTable ) 
-			{
-				// TODO: test case for local colour table
-				localColourTable = ColourTable.FromStream( inputStream, imageDescriptor.LocalColourTableSize );
-				activeColourTable = localColourTable; // make local table active
-			} 
-			else 
-			{
-				localColourTable = null;
-				if( gct == null )
-				{
-					// We have neither local nor global colour table, so we
-					// won't be able to decode this frame.
-					Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
-					                                 lsd.LogicalScreenSize.Height );
-					GifFrame emptyFrame = new GifFrame( emptyBitmap );
-					emptyFrame.Delay = gce.DelayTime;
-					emptyFrame.SetStatus( ErrorState.FrameHasNoColourTable, "" );
-					return emptyFrame;
-				}
-				activeColourTable = gct; // make global table active
-				if( lsd.BackgroundColourIndex == transparentColourIndex )
-				{
-					backgroundColour = Color.FromArgb( 0 );
-				}
-			}
-			#endregion
-
-			// If this frame has a transparent colour then replace its entry in
-			// the active colour table with black // TODO: (why?)
-			Color savedTransparentColour = Color.FromArgb( 0 );
-			if( gce.HasTransparentColour )
-			{
-				// TODO: test case for graphic control extension has transparent colour
-				savedTransparentColour = activeColourTable[transparentColourIndex];
-				activeColourTable[transparentColourIndex] = Color.FromArgb( 0 );
-			}
-
-			// decode pixel data
-			int pixelCount = imageDescriptor.Size.Width * imageDescriptor.Size.Height;
-			TableBasedImageData indexedPixels 
-				= new TableBasedImageData( inputStream, pixelCount );
-			
-			// TODO: can this ever happen? Test case needed
-			if( indexedPixels.Pixels.Count == 0 )
-			{
-				Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
-				                                 lsd.LogicalScreenSize.Height );
-				GifFrame emptyFrame = new GifFrame( emptyBitmap );
-				emptyFrame.Delay = gce.DelayTime;
-				emptyFrame.SetStatus( ErrorState.FrameHasNoImageData, "" );
-				return emptyFrame;
-			}
-			
-			// Skip any remaining blocks up to the next block terminator (in
-			// case there is any surplus data before the next frame)
-			SkipBlocks( inputStream );
-
-			// If we replaced the transparent colour's entry in the active 
-			// colour table with black, then restore its original colour.
-			if( gce.HasTransparentColour )
-			{
-				activeColourTable[transparentColourIndex] = savedTransparentColour;
-			}
-
-			GifFrame frame = new GifFrame();
-			frame._indexedPixels = indexedPixels;
-
-			if( imageDescriptor.HasLocalColourTable )
-			{
-				// TODO: test case for this condition
-				frame._localColourTable = activeColourTable;
-			}
-			else
-			{
-				frame._localColourTable = null;
-			}
-
-			frame._extension = gce;
-			if( gce != null )
-			{
-				frame._delay = gce.DelayTime;
-			}
-			frame._imageDescriptor = imageDescriptor;
-			frame._backgroundColour = backgroundColour;
-			GifComponentStatus status;
-			frame._image = CreateBitmap( indexedPixels, 
-			                             lsd,
-			                             imageDescriptor,
-			                             activeColourTable,
-			                             gce,
-			                             previousFrame,
-			                             previousFrameBut1, 
-			                             out status );
-			frame.SetStatus( status.ErrorState, status.ErrorMessage );
-			if( gceNull )
-			{
-				frame.SetStatus( ErrorState.NoGraphicControlExtension, "" );
-			}
-			
-			return frame;
-		}
-		#endregion
-
 		#region public override WriteToStream method
 		/// <summary>
 		/// Writes this component to the supplied output stream.
@@ -461,8 +520,6 @@ namespace GifComponents
 		{
 			throw new NotImplementedException();
 		}
-		#endregion
-
 		#endregion
 		
 		#region private methods
@@ -583,7 +640,6 @@ namespace GifComponents
 				int pixelRowNumber = i;
 				if( id.IsInterlaced ) 
 				{
-					// TODO: test case for interlaced images
 					#region work out the pixel row we're setting for an interlaced image
 					if( interlaceRowNumber >= id.Size.Height ) 
 					{

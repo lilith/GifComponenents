@@ -27,7 +27,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The Application Extension contains application-specific information; 
@@ -60,6 +60,61 @@ namespace GifComponents
 		/// </param>
 		public ApplicationExtension( DataBlock identificationBlock, 
 		                             Collection<DataBlock> applicationData )
+		{
+			SaveData( identificationBlock, applicationData );
+		}
+		#endregion
+
+		#region constructor( Stream )
+		/// <summary>
+		/// Reads and returns an application extension from the supplied input 
+		/// stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		public ApplicationExtension( Stream inputStream )
+			: this( inputStream, false )
+		{}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Reads and returns an application extension from the supplied input 
+		/// stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
+		public ApplicationExtension( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			DataBlock identificationBlock = new DataBlock( inputStream, 
+			                                               XmlDebugging );
+			Collection<DataBlock> applicationData = new Collection<DataBlock>();
+			if( !identificationBlock.TestState( ErrorState.EndOfInputStream ) )
+			{
+				// Read application specific data
+				DataBlock thisBlock;
+				do
+				{
+					thisBlock = new DataBlock( inputStream, XmlDebugging );
+					applicationData.Add( thisBlock );
+				}
+				// A zero-length block indicates the end of the data blocks
+				while( thisBlock.DeclaredBlockSize != 0 
+				       && !thisBlock.TestState( ErrorState.EndOfInputStream ) 
+				     );
+			}
+			
+			SaveData( identificationBlock, applicationData );
+		}
+		#endregion
+		
+		#region private SaveData method
+		private void SaveData( DataBlock identificationBlock, 
+		                       Collection<DataBlock> applicationData )
 		{
 			_identificationBlock = identificationBlock;
 
@@ -99,6 +154,26 @@ namespace GifComponents
 			_applicationAuthenticationCode = sb.ToString();
 
 			_applicationData = applicationData;
+			
+			if( XmlDebugging )
+			{
+				WriteDebugXmlStartElement( "IdentificationData" );
+				WriteDebugXmlNode( identificationBlock.DebugXmlReader );
+				WriteDebugXmlElement( "ApplicationIdentifier", 
+				                      _applicationIdentifier );
+				WriteDebugXmlElement( "ApplicationAuthenticationCode", 
+				                      _applicationAuthenticationCode );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlStartElement( "ApplicationData" );
+				foreach( DataBlock db in applicationData )
+				{
+					WriteDebugXmlNode( db.DebugXmlReader );
+				}
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlFinish();
+			}
 		}
 		#endregion
 
@@ -161,44 +236,6 @@ namespace GifComponents
 		}
 		#endregion
 
-		#endregion
-
-		#region public static FromStream method
-		/// <summary>
-		/// Reads and returns an application extension from the supplied input 
-		/// stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <returns>
-		/// The ApplicationExtension read from the input stream.
-		/// </returns>
-		public static ApplicationExtension FromStream( Stream inputStream )
-		{
-			DataBlock identificationBlock = DataBlock.FromStream( inputStream );
-			
-			Collection<DataBlock> applicationData = new Collection<DataBlock>();
-			if( !identificationBlock.TestState( ErrorState.EndOfInputStream ) )
-			{
-				// Read application specific data
-				DataBlock thisBlock;
-				do
-				{
-					thisBlock = DataBlock.FromStream( inputStream );
-					applicationData.Add( thisBlock );
-				}
-				// A zero-length block indicates the end of the data blocks
-				while( thisBlock.DeclaredBlockSize != 0 
-				       && !thisBlock.TestState( ErrorState.EndOfInputStream ) 
-				     );
-			}
-			
-			ApplicationExtension ae 
-				= new ApplicationExtension( identificationBlock, 
-				                            applicationData );
-			return ae;
-		}
 		#endregion
 
 		#region public WriteToStream method

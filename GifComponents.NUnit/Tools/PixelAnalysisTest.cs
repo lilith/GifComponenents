@@ -25,6 +25,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using NUnit.Framework;
+using NUnit.Extensions;
 
 namespace GifComponents.NUnit
 {
@@ -32,7 +33,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the PixelAnalysis class.
 	/// </summary>
 	[TestFixture]
-	public class PixelAnalysisTest
+	public class PixelAnalysisTest : TestFixtureBase, IDisposable
 	{
 		#region declarations
 		private PixelAnalysis _pa;
@@ -68,7 +69,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage001Colour()
 		{
+			ReportStart();
 			TestSingleImage( 1 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -80,7 +83,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage002Colours()
 		{
+			ReportStart();
 			TestSingleImage( 2 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -92,7 +97,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage004Colours()
 		{
+			ReportStart();
 			TestSingleImage( 4 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -104,7 +111,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage005Colours()
 		{
+			ReportStart();
 			TestSingleImage( 5 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -115,7 +124,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage256Colours()
 		{
+			ReportStart();
 			TestSingleImage( 256 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -126,6 +137,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void SingleImage257Colours()
 		{
+			ReportStart();
 			Bitmap image = MakeBitmap( 257 );
 			_pa = new PixelAnalysis( image, 10, QuantizerType.NeuQuant );
 			// Cannot use the TestSingleImage method this time because using
@@ -135,6 +147,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 256, _pa.ColourTable.Length );
 			Assert.AreEqual( image.Width * image.Height, 
 			                 _pa.IndexedPixels.Count );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -149,7 +162,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MultipleImages001Colour()
 		{
+			ReportStart();
 			TestMultipleImages( 1 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -160,7 +175,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MultipleImages002Colours()
 		{
+			ReportStart();
 			TestMultipleImages( 2 );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -171,7 +188,9 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MultipleImages256Colours()
 		{
+			ReportStart();
 			TestMultipleImages( 256 );
+			ReportEnd();
 		}
 		#endregion
 
@@ -182,6 +201,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void MultipleImages257Colours()
 		{
+			ReportStart();
 			_images.Add( MakeBitmap( 257 ) );
 			_images.Add( MakeBitmap( 257 ) );
 			_pa = new PixelAnalysis( _images, 10 );
@@ -196,6 +216,7 @@ namespace GifComponents.NUnit
 			                 _pa.IndexedPixelsCollection[0].Count );
 			Assert.AreEqual( _images[1].Width * _images[1].Height, 
 			                 _pa.IndexedPixelsCollection[1].Count );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -213,6 +234,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void IndexedPixelsException()
 		{
+			ReportStart();
 			_images.Add( MakeBitmap( 10 ) );
 			_images.Add( MakeBitmap( 20 ) );
 			_pa = new PixelAnalysis( _images, 10 );
@@ -229,6 +251,7 @@ namespace GifComponents.NUnit
 					+ "pixels for a single image. "
 					+ "Call the IndexedPixelCollection property instead.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -244,6 +267,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void IndexedPixelsCollectionException()
 		{
+			ReportStart();
 			_pa = new PixelAnalysis( MakeBitmap( 10 ), 10, QuantizerType.NeuQuant );
 			try
 			{
@@ -258,6 +282,7 @@ namespace GifComponents.NUnit
 					+ "collection of images. "
 					+ "Call the IndexedPixels property instead.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -421,6 +446,56 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~PixelAnalysisTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_pa.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
+		}
 		#endregion
 	}
 }

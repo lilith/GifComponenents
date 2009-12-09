@@ -189,37 +189,52 @@ namespace GifComponents.Palettes
 		#endregion
 
 		#region IDisposable implementation
-		private bool _isDisposed; // defaults to false
-		
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~PaletteEditor()
+		{
+			Dispose( false );
+		}
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
 		public void Dispose()
 		{
 			Dispose( true );
-			GC.SuppressFinalize( true );
+			GC.SuppressFinalize( this );
 		}
-		
+
 		/// <summary>
 		/// Disposes resources used by this class.
 		/// </summary>
-		/// <param name="isDisposing">
+		/// <param name="disposing">
 		/// Indicates whether this method is being called by the class's Dispose
 		/// method (true) or by the garbage collector (false).
 		/// </param>
-		protected virtual void Dispose( bool isDisposing )
+		protected virtual void Dispose( bool disposing )
 		{
-			if( _isDisposed )
+			if( !_disposed )
 			{
-				return;
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_paletteForm.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
 			}
-			
-			if( isDisposing )
-			{
-				_paletteForm.Dispose();
-			}
-			
-			_isDisposed = true;
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

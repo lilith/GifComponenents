@@ -25,7 +25,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The Graphic Control Extension contains parameters used when processing 
@@ -90,6 +90,66 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region constructor( Stream )
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		public GraphicControlExtension( Stream inputStream )
+			: this( inputStream, false ) {}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
+		public GraphicControlExtension( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			_blockSize = Read( inputStream ); // block size
+			
+			PackedFields packed = new PackedFields( Read( inputStream ) );
+			_disposalMethod = (DisposalMethod) packed.GetBits( 3, 3 );
+			_expectsUserInput = packed.GetBit( 6 );
+			_hasTransparentColour = packed.GetBit( 7 );
+
+			if( _disposalMethod == 0 )
+			{
+				_disposalMethod = DisposalMethod.DoNotDispose; // elect to keep old image if discretionary
+			}
+			
+			_delayTime = ReadShort( inputStream ); // delay in hundredths of a second
+			_transparentColourIndex = Read( inputStream ); // transparent color index
+			int blockTerminator = Read( inputStream ); // block terminator
+			
+			if( xmlDebugging )
+			{
+				WriteDebugXmlElement( "BlockSize", _blockSize );
+				
+				WriteDebugXmlStartElement( "PackedFields" );
+				WriteDebugXmlAttribute( "ByteRead", ToHex( packed.Byte ) );
+				WriteDebugXmlAttribute( "DisposalMethod", 
+				                        _disposalMethod.ToString() );
+				WriteDebugXmlAttribute( "ExpectsUserInput", _expectsUserInput );
+				WriteDebugXmlAttribute( "HasTransparentColour", _hasTransparentColour );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlElement( "DelayTime", _delayTime );
+				WriteDebugXmlElement( "TransparentColourIndex", 
+				                      _transparentColourIndex );
+				WriteDebugXmlElement( "BlockTerminator", blockTerminator );
+				
+				WriteDebugXmlFinish();
+			}
+		}
+		#endregion
+
 		#region logical properties
 		
 		#region BlockSize
@@ -205,43 +265,6 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#endregion
-
-		#region public static FromStream method
-		/// <summary>
-		/// Reads and returns a graphic control extension from the supplied 
-		/// input stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <returns>
-		/// The graphic control extension read from the supplied input stream.
-		/// </returns>
-		public static GraphicControlExtension FromStream( Stream inputStream )
-		{
-			int blockSize = Read( inputStream ); // block size
-			
-			PackedFields packed = new PackedFields( Read( inputStream ) );
-			int disposalMethod = packed.GetBits( 3, 3 );
-			bool expectsUserInput = packed.GetBit( 6 );
-			bool hasTransparentColour = packed.GetBit( 7 );
-
-			if( disposalMethod == 0 )
-			{
-				disposalMethod = 1; // elect to keep old image if discretionary
-			}
-			
-			int delay = ReadShort( inputStream ); // delay in hundredths of a second
-			int transparentColourIndex = Read( inputStream ); // transparent color index
-			Read( inputStream ); // block terminator
-			return new GraphicControlExtension( blockSize, 
-			                                    (DisposalMethod) disposalMethod,
-			                                    expectsUserInput, 
-			                                    hasTransparentColour, 
-			                                    delay, 
-			                                    transparentColourIndex );
-		}
 		#endregion
 
 		#region public WriteToStream method

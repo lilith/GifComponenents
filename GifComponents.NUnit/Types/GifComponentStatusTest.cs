@@ -23,6 +23,7 @@
 
 using System;
 using NUnit.Framework;
+using NUnit.Extensions;
 
 namespace GifComponents.NUnit
 {
@@ -30,7 +31,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the GifComponentStatus class.
 	/// </summary>
 	[TestFixture]
-	public class GifComponentStatusTest
+	public class GifComponentStatusTest : TestFixtureBase
 	{
 		private GifComponentStatus _status;
 		
@@ -41,11 +42,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ErrorStateTest()
 		{
+			ReportStart();
 			foreach( ErrorState state in ErrorState.GetValues( typeof( ErrorState ) ) )
 			{
 				_status = new GifComponentStatus( state, "error" );
 				Assert.AreEqual( state, _status.ErrorState );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -56,8 +59,10 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ErrorMessageTest()
 		{
+			ReportStart();
 			_status = new GifComponentStatus( ErrorState.Ok, "message" );
 			Assert.AreEqual( "message", _status.ErrorMessage );
+			ReportEnd();
 		}
 		#endregion
 
@@ -68,11 +73,13 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ToStringTest()
 		{
+			ReportStart();
 			_status = new GifComponentStatus( ErrorState.NotANetscapeExtension 
 			                                 | ErrorState.BadDataBlockIntroducer, 
 			                                 "error" );
 			Assert.AreEqual( "BadDataBlockIntroducer, NotANetscapeExtension", 
 			                 _status.ToString() );
+			ReportEnd();
 		}
 		#endregion
 	}

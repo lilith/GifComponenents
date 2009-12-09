@@ -28,9 +28,12 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Globalization;
+using System.Text;
 using System.Threading;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Components;
+using GifComponents.NUnit.Components;
 
 namespace GifComponents.NUnit
 {
@@ -38,9 +41,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the GifDecoder class.
 	/// </summary>
 	[TestFixture]
-	[SuppressMessage("Microsoft.Design", 
-	                 "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable")]
-	public class GifDecoderTest
+	public class GifDecoderTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private GifDecoder _decoder;
 		private LogicalScreenDescriptor _lsd;
@@ -52,8 +53,16 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeSmiley()
 		{
+			ReportStart();
+			DecodeSmiley( true );
+			DecodeSmiley( false );
+			ReportEnd();
+		}
+		
+		private void DecodeSmiley( bool xmlDebugging )
+		{
 			string fileName = @"images\smiley\smiley.gif";
-			_decoder = new GifDecoder( fileName );
+			_decoder = new GifDecoder( fileName, xmlDebugging );
 			_decoder.Decode();
 			_lsd = _decoder.LogicalScreenDescriptor;
 			int expectedColourTableSize = 128;
@@ -131,6 +140,11 @@ namespace GifComponents.NUnit
 				frameNumber++;
 			}
 			CompareFrames( fileName );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _decoder.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -142,6 +156,8 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeSmileyStream()
 		{
+			ReportStart();
+			
 			string fileName = @"images\smiley\smiley.gif";
 			Stream inputStream = new FileInfo( fileName ).OpenRead();
 			_decoder = new GifDecoder( inputStream );
@@ -222,6 +238,8 @@ namespace GifComponents.NUnit
 				frameNumber++;
 			}
 			CompareFrames( fileName );
+			
+			ReportEnd();
 		}
 		#endregion
 		
@@ -232,10 +250,26 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DecodeRotatingGlobe()
 		{
+			ReportStart();
+			DecodeRotatingGlobe( true );
+			DecodeRotatingGlobe( false );
+			ReportEnd();
+		}
+		
+		private void DecodeRotatingGlobe( bool xmlDebugging )
+		{
 			string fileName 
 				= @"images\globe\spinning globe better 200px transparent background.gif";
-			_decoder = new GifDecoder( fileName );
+			_decoder = new GifDecoder( fileName, xmlDebugging );
+			WriteMessage( "Started decoding. XmlDebugging=" + xmlDebugging );
 			_decoder.Decode();
+			WriteMessage( "Finished decoding. XmlDebugging=" + xmlDebugging );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _decoder.DebugXml );
+			}
+			
 			_lsd = _decoder.LogicalScreenDescriptor;
 			int expectedColourTableSize = 64;
 			
@@ -249,7 +283,8 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( expectedColourTableSize, 
 			                	_decoder.GlobalColourTable.Length );
 			Assert.AreEqual( 2, _lsd.ColourResolution );
-			Assert.AreEqual( Color.FromArgb( 255, 255, 255, 255 ), _decoder.BackgroundColour );
+			Assert.AreEqual( Color.FromArgb( 255, 255, 255, 255 ), 
+			                 _decoder.BackgroundColour );
 			Assert.AreEqual( 63, _lsd.BackgroundColourIndex );
 			Assert.AreEqual( false, _lsd.GlobalColourTableIsSorted );
 			Assert.AreEqual( 200, _lsd.LogicalScreenSize.Width );
@@ -314,20 +349,31 @@ namespace GifComponents.NUnit
 		[Test]
 		public void BadSignature()
 		{
+			ReportStart();
+			
 			string[] files = Directory.GetFiles( Directory.GetCurrentDirectory() );
 			foreach( string file in files )
 			{
-				if( file.EndsWith( ".gif" ) == false )
+				Stream s = File.Open( file, FileMode.Open );
+				byte[] bytes = new byte[3];
+				s.Read( bytes, 0, 3 );
+				s.Close();
+				
+				StringBuilder sb = new StringBuilder();
+				foreach( byte b in bytes )
 				{
-					Debug.WriteLine( "GifDecoderTest.BadSignature" );
-					
+					sb.Append( (char) b );
+				}
+				if( sb.ToString() != "GIF" )
+				{
 					_decoder = new GifDecoder( file );
 					_decoder.Decode();
 					Assert.AreEqual( true, 
 					                 _decoder.TestState( ErrorState.BadSignature ),
-					                 file );
+					                 file + ": " + _decoder.ConsolidatedState );
 				}
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -340,6 +386,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void NullFileName()
 		{
+			ReportStart();
+			
 			string fileName = null;
 			try
 			{
@@ -348,6 +396,7 @@ namespace GifComponents.NUnit
 			catch( ArgumentNullException ex )
 			{
 				StringAssert.Contains( "name", ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -362,6 +411,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void NullStream()
 		{
+			ReportStart();
+			
 			Stream stream = null;
 			try
 			{
@@ -370,6 +421,7 @@ namespace GifComponents.NUnit
 			catch( ArgumentNullException ex )
 			{
 				StringAssert.Contains( "inputStream", ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -384,6 +436,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( FileNotFoundException ) )]
 		public void FileNotFound()
 		{
+			ReportStart();
+			
 			_decoder = new GifDecoder( "nonexist.gif" );
 			// Don't try to catch the exception because it's thrown by the CLR
 			// rather than by GifDecoder.
@@ -399,6 +453,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void UnreadableStream()
 		{
+			ReportStart();
+			
 			// open a write-only stream
 			Stream s = File.OpenWrite( "temp.temp" );
 			try
@@ -412,6 +468,7 @@ namespace GifComponents.NUnit
 					= "The supplied stream cannot be read";
 				Assert.AreEqual( "inputStream", ex.ParamName );
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 			finally
@@ -422,6 +479,22 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 
+		#region LsdEndOfInputStream
+		/// <summary>
+		/// Checks that the correct error status is set when the end of the
+		/// input stream is reached whilst decoding the logical screen 
+		/// descriptor.
+		/// </summary>
+		[Test]
+		public void LsdEndOfInputStream()
+		{
+			_decoder = new GifDecoder( GifFileName );
+			_decoder.Decode();
+			Assert.AreEqual( ErrorState.EndOfInputStream, 
+			                 _decoder.ConsolidatedState );
+		}
+		#endregion
+		
 		#region DecodeAllGifs
 		private string _status;
 		
@@ -435,14 +508,18 @@ namespace GifComponents.NUnit
 		[Ignore( "Takes ages to run" )]
 		public void DecodeAllGifs()
 		{
+			ReportStart();
+			
 			Thread t = new Thread( StartLooking );
 			t.IsBackground = true;
 			t.Start();
 			while( t.IsAlive )
 			{
 				Thread.Sleep( 5000 );
-				Console.WriteLine( _status );
+				WriteMessage( _status );
 			}
+			
+			ReportEnd();
 		}
 		
 		private void StartLooking()
@@ -470,7 +547,7 @@ namespace GifComponents.NUnit
 					}
 					catch( Exception )
 					{
-						Console.WriteLine( "Exception while decoding " + gif );
+						WriteMessage( "Exception while decoding " + gif );
 						throw;
 					}
 				}
@@ -504,5 +581,55 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~GifDecoderTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_decoder.Dispose();
+					_lsd.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
+		}
+		#endregion
 	}
 }

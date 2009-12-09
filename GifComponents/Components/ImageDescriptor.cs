@@ -26,7 +26,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// Describes a single image within a Graphics Interchange Format data 
@@ -103,6 +103,68 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region constructor( Stream )
+		/// <summary>
+		/// Reads and returns an image descriptor from the supplied stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		public ImageDescriptor( Stream inputStream ) : this( inputStream, false )
+		{}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Reads and returns an image descriptor from the supplied stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
+		public ImageDescriptor( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			int leftPosition = ReadShort( inputStream ); // (sub)image position & size
+			int topPosition = ReadShort( inputStream );
+			int width = ReadShort( inputStream );
+			int height = ReadShort( inputStream );
+			_position = new Point( leftPosition, topPosition );
+			_size = new Size( width, height );
+
+			PackedFields packed = new PackedFields( Read( inputStream ) );
+			_hasLocalColourTable = packed.GetBit( 0 );
+			_isInterlaced = packed.GetBit( 1 );
+			_isSorted = packed.GetBit( 2 );
+			_localColourTableSizeBits = packed.GetBits( 5, 3 );
+			
+			if( XmlDebugging )
+			{
+				WriteDebugXmlStartElement( "Position" );
+				WriteDebugXmlAttribute( "X", _position.X );
+				WriteDebugXmlAttribute( "Y", _position.Y );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlStartElement( "Size" );
+				WriteDebugXmlAttribute( "Width", _size.Width );
+				WriteDebugXmlAttribute( "Height", _size.Height );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlStartElement( "PackedFields" );
+				WriteDebugXmlAttribute( "ByteRead", ToHex( packed.Byte ) );
+				WriteDebugXmlAttribute( "HasLocalColourTable", 
+				                        _hasLocalColourTable );
+				WriteDebugXmlAttribute( "IsInterlaced", _isInterlaced );
+				WriteDebugXmlAttribute( "LocalColourTableIsSorted", _isSorted );
+				WriteDebugXmlAttribute( "LocalColourTableSizeBits", 
+				                        _localColourTableSizeBits );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlFinish();
+			}
+		}
+		#endregion
+
 		#region logical properties
 		
 		#region Position property
@@ -190,42 +252,6 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#endregion
-
-		#region public static FromStream method
-		/// <summary>
-		/// Reads and returns an image descriptor from the supplied stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <returns>
-		/// The image descriptor read from the supplied input stream.
-		/// </returns>
-		public static ImageDescriptor FromStream( Stream inputStream )
-		{
-			int leftPosition = ReadShort( inputStream ); // (sub)image position & size
-			int topPosition = ReadShort( inputStream );
-			int width = ReadShort( inputStream );
-			int height = ReadShort( inputStream );
-			Point position = new Point( leftPosition, topPosition );
-			Size size = new Size( width, height );
-
-			PackedFields packed = new PackedFields( Read( inputStream ) );
-			bool hasLocalColourTable = packed.GetBit( 0 );
-			bool interlace = packed.GetBit( 1 );
-			bool lctIsSorted = packed.GetBit( 2 );
-			int lctSize = packed.GetBits( 5, 3 );
-			
-			ImageDescriptor descriptor = new ImageDescriptor( position, 
-			                                                  size,
-			                                                  hasLocalColourTable, 
-			                                                  interlace, 
-			                                                  lctIsSorted, 
-			                                                  lctSize );
-			
-			return descriptor;
-		}
 		#endregion
 
 		#region public WriteToStream method

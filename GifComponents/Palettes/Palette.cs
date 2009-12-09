@@ -286,6 +286,7 @@ namespace GifComponents.Palettes
 			}
 			else if( numberOfColours > 32 )
 			{
+				// TODO: test case for numberOfColours between 16 and 32
 				brushSize = new Size( 2, 2 );
 			}
 			else if( numberOfColours > 16 )

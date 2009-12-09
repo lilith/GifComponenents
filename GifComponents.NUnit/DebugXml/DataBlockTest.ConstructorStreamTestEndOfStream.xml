@@ -1,0 +1,4 @@
+﻿<DataBlock>
+  <ErrorState>EndOfInputStream</ErrorState>
+  <ErrorMessage>The end of the input stream was reached whilst attempting to read a DataBlock.</ErrorMessage>
+</DataBlock>

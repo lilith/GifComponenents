@@ -1,0 +1,23 @@
+﻿<GifFrame>
+  <ImageDescriptor>
+  <Position X="0" Y="0" />
+  <Size Width="3" Height="5" />
+  <PackedFields ByteRead="00" HasLocalColourTable="False" IsInterlaced="False" LocalColourTableIsSorted="False" LocalColourTableSizeBits="0" />
+</ImageDescriptor>
+  <TableBasedImageData>
+  <LzwMinimumCodeSize>8</LzwMinimumCodeSize>
+  <DataBlocks>
+    <DataBlock>
+  <BlockSize>0</BlockSize>
+  <BytesRead>
+    <ByteGroup></ByteGroup>
+  </BytesRead>
+</DataBlock>
+    <ErrorState>TooFewPixelsInImageData</ErrorState>
+    <ErrorMessage>Expected pixel count: 15. Actual pixel count: 0</ErrorMessage>
+  </DataBlocks>
+  <IndexedPixels>
+    <ByteGroup>00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 </ByteGroup>
+  </IndexedPixels>
+</TableBasedImageData>
+</GifFrame>

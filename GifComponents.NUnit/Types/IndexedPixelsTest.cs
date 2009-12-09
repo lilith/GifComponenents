@@ -24,6 +24,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
+using NUnit.Extensions;
 
 namespace GifComponents.NUnit
 {
@@ -31,7 +32,7 @@ namespace GifComponents.NUnit
 	/// Test fixture for the IndexedPixels class.
 	/// </summary>
 	[TestFixture]
-	public class IndexedPixelsTest
+	public class IndexedPixelsTest : TestFixtureBase
 	{
 		private IndexedPixels _ip;
 		
@@ -44,6 +45,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void DefaultConstructor()
 		{
+			ReportStart();
 			byte[] bytes = new byte[] { 24, 39, 2 };
 			
 			// Test the constructor
@@ -66,6 +68,7 @@ namespace GifComponents.NUnit
 			// Test the set accessor of the indexer
 			_ip[1] = 246;
 			Assert.AreEqual( 246, _ip[1] );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -77,6 +80,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void CapacityConstructor()
 		{
+			ReportStart();
 			byte[] bytes = new byte[] { 24, 39, 2 };
 			
 			// Test the constructor
@@ -95,6 +99,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( bytes[i], _ip[i] );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -107,6 +112,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( NotSupportedException ) )]
 		public void CapacityConstructorAdd()
 		{
+			ReportStart();
 			_ip = new IndexedPixels( 3 );
 			try
 			{
@@ -118,6 +124,7 @@ namespace GifComponents.NUnit
 					= "You cannot add pixels to this instance because it was "
 					+ "instantiated with a fixed size.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -135,6 +142,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "temp")]
 		public void IndexOutOfRangeGet()
 		{
+			ReportStart();
 			_ip = new IndexedPixels();
 			try
 			{
@@ -144,6 +152,7 @@ namespace GifComponents.NUnit
 			{
 				string message = "Collection size: 0. Supplied index: 0.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -158,6 +167,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void IndexOutOfRangeSet()
 		{
+			ReportStart();
 			_ip = new IndexedPixels();
 			try
 			{
@@ -167,6 +177,7 @@ namespace GifComponents.NUnit
 			{
 				string message = "Collection size: 0. Supplied index: 0.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}

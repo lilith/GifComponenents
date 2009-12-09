@@ -25,14 +25,15 @@ using System;
 using System.Drawing;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the LogicalScreenDescriptor class.
 	/// </summary>
 	[TestFixture]
-	public class LogicalScreenDescriptorTest
+	public class LogicalScreenDescriptorTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private LogicalScreenDescriptor _lsd;
 		
@@ -44,6 +45,8 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
+			
 			int width = 15;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -73,6 +76,8 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( backgroundColourIndex, _lsd.BackgroundColourIndex );
 			Assert.AreEqual( pixelAspectRatio, _lsd.PixelAspectRatio );
 			Assert.AreEqual( ErrorState.Ok, _lsd.ConsolidatedState );
+			
+			ReportEnd();
 		}
 		#endregion
 		
@@ -85,6 +90,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestTooWide()
 		{
+			ReportStart();
+			
 			int width = ushort.MaxValue + 1;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -113,6 +120,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + width;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "logicalScreenSize", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -127,6 +135,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestTooTall()
 		{
+			ReportStart();
+			
 			int width = 15;
 			int height = ushort.MaxValue + 1;
 			Size screenSize = new Size( width, height );
@@ -155,6 +165,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + height;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "logicalScreenSize", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -169,6 +180,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestColourResolutionTooLarge()
 		{
+			ReportStart();
+			
 			int width = 15;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -196,6 +209,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + colourResolution;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "colourResolution", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -210,6 +224,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestGlobalColourTableTooLarge()
 		{
+			ReportStart();
+			
 			int width = 15;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -237,6 +253,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + globalColourTableSizeBits;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "globalColourTableSizeBits", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -251,6 +268,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestBackgroundColourIndexTooLarge()
 		{
+			ReportStart();
 			int width = 15;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -279,6 +297,7 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + backgroundColourIndex;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "backgroundColourIndex", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -293,6 +312,8 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorTestPixelAspectRatioTooLarge()
 		{
+			ReportStart();
+			
 			int width = 15;
 			int height = 20;
 			Size screenSize = new Size( width, height );
@@ -321,18 +342,27 @@ namespace GifComponents.NUnit
 					+ "Supplied value: " + pixelAspectRatio;
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "pixelAspectRatio", ex.ParamName );
+				ReportEnd();
 				throw;
 			}
 		}
 		#endregion
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly under normal
+		/// Checks that the constructor( Stream ) works correctly under normal
 		/// circumstances.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			int width = 15;
 			int height = 20;
@@ -370,7 +400,7 @@ namespace GifComponents.NUnit
 			s.WriteByte( (byte) pixelAspectRatio );
 			
 			s.Seek( 0, SeekOrigin.Begin );
-			_lsd = LogicalScreenDescriptor.FromStream( s );
+			_lsd = new LogicalScreenDescriptor( s, xmlDebugging );
 			
 			Assert.AreEqual( ErrorState.Ok, _lsd.ConsolidatedState );
 			Assert.AreEqual( screenSize, _lsd.LogicalScreenSize );
@@ -384,16 +414,29 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( backgroundColourIndex, _lsd.BackgroundColourIndex );
 			Assert.AreEqual( pixelAspectRatio, _lsd.PixelAspectRatio );
 			Assert.AreEqual( ErrorState.Ok, _lsd.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _lsd.DebugXml );
+			}
 		}
 		#endregion
 
-		#region FromStreamEndOfStreamTest
+		#region ConstructorEndOfStreamTest
 		/// <summary>
 		/// Checks that the correct error status is set if the end of the input
 		/// stream is encountered before the LSD is complete
 		/// </summary>
 		[Test]
-		public void FromStreamEndOfStreamTest()
+		public void ConstructorEndOfStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamEndOfStreamTest( true );
+			ConstructorStreamEndOfStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamEndOfStreamTest( bool xmlDebugging )
 		{
 			Size screenSize = new Size( 12, 4 );
 			bool hasGlobalColourTable = false;
@@ -414,7 +457,7 @@ namespace GifComponents.NUnit
 			_lsd.WriteToStream( s );
 			s.SetLength( s.Length - 1 ); // remove final byte from stream
 			s.Seek( 0, SeekOrigin.Begin );
-			_lsd = LogicalScreenDescriptor.FromStream( s );
+			_lsd = new LogicalScreenDescriptor( s, xmlDebugging );
 			
 			Assert.AreEqual( ErrorState.EndOfInputStream, _lsd.ConsolidatedState );
 			Assert.AreEqual( screenSize, _lsd.LogicalScreenSize );
@@ -424,6 +467,11 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( globalColourTableSizeBits, _lsd.GlobalColourTableSizeBits );
 			Assert.AreEqual( backgroundColourIndex, _lsd.BackgroundColourIndex );
 			Assert.AreEqual( -1, _lsd.PixelAspectRatio );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _lsd.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -434,6 +482,8 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
+			
 			Size screenSize = new Size( 12, 4 );
 			bool hasGlobalColourTable = false;
 			int colourResolution = 3;
@@ -452,7 +502,7 @@ namespace GifComponents.NUnit
 			MemoryStream s = new MemoryStream();
 			_lsd.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
-			_lsd = LogicalScreenDescriptor.FromStream( s );
+			_lsd = new LogicalScreenDescriptor( s );
 			
 			Assert.AreEqual( ErrorState.Ok, _lsd.ConsolidatedState );
 			Assert.AreEqual( screenSize, _lsd.LogicalScreenSize );
@@ -462,6 +512,58 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( globalColourTableSizeBits, _lsd.GlobalColourTableSizeBits );
 			Assert.AreEqual( backgroundColourIndex, _lsd.BackgroundColourIndex );
 			Assert.AreEqual( pixelAspectRatio, _lsd.PixelAspectRatio );
+			
+			ReportEnd();
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~LogicalScreenDescriptorTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_lsd.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

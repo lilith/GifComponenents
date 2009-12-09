@@ -42,7 +42,7 @@ namespace GifComponents.NUnit
 	/// the results.
 	/// </remarks>
 	[TestFixture]
-	public class ImageToolsTest
+	public class ImageToolsTest : TestFixtureBase
 	{
 		private Bitmap _bitmap;
 		
@@ -53,6 +53,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void GetColoursTest()
 		{
+			ReportStart();
 			_bitmap = RandomBitmap.Create( new Size( 100, 100 ), 20, 
 			                               PixelFormat.Format32bppArgb );
 			
@@ -75,6 +76,7 @@ namespace GifComponents.NUnit
 				                       actualColours[i], 
 				                       "Index " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -86,6 +88,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void GetDistinctColoursTest()
 		{
+			ReportStart();
 			_bitmap = RandomBitmap.Create( new Size( 50, 50 ), 10, 
 			                               PixelFormat.Format32bppArgb );
 			
@@ -118,6 +121,7 @@ namespace GifComponents.NUnit
 				CollectionAssert.Contains( actualDistinctColours, thisColour, 
 				                           thisColour.ToString() );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -131,6 +135,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "Rgb")]
 		public void GetRgbArrayTest()
 		{
+			ReportStart();
 			_bitmap = RandomBitmap.Create( new Size( 50, 50 ), 10, 
 			                               PixelFormat.Format32bppArgb );
 			
@@ -155,6 +160,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( actual[i], exected[i], "Index " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -171,6 +177,7 @@ namespace GifComponents.NUnit
 		                 MessageId = "Rgb")]
 		public void GetRgbCollectionTest()
 		{
+			ReportStart();
 			_bitmap = RandomBitmap.Create( new Size( 50, 50 ), 10, 
 			                               PixelFormat.Format32bppArgb );
 			
@@ -195,6 +202,7 @@ namespace GifComponents.NUnit
 			{
 				Assert.AreEqual( actual[i], exected[i], "Index " + i );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -212,6 +220,7 @@ namespace GifComponents.NUnit
 		          "until it's removed completely" )]
 		public void GetRgbSpeedComparisonTest()
 		{
+			ReportStart();
 			_bitmap = RandomBitmap.Create( new Size( 1000, 1000 ), 100, 
 			                               PixelFormat.Format32bppArgb );
 			_bitmap.Save( "GetRgbSpeedComparisonTest.bmp" );
@@ -225,13 +234,13 @@ namespace GifComponents.NUnit
 				= ImageTools.GetRgbCollection( colours );
 			endTime = DateTime.Now;
 			TimeSpan collectionRunTime = endTime - startTime;
-			Console.WriteLine( "GetRgbCollection took " + collectionRunTime );
+			WriteMessage( "GetRgbCollection took " + collectionRunTime );
 			
 			startTime = DateTime.Now;
 			byte[] rgbArray = ImageTools.GetRgbArray( colours );
 			endTime = DateTime.Now;
 			TimeSpan arrayRunTime = endTime - startTime;
-			Console.WriteLine( "GetRgbArray took " + arrayRunTime );
+			WriteMessage( "GetRgbArray took " + arrayRunTime );
 			
 			// GetRgbArray should be quicker than GetRgbCollection. If not then
 			// there's probably something wrong with GetRgbArray
@@ -265,6 +274,7 @@ namespace GifComponents.NUnit
 					+ " (" + colourName + ")";
 				Assert.AreEqual( rgbCollection[i], rgbArray[i], message );
 			}
+			ReportEnd();
 		}
 		#endregion
 

@@ -25,7 +25,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// An application extension which controls the number of times an animation

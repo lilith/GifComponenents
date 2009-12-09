@@ -28,6 +28,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Xml;
+using GifComponents.Components;
 
 namespace GifComponents
 {
@@ -58,7 +60,7 @@ namespace GifComponents
 	/// 5. Removed all private declarations which are not components of a GIF
 	/// 	file.
 	/// </summary>
-	public class GifDecoder : GifComponent, IDisposable // IDisposable due to ReadAheadStream
+	public class GifDecoder : GifComponent
 	{
 
 		#region declarations
@@ -113,7 +115,6 @@ namespace GifComponents
 		/// read.
 		/// </summary>
 		private Stream _stream;
-		
 		#endregion
 		
 		#region constructors
@@ -130,6 +131,28 @@ namespace GifComponents
 		/// The supplied filename is null.
 		/// </exception>
 		public GifDecoder( string fileName )
+			: this( fileName, false )
+		{
+		}
+		#endregion
+		
+		#region constructor( string, bool )
+		/// <summary>
+		/// Reads a GIF file from specified file/URL source  
+		/// (URL assumed if name contains ":/" or "file:")
+		/// </summary>
+		/// <param name="fileName">
+		/// Path or URL of image file.
+		/// </param>
+		/// <param name="xmlDebugging">
+		/// A boolean value indicating whether or not an XML document should be 
+		/// created showing how the GIF stream was decoded.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		/// The supplied filename is null.
+		/// </exception>
+		public GifDecoder( string fileName, bool xmlDebugging )
+			: base( xmlDebugging )
 		{
 			if( fileName == null )
 			{
@@ -152,6 +175,22 @@ namespace GifComponents
 		/// A stream to read the GIF data from.
 		/// </param>
 		public GifDecoder( Stream inputStream )
+			: this( inputStream, false ) {}
+		#endregion
+		
+		#region constructor( stream, bool )
+		/// <summary>
+		/// Reads a GIF file from the specified stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// A stream to read the GIF data from.
+		/// </param>
+		/// <param name="xmlDebugging">
+		/// A boolean value indicating whether or not an XML document should be 
+		/// created showing how the GIF stream was decoded.
+		/// </param>
+		public GifDecoder( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
 		{
 			if( inputStream == null )
 			{
@@ -328,22 +367,30 @@ namespace GifComponents
 			_gct = null;
 			
 			SetStatus( "Reading GIF header" );
-			_header = GifHeader.FromStream( inputStream );
+			_header = new GifHeader( inputStream, XmlDebugging );
+			WriteDebugXmlNode( _header.DebugXmlReader );
+			if( _header.ErrorState != ErrorState.Ok )
+			{
+				WriteDebugXmlFinish();
+				return;
+			}
 
 			SetStatus( "Reading logical screen descriptor" );
-			_lsd = LogicalScreenDescriptor.FromStream( inputStream );
-			
+			_lsd = new LogicalScreenDescriptor( inputStream, XmlDebugging );
+			WriteDebugXmlNode( _lsd.DebugXmlReader );
 			if( TestState( ErrorState.EndOfInputStream ) )
 			{
-				// TODO: test case for this condition
+				WriteDebugXmlFinish();
 				return;
 			}
 			
 			if( _lsd.HasGlobalColourTable )
 			{
 				SetStatus( "Reading global colour table" );
-				_gct = ColourTable.FromStream( inputStream, 
-				                               _lsd.GlobalColourTableSize );
+				_gct = new ColourTable( inputStream, 
+				                        _lsd.GlobalColourTableSize, 
+				                        XmlDebugging );
+				WriteDebugXmlNode( _gct.DebugXmlReader );
 			}
 			
 			if( ConsolidatedState == ErrorState.Ok )
@@ -351,12 +398,13 @@ namespace GifComponents
 				ReadContents( inputStream );
 			}
 			inputStream.Close();
+			WriteDebugXmlFinish();
 		}
 		#endregion
 		
 		#region private ReadContents method
 		/// <summary>
-		/// Main file parser.  Reads GIF content blocks.
+		/// Main file parser. Reads GIF content blocks.
 		/// </summary>
 		/// <param name="inputStream">
 		/// Input stream from which the GIF data is to be read.
@@ -370,38 +418,51 @@ namespace GifComponents
 			while( !done && ConsolidatedState == ErrorState.Ok )
 			{
 				int code = Read( inputStream );
+				WriteCodeToDebugXml( code );
+				
 				switch( code )
 				{
 
 					case CodeImageSeparator:
+						WriteDebugXmlComment( "0x2C - image separator" );
 						AddFrame( inputStream, lastGce );
 						break;
 
 					case CodeExtensionIntroducer:
+						WriteDebugXmlComment( "0x21 - extension introducer" );
 						code = Read( inputStream );
+						WriteCodeToDebugXml( code );
 						switch( code )
 						{
 							case CodePlaintextLabel:
 								// TODO: handle plain text extension
+								WriteDebugXmlComment( "0x01 - plain text extension" );
 								SetStatus( "Skipping plain text extension" );
 								SkipBlocks( inputStream );
 								break;
 
 							case CodeGraphicControlLabel:
+								WriteDebugXmlComment( "0xF9 - graphic control label" );
 								SetStatus( "Reading graphic control extension" );
-								lastGce = GraphicControlExtension.FromStream( inputStream );
+								lastGce = new GraphicControlExtension( inputStream, 
+								                                       XmlDebugging );
+								WriteDebugXmlNode( lastGce.DebugXmlReader );
 								break;
 								
 							case CodeCommentLabel:
 								// TODO: handle comment extension
+								WriteDebugXmlComment( "0xFE - comment extension" );
 								SetStatus( "Skipping comment extension" );
 								SkipBlocks( inputStream );
 								break;
 
 							case CodeApplicationExtensionLabel:
+								WriteDebugXmlComment( "0xFF - application extension label" );
 								SetStatus( "Reading application extension" );
 								ApplicationExtension ext 
-									= ApplicationExtension.FromStream( inputStream );
+									= new ApplicationExtension( inputStream, 
+									                            XmlDebugging );
+								WriteDebugXmlNode( ext.DebugXmlReader );
 								if( ext.ApplicationIdentifier == "NETSCAPE"
 								    && ext.ApplicationAuthenticationCode == "2.0" )
 								{
@@ -414,7 +475,8 @@ namespace GifComponents
 								break;
 	
 							default : // uninteresting extension
-									SetStatus( "Skipping uninteresting extension" );
+								WriteDebugXmlComment( "Ignoring this extension" );
+								SetStatus( "Skipping uninteresting extension" );
 								SkipBlocks( inputStream );
 								break;
 						}
@@ -423,11 +485,13 @@ namespace GifComponents
 					case CodeTrailer:
 						// We've reached an explicit end-of-data marker, so stop
 						// processing the stream.
+						WriteDebugXmlComment( "0x3B - end of data" );
 						SetStatus( "Reached the end of data marker" );
 						done = true;
 						break;
 
 					case 0x00 : // bad byte, but keep going and see what happens
+						WriteDebugXmlComment( "0x00 - unexpected code" );
 						message
 							= "Unexpected block terminator encountered at "
 							+ "position " + inputStream.Position
@@ -437,6 +501,7 @@ namespace GifComponents
 						break;
 						
 					case -1: // reached the end of the input stream
+						WriteDebugXmlComment( "-1 - end of input stream" );
 						message
 							= "Reached the end of the input stream without "
 							+ "encountering trailer 0x3b";
@@ -444,6 +509,7 @@ namespace GifComponents
 						break;
 
 					default :
+						WriteDebugXmlComment( "Not a recognised code" );
 						message 
 							= "Bad data block introducer: 0x"
 							+ code.ToString( "X", CultureInfo.InvariantCulture ).PadLeft( 2, '0' )
@@ -456,6 +522,19 @@ namespace GifComponents
 						SetStatus( ErrorState.BadDataBlockIntroducer, message );
 						break;
 				}
+			}
+		}
+		#endregion
+		
+		#region private WriteCodeToDebugXml method
+		private void WriteCodeToDebugXml( int code )
+		{
+			if( XmlDebugging )
+			{
+				WriteDebugXmlStartElement( "Code" );
+				WriteDebugXmlAttribute( "Value", ToHex( code ) );
+				WriteDebugXmlAttribute( "FrameCount", _frames.Count );
+				WriteDebugXmlEndElement();
 			}
 		}
 		#endregion
@@ -494,12 +573,15 @@ namespace GifComponents
 			{
 				previousFrameBut1 = null;
 			}
-			_frames.Add( GifFrame.FromStream( inputStream, 
-			                                  _lsd, 
-			                                  _gct, 
-			                                  lastGce, 
-			                                  previousFrame, 
-			                                  previousFrameBut1 ) );
+			GifFrame frame = new GifFrame( inputStream, 
+			                               _lsd,
+			                               _gct,
+			                               lastGce,
+			                               previousFrame,
+			                               previousFrameBut1,
+			                               XmlDebugging );
+			_frames.Add( frame );
+			WriteDebugXmlNode( frame.DebugXmlReader );
 			SetStatus( "Done adding frame " + (_frames.Count + 1) );
 		}
 		#endregion
@@ -540,39 +622,5 @@ namespace GifComponents
 		
 		#endregion
 
-		#region IDisposable implementation
-		private bool _isDisposed; // defaults to false
-		
-		/// <summary>
-		/// Disposes resources used by this class.
-		/// </summary>
-		public void Dispose()
-		{
-			Dispose( true );
-			GC.SuppressFinalize( true );
-		}
-		
-		/// <summary>
-		/// Disposes resources used by this class.
-		/// </summary>
-		/// <param name="isDisposing">
-		/// Indicates whether this method is being called by the class's Dispose
-		/// method (true) or by the garbage collector (false).
-		/// </param>
-		protected virtual void Dispose( bool isDisposing )
-		{
-			if( _isDisposed )
-			{
-				return;
-			}
-			
-			if( isDisposing )
-			{
-				_stream.Dispose();
-			}
-			
-			_isDisposed = true;
-		}
-		#endregion
 	}
 }

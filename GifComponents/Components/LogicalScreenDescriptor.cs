@@ -24,9 +24,10 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The Logical Screen Descriptor component of a Graphics Interchange Format
@@ -181,6 +182,76 @@ namespace GifComponents
 			_gctSizeBits = globalColourTableSizeBits;
 			_backgroundColourIndex = backgroundColourIndex;
 			_pixelAspectRatio = pixelAspectRatio;
+		}
+		#endregion
+
+		#region constructor( Stream )
+		/// <summary>
+		/// Constructor.
+		/// Reads and returns a logical screen descriptor from the supplied
+		/// input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to be read.
+		/// </param>
+		public LogicalScreenDescriptor( Stream inputStream )
+			: this( inputStream, false ) {}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Constructor.
+		/// Reads and returns a logical screen descriptor from the supplied
+		/// input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to be read.
+		/// </param>
+		/// <param name="xmlDebugging">
+		/// Whether or not to create debug XML.
+		/// </param>
+		public LogicalScreenDescriptor( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			// logical screen size
+			int width = ReadShort( inputStream );
+			int height = ReadShort( inputStream );
+			_screenSize = new Size( width, height );
+
+			PackedFields packed = new PackedFields( Read( inputStream ) );
+			_hasGlobalColourTable = packed.GetBit( 0 );
+			_colourResolution = packed.GetBits( 1, 3 );
+			_gctIsSorted = packed.GetBit( 4 );
+			_gctSizeBits = packed.GetBits( 5, 3 );
+
+			_backgroundColourIndex = Read( inputStream );
+			_pixelAspectRatio = Read( inputStream );
+			
+			if( XmlDebugging )
+			{
+				WriteDebugXmlStartElement( "LogicalScreenSize" );
+				WriteDebugXmlAttribute( "Width", width );
+				WriteDebugXmlAttribute( "Height", height );
+				WriteDebugXmlEndElement();
+
+				WriteDebugXmlStartElement( "PackedFields" );
+				WriteDebugXmlAttribute( "ByteRead", ToHex( packed.Byte ) );
+				WriteDebugXmlAttribute( "HasGlobalColourTable", _hasGlobalColourTable );
+				WriteDebugXmlAttribute( "ColourResolution", _colourResolution );
+				WriteDebugXmlAttribute( "GlobalColourTableIsSorted", _gctIsSorted );
+				WriteDebugXmlAttribute( "GlobalColourTableSizeBits", _gctSizeBits );
+				WriteDebugXmlEndElement();
+				
+				WriteDebugXmlElement( "BackgroundColourIndex", _backgroundColourIndex );
+				WriteDebugXmlElement( "PixelAspectRatio", _pixelAspectRatio );
+			}
+			
+			if( width < 0 || height < 0 || packed.Byte < 0 
+			   || _backgroundColourIndex < 0 || _pixelAspectRatio < 0 )
+			{
+				SetStatus( ErrorState.EndOfInputStream, "" );
+			}
+			WriteDebugXmlFinish();
 		}
 		#endregion
 
@@ -365,51 +436,6 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#endregion
-
-		#region public static FromStream method
-		/// <summary>
-		/// Reads and returns a logical screen descriptor from the supplied
-		/// input stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to be read.
-		/// </param>
-		/// <returns>
-		/// The logical screen descriptor read from the input stream.
-		/// </returns>
-		public static LogicalScreenDescriptor FromStream( Stream inputStream )
-		{
-			// logical screen size
-			int width = ReadShort( inputStream );
-			int height = ReadShort( inputStream );
-			Size screenSize = new Size( width, height );
-
-			PackedFields packed = new PackedFields( Read( inputStream ) );
-			bool hasGlobalColourTable = packed.GetBit( 0 );
-			int colourResolution = packed.GetBits( 1, 3 );
-			bool gctIsSorted = packed.GetBit( 4 );
-			int gctSize = packed.GetBits( 5, 3 );
-
-			int bgIndex = Read( inputStream ); // background color index
-			int pixelAspect = Read( inputStream ); // pixel aspect ratio
-			
-			LogicalScreenDescriptor lsd 
-				= new LogicalScreenDescriptor( screenSize,
-				                               hasGlobalColourTable, 
-				                               colourResolution, 
-				                               gctIsSorted, 
-				                               gctSize, 
-				                               bgIndex, 
-				                               pixelAspect );
-			
-			if( width < 0 || height < 0 || packed.Byte < 0 || bgIndex < 0 
-			   || pixelAspect < 0 )
-			{
-				lsd.SetStatus( ErrorState.EndOfInputStream, "" );
-			}
-			return lsd;
-		}
 		#endregion
 
 		#region public WriteToStream method

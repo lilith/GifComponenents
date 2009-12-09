@@ -32,7 +32,6 @@
 			<ComponentRef Id="GifBuilderAboutFormParameters"/>
 			<ComponentRef Id="ColourTableC64"/>
 			<ComponentRef Id="ColourTableCga"/>
-			<ComponentRef Id="ColourTableEmpty"/>
 			<ComponentRef Id="ColourTableGameboy"/>
 			<ComponentRef Id="ColourTableGrayscale"/>
 			<ComponentRef Id="ColourTableMacintosh"/>

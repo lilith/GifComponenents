@@ -79,13 +79,6 @@
 							      Name="cga.act" 
 							      Source="..\GifComponents\ColourTables\cga.act"/>
 						</Component>
-						<Component Id="ColourTableEmpty" 
-						           Guid="9613008C-DB80-4B47-B556-97CEC98A832E" 
-						           DiskId="1">
-							<File Id="ColourTableEmpty" 
-							      Name="empty.act" 
-							      Source="..\GifComponents\ColourTables\empty.act"/>
-						</Component>
 						<Component Id="ColourTableGameboy" 
 						           Guid="E0FD0765-573F-4A5E-89DD-D625B3889636" 
 						           DiskId="1">

@@ -1,0 +1,5 @@
+﻿<TableBasedImageData>
+  <LzwMinimumCodeSize>12</LzwMinimumCodeSize>
+  <ErrorState>LzwMinimumCodeSizeTooLarge</ErrorState>
+  <ErrorMessage>LZW minimum code size: 12. Clear code: 4096. Max stack size: 4096</ErrorMessage>
+</TableBasedImageData>

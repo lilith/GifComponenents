@@ -1,0 +1,18 @@
+﻿<TableBasedImageData>
+  <LzwMinimumCodeSize>8</LzwMinimumCodeSize>
+  <DataBlocks>
+    <DataBlock>
+  <BlockSize>11</BlockSize>
+  <BytesRead>
+    <ByteGroup>00 51 FC 1B 28 70 A0 C1 83 01 00 </ByteGroup>
+  </BytesRead>
+  <ErrorState>DataBlockTooShort</ErrorState>
+  <ErrorMessage>Supplied block size: 11. Actual block size: 10</ErrorMessage>
+</DataBlock>
+    <ErrorState>TooFewPixelsInImageData</ErrorState>
+    <ErrorMessage>Expected pixel count: 15. Actual pixel count: 0</ErrorMessage>
+  </DataBlocks>
+  <IndexedPixels>
+    <ByteGroup>00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 </ByteGroup>
+  </IndexedPixels>
+</TableBasedImageData>

@@ -30,8 +30,8 @@ namespace GifComponents
 {
 	/// <summary>
 	/// Represents an image in terms of the indices into its associated
-	/// <see cref="ColourTable"/> which relate to the colours of the individual
-	/// pixels in the image.
+	/// <see cref="GifComponents.Components.ColourTable"/> which relate to the 
+	/// colours of the individual pixels in the image.
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1710:IdentifiersShouldHaveCorrectSuffix")]

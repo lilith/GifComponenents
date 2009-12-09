@@ -1,0 +1,21 @@
+﻿<GifFrame>
+  <ImageDescriptor>
+  <Position X="0" Y="0" />
+  <Size Width="3" Height="5" />
+  <PackedFields ByteRead="00" HasLocalColourTable="False" IsInterlaced="False" LocalColourTableIsSorted="False" LocalColourTableSizeBits="0" />
+</ImageDescriptor>
+  <TableBasedImageData>
+  <LzwMinimumCodeSize>8</LzwMinimumCodeSize>
+  <DataBlocks>
+    <DataBlock>
+  <BlockSize>11</BlockSize>
+  <BytesRead>
+    <ByteGroup>00 01 04 18 28 70 A0 C1 83 01 01 </ByteGroup>
+  </BytesRead>
+</DataBlock>
+  </DataBlocks>
+  <IndexedPixels>
+    <ByteGroup>00 01 01 01 00 01 01 01 01 01 01 01 01 01 01 </ByteGroup>
+  </IndexedPixels>
+</TableBasedImageData>
+</GifFrame>

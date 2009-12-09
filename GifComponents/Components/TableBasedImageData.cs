@@ -28,7 +28,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The image data for a table based image consists of a sequence of 
@@ -38,6 +38,16 @@ namespace GifComponents
 	/// Each index must be within the range of the size of the active color 
 	/// table, starting at 0.
 	/// See http://www.w3.org/Graphics/GIF/spec-gif89a.txt section 22
+	/// 
+	/// Adapted from John Cristy's ImageMagick.
+	/// Decodes LZW image data into pixel array and returns table-based 
+	/// image data - see http://www.w3.org/Graphics/GIF/spec-gif89a.txt
+	/// section 22.
+	/// Simon Bridewell - July-August 2009
+	/// 	Extracted this logic from GifDecoder.cs
+	/// 	Added logical properties
+	/// 	Derive from GifComponent in order to make use of component status
+	/// 	Use stronger types than just byte where appropriate
 	/// </summary>
 	public class TableBasedImageData : GifComponent
 	{
@@ -63,18 +73,9 @@ namespace GifComponents
 		private int _lzwMinimumCodeSize;
 		#endregion
 		
-		#region Constructor
+		#region constructor( Stream, int )
 		/// <summary>
 		/// Constructor.
-		/// Adapted from John Cristy's ImageMagick.
-		/// Decodes LZW image data into pixel array and returns table-based 
-		/// image data - see http://www.w3.org/Graphics/GIF/spec-gif89a.txt
-		/// section 22.
-		/// Simon Bridewell - July-August 2009
-		/// 	Extracted this logic from GifDecoder.cs
-		/// 	Added logical properties
-		/// 	Derive from GifComponent in order to make use of component status
-		/// 	Use stronger types than just byte where appropriate
 		/// </summary>
 		/// <param name="inputStream">
 		/// The stream from which the image data is to be read, starting with
@@ -83,6 +84,23 @@ namespace GifComponents
 		/// <param name="pixelCount">
 		/// Number of pixels in the image.
 		/// </param>
+		public TableBasedImageData( Stream inputStream, int pixelCount )
+			: this( inputStream, pixelCount, false )
+		{}
+		#endregion
+		
+		#region Constructor( Stream, int, bool )
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The stream from which the image data is to be read, starting with
+		/// the LZW minimum code size, and ending with a block terminator.
+		/// </param>
+		/// <param name="pixelCount">
+		/// Number of pixels in the image.
+		/// </param>
+		/// <param name="xmlDebugging">Whether or not to create debug XML</param>
 		/// <remarks>
 		/// The input stream is read, first into the LZW minimum code size, then
 		/// into data blocks. Bytes are extracted from the data blocks into a
@@ -92,7 +110,10 @@ namespace GifComponents
 		/// end-of-information code or error condition is encountered, any
 		/// remaining pixel indices not already populated default to zero.
 		/// </remarks>
-		public TableBasedImageData( Stream inputStream, int pixelCount )
+		public TableBasedImageData( Stream inputStream, 
+		                            int pixelCount, 
+		                            bool xmlDebugging )
+			: base( xmlDebugging )
 		{
 			#region guard against silly image sizes
 			if( pixelCount < 1 )
@@ -128,6 +149,7 @@ namespace GifComponents
 
 			//  Initialize GIF data stream decoder.
 			_lzwMinimumCodeSize = Read( inputStream ); // number of bits initially used for LZW codes in image data
+			WriteDebugXmlElement( "LzwMinimumCodeSize", _lzwMinimumCodeSize );
 			nextAvailableCode = ClearCode + 2;
 			previousCode = _nullCode;
 			currentCodeSize = InitialCodeSize;
@@ -140,6 +162,7 @@ namespace GifComponents
 					+ ". Clear code: " + ClearCode
 					+ ". Max stack size: " + _maxStackSize;
 				SetStatus( ErrorState.LzwMinimumCodeSizeTooLarge, message );
+				WriteDebugXmlFinish();
 				return;
 			}
 			#endregion
@@ -150,6 +173,8 @@ namespace GifComponents
 				prefix[code] = 0;
 				suffix[code] = (byte) code;
 			}
+			
+			WriteDebugXmlStartElement( "DataBlocks" );
 
 			#region decode LZW image data
 
@@ -321,6 +346,7 @@ namespace GifComponents
 					#region do we need to increase the code size?
 					if( ( nextAvailableCode & GetMaximumPossibleCode( currentCodeSize ) ) == 0 )
 					{
+						// TODO: test case for increasing the code size
 						// We've reached the largest code possible for this size
 						if( nextAvailableCode < _maxStackSize )
 						{
@@ -351,6 +377,15 @@ namespace GifComponents
 				SetStatus( ErrorState.TooFewPixelsInImageData, message );
 			}
 			#endregion
+			
+			if( XmlDebugging )
+			{
+				WriteDebugXmlEndElement();
+				byte[] bytes = new byte[_pixels.Count];
+				_pixels.CopyTo( bytes, 0 );
+				WriteDebugXmlByteValues( "IndexedPixels", bytes );
+				WriteDebugXmlFinish();
+			}
 		}
 		#endregion
 		
@@ -461,8 +496,9 @@ namespace GifComponents
 		#region private ReadDataBlock method
 		private DataBlock ReadDataBlock( Stream inputStream )
 		{
-			DataBlock block = DataBlock.FromStream( inputStream );
+			DataBlock block = new DataBlock( inputStream, XmlDebugging );
 			_dataBlocks.Add( block );
+			WriteDebugXmlNode( block.DebugXmlReader );
 			return block;
 		}
 		#endregion

@@ -1,0 +1,7 @@
+﻿<GraphicControlExtension>
+  <BlockSize>4</BlockSize>
+  <PackedFields ByteRead="05" DisposalMethod="DoNotDispose" ExpectsUserInput="False" HasTransparentColour="True" />
+  <DelayTime>40</DelayTime>
+  <TransparentColourIndex>22</TransparentColourIndex>
+  <BlockTerminator>0</BlockTerminator>
+</GraphicControlExtension>

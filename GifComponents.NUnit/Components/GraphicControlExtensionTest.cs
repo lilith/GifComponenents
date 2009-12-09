@@ -24,14 +24,15 @@
 using System;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the GraphicControlExtension class.
 	/// </summary>
 	[TestFixture]
-	public class GraphicControlExtensionTest
+	public class GraphicControlExtensionTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private GraphicControlExtension _gce;
 
@@ -43,6 +44,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
 			int blockSize = 4;
 			DisposalMethod method = DisposalMethod.DoNotDispose;
 			bool expectsUserInput = false;
@@ -63,15 +65,23 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( delayTime, _gce.DelayTime );
 			Assert.AreEqual( transparentColourIndex, _gce.TransparentColourIndex );
 			Assert.AreEqual( ErrorState.Ok, _gce.ErrorState );
+			ReportEnd();
 		}
 		#endregion
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly.
+		/// Checks that the constructor( Stream ) works correctly.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			int blockSize = 4;
 			DisposalMethod method = DisposalMethod.DoNotDispose;
@@ -106,7 +116,7 @@ namespace GifComponents.NUnit
 			
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_gce = GraphicControlExtension.FromStream( s );
+			_gce = new GraphicControlExtension( s, xmlDebugging );
 			
 			Assert.AreEqual( blockSize, _gce.BlockSize );
 			Assert.AreEqual( method, _gce.DisposalMethod );
@@ -115,16 +125,29 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( delayTime, _gce.DelayTime );
 			Assert.AreEqual( transparentColourIndex, _gce.TransparentColourIndex );
 			Assert.AreEqual( ErrorState.Ok, _gce.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _gce.DebugXml );
+			}
 		}
 		#endregion
 
-		#region FromStreamTestDisposalMethodNotSpecified
+		#region ConstructorStreamTestDisposalMethodNotSpecified
 		/// <summary>
-		/// Checks that the FromStream method works correctly when the disposal
-		/// method is not specified (defaults to Do Not Dispose).
+		/// Checks that the constructor( Stream )works correctly when the 
+		/// disposal method is not specified (defaults to Do Not Dispose).
 		/// </summary>
 		[Test]
-		public void FromStreamTestDisposalMethodNotSpecified()
+		public void ConstructorStreamTestDisposalMethodNotSpecified()
+		{
+			ReportStart();
+			ConstructorStreamTestDisposalMethodNotSpecified( true );
+			ConstructorStreamTestDisposalMethodNotSpecified( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTestDisposalMethodNotSpecified( bool xmlDebugging )
 		{
 			int blockSize = 4;
 			DisposalMethod method = DisposalMethod.NotSpecified;
@@ -159,7 +182,7 @@ namespace GifComponents.NUnit
 			
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_gce = GraphicControlExtension.FromStream( s );
+			_gce = new GraphicControlExtension( s, xmlDebugging );
 			
 			Assert.AreEqual( blockSize, _gce.BlockSize );
 			Assert.AreEqual( DisposalMethod.DoNotDispose, _gce.DisposalMethod );
@@ -168,6 +191,11 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( delayTime, _gce.DelayTime );
 			Assert.AreEqual( transparentColourIndex, _gce.TransparentColourIndex );
 			Assert.AreEqual( ErrorState.Ok, _gce.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _gce.DebugXml );
+			}
 		}
 		#endregion
 
@@ -178,6 +206,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
 			int blockSize = 4;
 			DisposalMethod disposalMethod = DisposalMethod.DoNotDispose;
 			bool expectsUserInput = false;
@@ -195,7 +224,7 @@ namespace GifComponents.NUnit
 			_gce.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_gce = GraphicControlExtension.FromStream( s );
+			_gce = new GraphicControlExtension( s );
 			
 			Assert.AreEqual( ErrorState.Ok, _gce.ConsolidatedState );
 			Assert.AreEqual( blockSize, _gce.BlockSize );
@@ -204,6 +233,58 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( hasTransparentColour, _gce.HasTransparentColour );
 			Assert.AreEqual( delayTime, _gce.DelayTime );
 			Assert.AreEqual( transparentColourIndex, _gce.TransparentColourIndex );
+			
+			ReportEnd();
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~GraphicControlExtensionTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_gce.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}

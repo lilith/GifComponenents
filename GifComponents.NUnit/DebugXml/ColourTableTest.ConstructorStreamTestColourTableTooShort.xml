@@ -1,0 +1,14 @@
+﻿<ColourTable ExpectedColours="5" ColoursRead="4">
+  <ErrorState>ColourTableTooShort</ErrorState>
+  <ErrorMessage>Expected colour table size: 15. Number of bytes read: 12</ErrorMessage>
+  <BytesRead>
+    <ByteGroup>00 00 00 FF 00 00 00 FF 00 00 00 FF </ByteGroup>
+  </BytesRead>
+  <Colours>
+    <Colour R="0" G="0" B="0" />
+    <Colour R="255" G="0" B="0" />
+    <Colour R="0" G="255" B="0" />
+    <Colour R="0" G="0" B="255" />
+    <Colour R="0" G="0" B="0" />
+</Colours>
+</ColourTable>

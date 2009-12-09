@@ -1,0 +1,29 @@
+﻿<GifFrame>
+  <ErrorState>NoGraphicControlExtension</ErrorState>
+  <ErrorMessage />
+  <ImageDescriptor>
+  <Position X="0" Y="0" />
+  <Size Width="9" Height="9" />
+  <PackedFields ByteRead="00" HasLocalColourTable="False" IsInterlaced="False" LocalColourTableIsSorted="False" LocalColourTableSizeBits="0" />
+</ImageDescriptor>
+  <TableBasedImageData>
+  <LzwMinimumCodeSize>2</LzwMinimumCodeSize>
+  <DataBlocks>
+    <DataBlock>
+  <BlockSize>20</BlockSize>
+  <BytesRead>
+    <ByteGroup>8C 8F A0 0B B6 B2 9C 82 CA 89 7B 5B 78 71 CF CE </ByteGroup>
+    <ByteGroup>74 08 52 00 </ByteGroup>
+  </BytesRead>
+</DataBlock>
+  </DataBlocks>
+  <IndexedPixels>
+    <ByteGroup>01 01 01 01 01 01 01 01 01 01 00 00 00 00 00 00 </ByteGroup>
+    <ByteGroup>00 01 01 00 00 00 02 00 00 00 01 01 00 00 00 02 </ByteGroup>
+    <ByteGroup>00 00 00 01 01 00 02 02 02 02 02 00 01 01 00 00 </ByteGroup>
+    <ByteGroup>00 02 00 00 00 01 01 00 00 00 02 00 00 00 01 01 </ByteGroup>
+    <ByteGroup>00 00 00 00 00 00 00 01 01 01 01 01 01 01 01 01 </ByteGroup>
+    <ByteGroup>01 </ByteGroup>
+  </IndexedPixels>
+</TableBasedImageData>
+</GifFrame>

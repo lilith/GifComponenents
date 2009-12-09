@@ -28,7 +28,7 @@ using System.Drawing;
 using System.IO;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// A global or local colour table which forms part of a GIF data stream.
@@ -42,7 +42,9 @@ namespace GifComponents
 		private Collection<Color> _colours;
 		#endregion
 		
-		#region constructor
+		#region constructors
+
+		#region default constructor
 		/// <summary>
 		/// Constructor.
 		/// </summary>
@@ -51,6 +53,119 @@ namespace GifComponents
 			_colours = new Collection<Color>();
 		}
 		#endregion
+		
+		#region constructor( Stream, int )
+		/// <summary>
+		/// Reads and returns a colour table from the supplied input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="numberOfColours">
+		/// The number of colours the colour table is expected to contain.
+		/// </param>
+		public ColourTable( Stream inputStream, int numberOfColours )
+			: this( inputStream, numberOfColours, false )
+		{}
+		#endregion
+
+		#region constructor( Stream, int, bool )
+		/// <summary>
+		/// Reads and returns a colour table from the supplied input stream.
+		/// </summary>
+		/// <param name="inputStream">
+		/// The input stream to read.
+		/// </param>
+		/// <param name="numberOfColours">
+		/// The number of colours the colour table is expected to contain.
+		/// </param>
+		/// <param name="xmlDebugging">
+		/// Whether or not to create debug XML
+		/// </param>
+		public ColourTable( Stream inputStream, 
+		                    int numberOfColours, 
+		                    bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			string message 
+				= "The number of colours must be between 0 and 256. "
+				+ "Number supplied: " + numberOfColours;
+			
+			if( numberOfColours < 0 )
+			{
+				throw new ArgumentOutOfRangeException( "numberOfColours",
+				                                       message );
+			}
+			
+			if( numberOfColours > 256 )
+			{
+				throw new ArgumentOutOfRangeException( "numberOfColours", 
+				                                       message );
+			}
+			
+			WriteDebugXmlAttribute( "ExpectedColours", numberOfColours );
+			
+			int bytesExpected = numberOfColours * 3; // expected length of Colour table
+			byte[] buffer = new byte[bytesExpected];
+			int bytesRead = 0;
+			bytesRead = inputStream.Read( buffer, 0, buffer.Length );
+			int coloursRead = bytesRead / 3;
+			WriteDebugXmlAttribute( "ColoursRead", coloursRead );
+
+			int i = 0;
+			int j = 0;
+			_colours = new Collection<Color>();
+			while( i < coloursRead )
+			{
+				int r = ((int) buffer[j++]) & 0xff;
+				int g = ((int) buffer[j++]) & 0xff;
+				int b = ((int) buffer[j++]) & 0xff;
+				_colours.Add( Color.FromArgb( 255, r, g, b ) );
+				i++;
+			}
+			
+			if( bytesRead < bytesExpected )
+			{
+				message
+					= "Expected colour table size: " + bytesExpected
+					+ ". Number of bytes read: " + bytesRead;
+				SetStatus( ErrorState.ColourTableTooShort, message );
+				if( xmlDebugging )
+				{
+					byte[] actualBytes = new byte[bytesRead];
+					for( int n = 0; n < bytesRead; n++ )
+					{
+						actualBytes[n] = buffer[n];
+					}
+					WriteDebugXmlByteValues( "BytesRead", actualBytes );
+				}
+				
+				for( int k = bytesRead; k < bytesExpected; k += 3 )
+				{
+					// Fill colour table with black
+					_colours.Add( Color.FromArgb( 0 ) );
+				}
+			} 
+
+			if( XmlDebugging )
+			{
+				WriteDebugXmlStartElement( "Colours" );
+				foreach( Color c in _colours )
+				{
+					WriteDebugXmlStartElement( "Colour" );
+					WriteDebugXmlAttribute( "R", c.R );
+					WriteDebugXmlAttribute( "G", c.G );
+					WriteDebugXmlAttribute( "B", c.B );
+					WriteDebugXmlEndElement();
+				}
+			}
+			WriteDebugXmlFinish();
+		}
+		#endregion
+
+		#endregion
+
+		#region properties
 
 		#region Colours property
 		/// <summary>
@@ -125,6 +240,8 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#endregion
+
 		#region indexer
 		/// <summary>
 		/// Gets or sets the colour at the specified index in the colour table.
@@ -159,6 +276,8 @@ namespace GifComponents
 		}
 		#endregion
 		
+		#region methods
+
 		#region Add method
 		/// <summary>
 		/// Adds the supplied colour to the table
@@ -185,74 +304,6 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region static FromStream method
-		/// <summary>
-		/// Reads and returns a colour table from the supplied input stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <param name="numberOfColours">
-		/// The number of colours the colour table is expected to contain.
-		/// </param>
-		/// <returns>
-		/// The colour table read from the stream.
-		/// </returns>
-		public static ColourTable FromStream( Stream inputStream, 
-		                                      int numberOfColours )
-		{
-			string message 
-				= "The number of colours must be between 0 and 256. "
-				+ "Number supplied: " + numberOfColours;
-			
-			if( numberOfColours < 0 )
-			{
-				throw new ArgumentOutOfRangeException( "numberOfColours",
-				                                       message );
-			}
-			
-			if( numberOfColours > 256 )
-			{
-				throw new ArgumentOutOfRangeException( "numberOfColours", 
-				                                       message );
-			}
-			int bytesExpected = numberOfColours * 3; // expected length of Colour table
-			ColourTable colourTable = new ColourTable();
-			byte[] buffer = new byte[bytesExpected];
-			int bytesRead = 0;
-			bytesRead = inputStream.Read( buffer, 0, buffer.Length );
-			int coloursRead = bytesRead / 3;
-
-			if( bytesRead < bytesExpected )
-			{
-				message
-					= "Expected colour table size: " + bytesExpected
-					+ ". Number of bytes read: " + bytesRead;
-				colourTable.SetStatus( ErrorState.ColourTableTooShort, message );
-				
-				for( int i = 0; i < numberOfColours; i += 3 )
-				{
-					// Fill colour table with black
-					colourTable._colours.Add( Color.FromArgb( 0 ) );
-				}
-			} 
-			else 
-			{
-				int i = 0;
-				int j = 0;
-				while( i < coloursRead )
-				{
-					int r = ((int) buffer[j++]) & 0xff;
-					int g = ((int) buffer[j++]) & 0xff;
-					int b = ((int) buffer[j++]) & 0xff;
-					colourTable._colours.Add( Color.FromArgb( 255, r, g, b ) );
-					i++;
-				}
-			}
-			return colourTable;
-		}
-		#endregion
-
 		#region public WriteToStream method
 		/// <summary>
 		/// Writes this component to the supplied output stream.
@@ -271,7 +322,7 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region private static IsPowerOf2 method (commented out)
+		#region private static IsPowerOf2 method
 		/// <summary>
 		/// Determines whether the supplied number is an exact power of 2 and
 		/// therefore a suitable size for a colour table.
@@ -296,5 +347,8 @@ namespace GifComponents
 			}
 		}
 		#endregion
+
+		#endregion
+
 	}
 }

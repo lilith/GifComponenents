@@ -25,20 +25,48 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text;
+using System.Xml;
+using System.Xml.XPath;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The base class for a component of a Graphics Interchange File data 
 	/// stream.
 	/// </summary>
 	[TypeConverter( typeof( ExpandableObjectConverter ) )]
-	public abstract class GifComponent
+	public abstract class GifComponent : IDisposable
 	{
 		#region declarations
+		/// <summary>
+		/// The status of this component, consisting of its error state and any
+		/// associated error messages.
+		/// </summary>
 		private GifComponentStatus _status;
+		
+		/// <summary>
+		/// Set to true to store information in _debugXml about how the GIF
+		/// stream was decoder. Set to false for production use.
+		/// </summary>
+		private bool _xmlDebugging;
+		
+		/// <summary>
+		/// An <see cref="XmlTextWriter"/> which is used to write an XML 
+		/// document showing how the GIF stream was decoded.
+		/// For debugging use only.
+		/// </summary>
+		private System.Xml.XmlWriter _debugXmlWriter;
+		
+		/// <summary>
+		/// Holds a stream of XML showing how the GIF stream was decoded.
+		/// For debugging use only.
+		/// </summary>
+		private Stream _debugXmlStream;
+		
 		#endregion
 		
 		#region public constants
@@ -94,7 +122,7 @@ namespace GifComponents
 		
 		#endregion
 		
-		#region protected constructor
+		#region protected default constructor
 		/// <summary>
 		/// Constructor.
 		/// This is implicitly called by constructors of derived types.
@@ -104,8 +132,28 @@ namespace GifComponents
 			_status = new GifComponentStatus( ErrorState.Ok, "" );
 		}
 		#endregion
+		
+		#region protected constructor( bool )
+		/// <summary>
+		/// Constructor.
+		/// This should be called from the constructor of a derived type which
+		/// accepts a Stream and a boolean as parameters.
+		/// </summary>
+		/// <param name="xmlDebugging">
+		/// True: this component will create XML debug information whilst being 
+		/// instantiated from a stream.
+		/// False: this component will not create XML debug information.
+		/// </param>
+		protected GifComponent( bool xmlDebugging ) : this()
+		{
+			if( xmlDebugging )
+			{
+				WriteDebugXmlStart();
+			}
+		}
+		#endregion
 
-		#region properties
+		#region public properties
 		
 		#region ComponentStatus property
 		/// <summary>
@@ -244,7 +292,74 @@ namespace GifComponents
 		}
 		#endregion
 
+		#region public DebugXml property
+		/// <summary>
+		/// Gets the XML which provides insight into how the GIF stream or 
+		/// component was interpreted by this library.
+		/// For debugging use if the GIF stream cannot be decoded.
+		/// </summary>
+		[Category( "Status" )]
+		public string DebugXml
+		{
+			get 
+			{ 
+				string xml = DebugXmlReader.ReadOuterXml();
+				return xml;
+			}
+		}
 		#endregion
+		
+		#region public DebugXmlReader property
+		/// <summary>
+		/// Gets the XML which provides insight into how the GIF stream or 
+		/// component was interpreted by this library.
+		/// For debugging use if the GIF stream cannot be decoded.
+		/// </summary>
+		[Browsable( false )]
+		public XmlReader DebugXmlReader
+		{
+			get 
+			{
+				XmlReader xr;
+				if( _xmlDebugging )
+				{
+					_debugXmlStream.Position = 0;
+					xr = new XmlTextReader( _debugXmlStream );
+				}
+				else
+				{
+					string message
+						= "<Message>There is no DebugXml because XML debugging "
+						+ "has not been enabled for this "
+						+ this.GetType().Name
+						+ " instance.</Message>";
+					TextReader tr = new StringReader( message );
+					xr = new XmlTextReader( tr );
+				}
+				xr.MoveToContent();
+				return xr;
+			}
+		}
+		#endregion
+		
+		#endregion
+		
+		#region protected properties
+		
+		#region protected XmlDebugging property
+		/// <summary>
+		/// Gets a value indicating whether or not this component builds an xml
+		/// document during decoding for debugging purposes.
+		/// </summary>
+		protected bool XmlDebugging
+		{
+			get { return _xmlDebugging; }
+		}
+		#endregion
+		
+		#endregion
+		
+		#region methods
 		
 		#region public methods
 		
@@ -284,8 +399,6 @@ namespace GifComponents
 
 		#endregion
 		
-		#region protected methods
-		
 		#region protected SetStatus method
 		/// <summary>
 		/// Sets the ComponentStatus property of thie GifComponent.
@@ -306,9 +419,30 @@ namespace GifComponents
 			}
 			newMessage += errorMessage;
 			_status = new GifComponentStatus( newState, newMessage );
+
+			if( _xmlDebugging )
+			{
+				WriteDebugXmlErrorState( errorState, errorMessage );
+			}
 		}
 		#endregion
 
+		#region protected static ToHex method
+		/// <summary>
+		/// Converts the supplied integer to a 2-character hexadecimal value.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		protected static string ToHex( int value )
+		{
+			return string.Format( CultureInfo.InvariantCulture, 
+			                      "{0:X2}",
+			                      value );
+		}
+		#endregion
+		
+		#region methods for reading the GIF stream
+		
 		#region protected static Read method
 		/// <summary>
 		/// Reads a single byte from the input stream and advances the position
@@ -348,9 +482,6 @@ namespace GifComponents
 		/// </returns>
 		protected static int ReadShort( Stream inputStream )
 		{
-			// read 16-bit value, LSB first
-//			return Read( inputStream ) | (Read( inputStream ) << 8);
-			
 			// Least significant byte is first in the stream
 			int leastSignificant = Read( inputStream );
 			
@@ -372,7 +503,7 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region protected static SkipBlocks method
+		#region protected SkipBlocks method
 		/// <summary>
 		/// Skips variable length blocks up to and including next zero length 
 		/// block (block terminator).
@@ -380,17 +511,21 @@ namespace GifComponents
 		/// <param name="inputStream">
 		/// The input stream to read.
 		/// </param>
-		protected static void SkipBlocks( Stream inputStream )
+		protected void SkipBlocks( Stream inputStream )
 		{
 			DataBlock block;
 			do 
 			{
-				block = DataBlock.FromStream( inputStream );
+				block = new DataBlock( inputStream, _xmlDebugging );
 			} 
 			while( block.DeclaredBlockSize > 0 && block.ErrorState == ErrorState.Ok );
 		}
 		#endregion
 
+		#endregion
+
+		#region methods for writing the GIF stream
+		
 		#region protected static WriteString method
 		/// <summary>
 		/// Writes the supplied string to the supplied output stream
@@ -473,6 +608,349 @@ namespace GifComponents
 		#endregion
 	
 		#endregion
+		
+		#region methods for writing the debug XML
+
+		#region private WriteDebugXmlStart method
+		/// <summary>
+		/// Starts the process of creating debug XML during decoding.
+		/// This method is called by the GifComponent constructor if the supplied
+		/// xmlDebugging parameter is set to true.
+		/// Sets the private member _xmlDebugging to true.
+		/// Creates a new XmlWriter with an underlying MemoryStream and writes
+		/// a start element to it, named after the derived type.
+		/// </summary>
+		private void WriteDebugXmlStart()
+		{
+			_xmlDebugging = true;
+			XmlWriterSettings settings = new XmlWriterSettings();
+			settings.Indent = true;
+			_debugXmlStream = new MemoryStream();
+			_debugXmlWriter = XmlWriter.Create( _debugXmlStream, settings );
+			_debugXmlWriter.WriteStartDocument();
+			WriteDebugXmlStartElement( this.GetType().Name );
+		}
+		#endregion
+
+		#region private WriteDebugXmlErrorState method
+		/// <summary>
+		/// Writes the latest error state and error message to the debug XML
+		/// stream.
+		/// </summary>
+		/// <param name="errorState">The component's latest error state</param>
+		/// <param name="errorMessage">The associated error message</param>
+		/// <remarks>
+		/// There is no need to call this from derived classes as it is called
+		/// by the SetStatus method.
+		/// </remarks>
+		private void WriteDebugXmlErrorState( ErrorState errorState, 
+		                                      string errorMessage )
+		{
+			if( _xmlDebugging )
+			{
+				WriteDebugXmlElement( "ErrorState", errorState.ToString() );
+				WriteDebugXmlElement( "ErrorMessage", errorMessage );
+			}
+		}
+		#endregion
+
+		#region protected WriteDebugXmlByteValues( int[] ) method
+		/// <summary>
+		/// If the XmlDebugging property is set to true, writes a BytesRead
+		/// node to the DebugXmlWriter containing a hexadecimal representation
+		/// of the supplied byte array.
+		/// If the XmlDebugging property is set to false, does nothing.
+		/// </summary>
+		/// <param name="elementName">The name of the element to write</param>
+		/// <param name="bytes">The byte array to write</param>
+		/// <exception cref="ArgumentNullException">
+		/// The supplied byte array is null.
+		/// </exception>
+		protected void WriteDebugXmlByteValues( string elementName, int[] bytes )
+		{
+			if( bytes == null )
+			{
+				throw new ArgumentNullException( "bytes" );
+			}
+			
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteStartElement( elementName );
+				StringBuilder sb = new StringBuilder();
+				for( int i = 0; i < bytes.Length; i++ )
+				{
+					sb.Append( ToHex( bytes[i] ) + " " );
+					int result;
+					Math.DivRem( i + 1, 16, out result );
+					if( result == 0 )
+					{
+						_debugXmlWriter.WriteStartElement( "ByteGroup" );
+						_debugXmlWriter.WriteString( sb.ToString() );
+						_debugXmlWriter.WriteEndElement();
+						sb = new StringBuilder();
+					}
+				}
+				
+				_debugXmlWriter.WriteStartElement( "ByteGroup" );
+				_debugXmlWriter.WriteString( sb.ToString() );
+				_debugXmlWriter.WriteEndElement();
+				_debugXmlWriter.WriteEndElement();
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlByteValues( byte[] ) method
+		/// <summary>
+		/// If the XmlDebugging property is set to true, writes a BytesRead
+		/// node to the DebugXmlWriter containing a hexadecimal representation
+		/// of the supplied byte array.
+		/// If the XmlDebugging property is set to false, does nothing.
+		/// </summary>
+		/// <param name="elementName">The name of the element to write</param>
+		/// <param name="bytes">The byte array to write</param>
+		/// <exception cref="ArgumentNullException">
+		/// The supplied byte array is null.
+		/// </exception>
+		protected void WriteDebugXmlByteValues( string elementName, byte[] bytes )
+		{
+			if( bytes == null )
+			{
+				throw new ArgumentNullException( "bytes" );
+			}
+			
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteStartElement( elementName );
+				StringBuilder sb = new StringBuilder();
+				for( int i = 0; i < bytes.Length; i++ )
+				{
+					sb.Append( ToHex( bytes[i] ) + " " );
+					int result;
+					Math.DivRem( i + 1, 16, out result );
+					if( result == 0 )
+					{
+						_debugXmlWriter.WriteStartElement( "ByteGroup" );
+						_debugXmlWriter.WriteString( sb.ToString() );
+						_debugXmlWriter.WriteEndElement();
+						sb = new StringBuilder();
+					}
+				}
+				
+				_debugXmlWriter.WriteStartElement( "ByteGroup" );
+				_debugXmlWriter.WriteString( sb.ToString() );
+				_debugXmlWriter.WriteEndElement();
+				_debugXmlWriter.WriteEndElement();
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlComment method
+		/// <summary>
+		/// Writes a comment to the debug XML.
+		/// </summary>
+		/// <param name="comment">The comment to write</param>
+		protected void WriteDebugXmlComment( string comment )
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteComment( comment );
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlNode method
+		/// <summary>
+		/// Useful for writing the debug XML of a child component to its parent
+		/// component's debug XML stream.
+		/// </summary>
+		protected void WriteDebugXmlNode( XmlReader reader )
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteNode( reader, false );
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlRaw method
+		/// <summary>
+		/// Writes raw markup to the debug XML stream from the supplied string.
+		/// </summary>
+		/// <param name="text"></param>
+		protected void WriteDebugXmlRaw( string text )
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteRaw( text );
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlElement methods
+
+		#region WriteDebugXmlElement( string, bool )
+		/// <summary>
+		/// Writes an element to the DebugXml with the supplied element name
+		/// and a boolean value as the inner text.
+		/// </summary>
+		/// <param name="nodeName">
+		/// The name of the element to write.
+		/// </param>
+		/// <param name="innerText">
+		/// The inner text of the element to write.
+		/// </param>
+		protected void WriteDebugXmlElement( string nodeName, bool innerText )
+		{
+			string boolean = innerText.ToString( CultureInfo.InvariantCulture );
+			WriteDebugXmlElement( nodeName, boolean );
+		}
+		#endregion
+		
+		#region WriteDebugXmlElement( string, int )
+		/// <summary>
+		/// Writes an element to the DebugXml with the supplied element name
+		/// and inner text.
+		/// </summary>
+		/// <param name="nodeName">
+		/// The name of the element to write.
+		/// </param>
+		/// <param name="innerText">
+		/// The inner text of the element to write.
+		/// </param>
+		protected void WriteDebugXmlElement( string nodeName, int innerText )
+		{
+			string text = innerText.ToString( CultureInfo.InvariantCulture );
+			WriteDebugXmlElement( nodeName, text );
+		}
+		#endregion
+		
+		#region WriteDebugXmlElement( string, string )
+		/// <summary>
+		/// Writes an element to the DebugXml with the supplied element name
+		/// and inner text.
+		/// </summary>
+		/// <param name="nodeName">
+		/// The name of the element to write.
+		/// </param>
+		/// <param name="innerText">
+		/// The inner text of the element to write.
+		/// </param>
+		/// <remarks>
+		/// Call this method in preference to _debugXmlWriter.WriteElementString
+		/// because this method removes null characters from the inner text 
+		/// before attempting to write.
+		/// </remarks>
+		protected void WriteDebugXmlElement( string nodeName, string innerText )
+		{
+			if( innerText == null )
+			{
+				innerText = string.Empty;
+			}
+			
+			if( _xmlDebugging )
+			{
+				// remove nulls from the innerText before attempting to write
+				innerText = innerText.Replace( "\0", "" );
+				_debugXmlWriter.WriteElementString( nodeName, innerText );
+			}
+		}
+		#endregion
+
+		#endregion
+		
+		#region protected WriteDebugXmlAttribute methods
+		/// <summary>
+		/// Adds an attribute to the current element. Call after 
+		/// WriteDebugXmlStartElement and before WriteDebugXmlEndElement.
+		/// </summary>
+		/// <param name="name">The attribute name</param>
+		/// <param name="value">The attribute value</param>
+		protected void WriteDebugXmlAttribute( string name, bool value )
+		{
+			if( _xmlDebugging )
+			{
+				string text = value.ToString( CultureInfo.InvariantCulture );
+				WriteDebugXmlAttribute( name, text );
+			}
+		}
+		
+		/// <summary>
+		/// Adds an attribute to the current element. Call after 
+		/// WriteDebugXmlStartElement and before WriteDebugXmlEndElement.
+		/// </summary>
+		/// <param name="name">The attribute name</param>
+		/// <param name="value">The attribute value</param>
+		protected void WriteDebugXmlAttribute( string name, int value )
+		{
+			if( _xmlDebugging )
+			{
+				string text = value.ToString( CultureInfo.InvariantCulture );
+				WriteDebugXmlAttribute( name, text );
+			}
+		}
+		
+		/// <summary>
+		/// Adds an attribute to the current element. Call after 
+		/// WriteDebugXmlStartElement and before WriteDebugXmlEndElement.
+		/// </summary>
+		/// <param name="name">The attribute name</param>
+		/// <param name="value">The attribute value</param>
+		protected void WriteDebugXmlAttribute( string name, string value )
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteAttributeString( name, value );
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlStartElement method
+		/// <summary>
+		/// Writes out a start tag with the specified name to the debug XML
+		/// stream.
+		/// </summary>
+		/// <param name="name"></param>
+		protected void WriteDebugXmlStartElement( string name )
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteStartElement( name );
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlEndElement method
+		/// <summary>
+		/// Writes out the closing tag of the current element to the debug XML
+		/// stream.
+		/// </summary>
+		protected void WriteDebugXmlEndElement()
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteEndElement();
+			}
+		}
+		#endregion
+		
+		#region protected WriteDebugXmlFinish method
+		/// <summary>
+		/// Finishes off writing the debug XML.
+		/// </summary>
+		protected void WriteDebugXmlFinish()
+		{
+			if( _xmlDebugging )
+			{
+				_debugXmlWriter.WriteRaw( Environment.NewLine );
+				_debugXmlWriter.WriteEndElement();
+				_debugXmlWriter.WriteEndDocument();
+				_debugXmlWriter.Flush();
+				_debugXmlWriter.Close();
+			}
+		}
+		#endregion
+
+		#endregion
 
 		#region abstract WriteToStream method
 		/// <summary>
@@ -482,6 +960,58 @@ namespace GifComponents
 		/// The stream to which the component is to be written.
 		/// </param>
 		public abstract void WriteToStream( Stream outputStream );
+		#endregion
+
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~GifComponent()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_debugXmlStream.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
+		}
 		#endregion
 	}
 }

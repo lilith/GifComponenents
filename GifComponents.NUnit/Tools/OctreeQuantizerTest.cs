@@ -40,7 +40,7 @@ namespace GifComponents.NUnit
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Quantizer")]
-	public class OctreeQuantizerTest
+	public class OctreeQuantizerTest : TestFixtureBase
 	{
 		private OctreeQuantizer _oq;
 		
@@ -52,6 +52,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void CompareQuantizedImages()
 		{
+			ReportStart();
 			_oq = new OctreeQuantizer( 255, 8 );
 			for( int colourCount = 1; colourCount < 500; colourCount++ )
 			{
@@ -60,6 +61,7 @@ namespace GifComponents.NUnit
 				BitmapAssert.AreEqual( original, quantized, 3, 
 				                       colourCount + " colours" );
 			}
+			ReportEnd();
 		}
 		#endregion
 		
@@ -74,6 +76,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void MaxColoursTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_oq = new OctreeQuantizer( 0, 8 );
@@ -84,6 +87,7 @@ namespace GifComponents.NUnit
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "maxColours", ex.ParamName );
 				Assert.AreEqual( 0, ex.ActualValue );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -98,6 +102,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void MaxColoursTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_oq = new OctreeQuantizer( 256, 1 );
@@ -108,6 +113,7 @@ namespace GifComponents.NUnit
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "maxColours", ex.ParamName );
 				Assert.AreEqual( 256, ex.ActualValue );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -122,6 +128,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void MaxColourBitsTooSmall()
 		{
+			ReportStart();
 			try
 			{
 				_oq = new OctreeQuantizer( 10, 0 );
@@ -132,6 +139,7 @@ namespace GifComponents.NUnit
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "maxColourBits", ex.ParamName );
 				Assert.AreEqual( 0, ex.ActualValue );
+				ReportEnd();
 				throw;
 			}
 		}
@@ -146,6 +154,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
 		public void MaxColourBitsTooLarge()
 		{
+			ReportStart();
 			try
 			{
 				_oq = new OctreeQuantizer( 10, 9 );
@@ -156,6 +165,7 @@ namespace GifComponents.NUnit
 				StringAssert.Contains( message, ex.Message );
 				Assert.AreEqual( "maxColourBits", ex.ParamName );
 				Assert.AreEqual( 9, ex.ActualValue );
+				ReportEnd();
 				throw;
 			}
 		}

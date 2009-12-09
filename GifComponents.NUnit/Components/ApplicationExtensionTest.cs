@@ -25,14 +25,15 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the ApplicationExtension class.
 	/// </summary>
 	[TestFixture]
-	public class ApplicationExtensionTest
+	public class ApplicationExtensionTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private ApplicationExtension _ext;
 
@@ -44,6 +45,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
 			byte[] identification = new byte[]
 			{
 				(byte) 'N',
@@ -69,6 +71,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( identificationBlock, _ext.IdentificationBlock );
 			Assert.AreEqual( applicationData, _ext.ApplicationData );
 			Assert.AreEqual( ErrorState.Ok, _ext.ConsolidatedState );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -80,6 +83,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorIdentificationBlockTooLongTest()
 		{
+			ReportStart();
 			byte[] identification = new byte[]
 			{
 				(byte) 'N',
@@ -106,6 +110,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( identificationBlock, _ext.IdentificationBlock );
 			Assert.AreEqual( applicationData, _ext.ApplicationData );
 			Assert.AreEqual( ErrorState.IdentificationBlockTooLong, _ext.ErrorState );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -118,6 +123,7 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void ConstructorIdentificationBlockTooShortTest()
 		{
+			ReportStart();
 			byte[] identification = new byte[]
 			{
 				(byte) 'N',
@@ -147,18 +153,27 @@ namespace GifComponents.NUnit
 					= "The identification block should be 11 bytes long but "
 					+ "is only 10 bytes.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}
 		#endregion
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Tests that the FromStream method works correctly under normal
+		/// Tests that the constructor( Stream ) works correctly under normal
 		/// circumstances.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			
@@ -169,7 +184,7 @@ namespace GifComponents.NUnit
 			
 			s.Seek( 0, SeekOrigin.Begin ); // point to beginning of stream
 			
-			_ext = ApplicationExtension.FromStream( s );
+			_ext = new ApplicationExtension( s, xmlDebugging );
 
 			CheckExtension( _ext );
 			
@@ -178,17 +193,30 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( 0, _ext.ApplicationData[2].ActualBlockSize );
 			Assert.AreEqual( ErrorState.Ok, 
 			                 _ext.ApplicationData[2].ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _ext.DebugXml );
+			}
 		}
 		#endregion
 		
-		#region FromStreamTestNoBlockTerminator
+		#region ConstructorStreamTestNoBlockTerminator
 		/// <summary>
-		/// Checks that the correct error status is set when the FromStream
-		/// method is passed a stream where the application extension has no 
-		/// block terminator.
+		/// Checks that the correct error status is set when the 
+		/// constructor( Stream ) is passed a stream where the application 
+		/// extension has no block terminator.
 		/// </summary>
 		[Test]
-		public void FromStreamTestNoBlockTerminator()
+		public void ConstructorStreamTestNoBlockTerminator()
+		{
+			ReportStart();
+			ConstructorStreamTestNoBlockTerminator( true );
+			ConstructorStreamTestNoBlockTerminator( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTestNoBlockTerminator( bool xmlDebugging )
 		{
 			Stream s = new MemoryStream();
 			
@@ -200,9 +228,14 @@ namespace GifComponents.NUnit
 			s.Seek( 0, SeekOrigin.Begin ); // point to start of stream
 			
 			// Instantiate the ApplicationExtension
-			_ext = ApplicationExtension.FromStream( s );
+			_ext = new ApplicationExtension( s, xmlDebugging );
 
 			Assert.AreEqual( ErrorState.EndOfInputStream, _ext.ConsolidatedState );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _ext.DebugXml );
+			}
 		}
 		#endregion
 		
@@ -213,6 +246,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
 			byte[] identificationData = new byte[]
 			{
 				(byte) 'B', (byte) 'I', (byte) 'G', (byte) 'P', 
@@ -246,9 +280,10 @@ namespace GifComponents.NUnit
 			_ext.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			ApplicationExtension e = ApplicationExtension.FromStream( s );
+			ApplicationExtension e = new ApplicationExtension( s );
 			
 			CheckExtension( e );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -373,6 +408,56 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~ApplicationExtensionTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_ext.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
+		}
 		#endregion
 	}
 }

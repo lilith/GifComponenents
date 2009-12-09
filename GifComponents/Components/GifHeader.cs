@@ -26,7 +26,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 
-namespace GifComponents
+namespace GifComponents.Components
 {
 	/// <summary>
 	/// The header section of a Graphics Interchange Format stream.
@@ -70,6 +70,78 @@ namespace GifComponents
 		}
 		#endregion
 
+		#region public constructor( Stream )
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="inputStream">
+		/// A <see cref="System.IO.Stream"/> containing the data to create the
+		/// GifHeader.
+		/// </param>
+		public GifHeader( Stream inputStream ) 
+			: this( inputStream, false ) {}
+		#endregion
+		
+		#region constructor( Stream, bool )
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="inputStream">
+		/// A <see cref="System.IO.Stream"/> containing the data to create the
+		/// GifHeader.
+		/// </param>
+		/// <param name="xmlDebugging">
+		/// A boolean value indicating whether or not an XML document should be 
+		/// created showing how the GIF stream was decoded.
+		/// </param>
+		public GifHeader( Stream inputStream, bool xmlDebugging )
+			: base( xmlDebugging )
+		{
+			
+			StringBuilder sb = new StringBuilder();
+			int[] bytesRead = new int[6];
+			// Read 6 bytes from the GIF stream
+			// These should contain the signature and GIF version.
+			bool endOfFile = false;
+			for( int i = 0; i < 6; i++ ) 
+			{
+				int nextByte = Read( inputStream );
+				if( nextByte == -1 )
+				{
+					if( endOfFile == false )
+					{
+						SetStatus( ErrorState.EndOfInputStream, 
+						           "Bytes read: " + i );
+						endOfFile = true;
+					}
+					nextByte = 0;
+				}
+				sb.Append( (char) nextByte );
+				if( this.XmlDebugging )
+				{
+					bytesRead[i] = nextByte;
+				}
+			}
+			
+			string headerString = sb.ToString();
+
+			WriteDebugXmlByteValues( "BytesRead", bytesRead );
+			
+			_signature = headerString.Substring( 0, 3 );
+			WriteDebugXmlElement( "Signature", _signature );
+			_gifVersion = headerString.Substring( 3, 3 );
+			WriteDebugXmlElement( "GifVersion", _gifVersion );
+			if( _signature != "GIF" )
+			{
+				string errorInfo = "Bad signature: " + _signature;
+				ErrorState status = ErrorState.BadSignature;
+				SetStatus( status, errorInfo );
+			}
+
+			WriteDebugXmlFinish();
+		}
+		#endregion
+		
 		#region Signature property
 		/// <summary>
 		/// Gets the signature which introduces the GIF stream.
@@ -93,45 +165,6 @@ namespace GifComponents
 		public string Version
 		{
 			get { return _gifVersion; }
-		}
-		#endregion
-
-		#region public static FromStream method
-		/// <summary>
-		/// Reads and returns a GIF header from the supplied stream.
-		/// </summary>
-		/// <param name="inputStream">
-		/// The input stream to read.
-		/// </param>
-		/// <returns>
-		/// The GIF header read from the supplied input stream.
-		/// </returns>
-		public static GifHeader FromStream( Stream inputStream )
-		{
-			StringBuilder sb = new StringBuilder();
-			// Read 6 bytes from the GIF stream
-			// These should contain the signature and GIF version.
-			bool endOfFile = false;
-			for( int i = 0; i < 6; i++ ) 
-			{
-				int nextByte = Read( inputStream );
-				if( nextByte == -1 )
-				{
-					endOfFile = true;
-					nextByte = 0;
-				}
-				sb.Append( (char) nextByte );
-			}
-			string headerString = sb.ToString();
-			string signature = headerString.Substring( 0, 3 );
-			string gifVersion = headerString.Substring( 3, 3 );
-			GifHeader header = new GifHeader( signature, gifVersion );
-			if( endOfFile )
-			{
-				header.SetStatus( ErrorState.EndOfInputStream, "" );
-			}
-			
-			return header;
 		}
 		#endregion
 

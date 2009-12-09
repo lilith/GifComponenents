@@ -25,14 +25,15 @@ using System;
 using System.Drawing;
 using System.IO;
 using NUnit.Framework;
+using GifComponents.Components;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the ImageDescriptor class.
 	/// </summary>
 	[TestFixture]
-	public class ImageDescriptorTest
+	public class ImageDescriptorTest : GifComponentTestFixtureBase, IDisposable
 	{
 		private ImageDescriptor _id;
 		
@@ -44,6 +45,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void ConstructorTest()
 		{
+			ReportStart();
 			Point position = new Point( 1, 2 );
 			Size size = new Size( 20, 30 );
 			bool hasLocalColourTable = false;
@@ -66,15 +68,24 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( localColourTableSizeBits, _id.LocalColourTableSizeBits );
 			Assert.AreEqual( (int) Math.Pow( 2, localColourTableSizeBits + 1 ), 
 			                 _id.LocalColourTableSize );
+			ReportEnd();
 		}
 		#endregion
 		
-		#region FromStreamTest
+		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the FromStream method works correctly.
+		/// Checks that the constructor( stream ) works correctly.
 		/// </summary>
 		[Test]
-		public void FromStreamTest()
+		public void ConstructorStreamTest()
+		{
+			ReportStart();
+			ConstructorStreamTest( true );
+			ConstructorStreamTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamTest( bool xmlDebugging )
 		{
 			Point position = new Point( 1, 2 );
 			Size size = new Size( 20, 30 );
@@ -95,7 +106,7 @@ namespace GifComponents.NUnit
 			
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_id = ImageDescriptor.FromStream( s );
+			_id = new ImageDescriptor( s, xmlDebugging );
 
 			Assert.AreEqual( position, _id.Position );
 			Assert.AreEqual( size, _id.Size );
@@ -109,6 +120,11 @@ namespace GifComponents.NUnit
 			// to hold the actual size.
 			Assert.AreEqual( Math.Pow( 2, localColourTableSizeBits + 1), 
 			                 _id.LocalColourTableSize );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _id.DebugXml );
+			}
 		}
 		#endregion
 
@@ -119,6 +135,7 @@ namespace GifComponents.NUnit
 		[Test]
 		public void WriteToStreamTest()
 		{
+			ReportStart();
 			Point position = new Point( 1, 4 );
 			Size size = new Size( 12, 15 );
 			bool hasLocalColourTable = true;
@@ -136,7 +153,7 @@ namespace GifComponents.NUnit
 			_id.WriteToStream( s );
 			s.Seek( 0, SeekOrigin.Begin );
 			
-			_id = ImageDescriptor.FromStream( s );
+			_id = new ImageDescriptor( s );
 			
 			Assert.AreEqual( ErrorState.Ok, _id.ConsolidatedState );
 			Assert.AreEqual( position, _id.Position );
@@ -147,6 +164,7 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( localColourTableSizeBits, _id.LocalColourTableSizeBits );
 			Assert.AreEqual( (int) Math.Pow( 2, localColourTableSizeBits + 1 ),
 			                 _id.LocalColourTableSize );
+			ReportEnd();
 		}
 		#endregion
 		
@@ -195,6 +213,56 @@ namespace GifComponents.NUnit
 					| ( localColourTableSize & 7 )
 				);
 			outputStream.WriteByte( packed );
+		}
+		#endregion
+
+		#region IDisposable implementation
+		/// <summary>
+		/// Indicates whether or not the Dispose( bool ) method has already been 
+		/// called.
+		/// </summary>
+		bool _disposed;
+
+		/// <summary>
+		/// Finalzer.
+		/// </summary>
+		~ImageDescriptorTest()
+		{
+			Dispose( false );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		/// Disposes resources used by this class.
+		/// </summary>
+		/// <param name="disposing">
+		/// Indicates whether this method is being called by the class's Dispose
+		/// method (true) or by the garbage collector (false).
+		/// </param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !_disposed )
+			{
+				if( disposing )
+				{
+					// dispose-only, i.e. non-finalizable logic
+					_id.Dispose();
+				}
+
+				// new shared cleanup logic
+				_disposed = true;
+			}
+
+			// Uncomment if the base type also implements IDisposable
+//			base.Dispose( disposing );
 		}
 		#endregion
 	}
