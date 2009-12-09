@@ -56,6 +56,7 @@
     <Compile Include="Components\ApplicationExtension.cs" />
     <Compile Include="Components\ColourTable.cs" />
     <Compile Include="Components\DataBlock.cs" />
+    <Compile Include="Components\GifComponent.cs" />
     <Compile Include="Components\GifFrame.cs" />
     <Compile Include="Components\GifHeader.cs" />
     <Compile Include="Components\GraphicControlExtension.cs" />
@@ -92,7 +93,6 @@
     <Compile Include="Tools\PixelAnalysis.cs" />
     <Compile Include="Tools\Quantizer.cs" />
     <Compile Include="Tools\Utils.cs" />
-    <Compile Include="Types\GifComponent.cs" />
     <Compile Include="Types\GifComponentStatus.cs" />
     <Compile Include="Types\IndexedPixels.cs" />
     <Compile Include="Types\PackedFields.cs" />
