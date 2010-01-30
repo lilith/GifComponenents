@@ -42,7 +42,7 @@ namespace GifComponents.NUnit
 		/// </param>
 		/// <param name="blockiness">
 		/// Controls how often the colours of pixels in the image changes.
-		/// The higher this value, the smaller the contiguous blocks of colour.
+		/// The lower this value, the smaller the contiguous blocks of colour.
 		/// </param>
 		/// <param name="pixelFormat">
 		/// One of the System.Drawing.Imaging.PixelFormat values.
