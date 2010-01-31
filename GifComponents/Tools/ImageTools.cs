@@ -50,7 +50,7 @@ namespace GifComponents
 		{
 			// SB comment - this comment was present when I downloaded the
 			// code from thinkedge.com
-			// TODO: improve performance: use unsafe code
+			// FEATURE: improve performance: use unsafe code
 			Collection<Color> pixelColours = new Collection<Color>();
 			Bitmap tempBitmap = new Bitmap( image );
 			for( int y = 0; y < image.Height; y++ )
@@ -65,7 +65,9 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region GetDistinctColours method
+		#region GetDistinctColours methods
+		
+		#region GetDistinctColours( Collection<Color> ) method
 		/// <summary>
 		/// Gets a generic collection of all the distinct 
 		/// <see cref="System.Drawing.Color"/>s contained in the supplied 
@@ -94,6 +96,24 @@ namespace GifComponents
 			}
 			return distinctColours;
 		}
+		#endregion
+		
+		#region GetDistinctColours( Image ) method
+		/// <summary>
+		/// Gets a generic collection of all the distinct 
+		/// <see cref="System.Drawing.Color"/>s contained in the supplied 
+		/// image, i.e. each colour is included in the return value only once,
+		/// regardless of how many pixels in the image are of that colour.
+		/// </summary>
+		/// <param name="image">The image to examine</param>
+		/// <returns>The distinct colours in the supplied image</returns>
+		public static Collection<Color> GetDistinctColours( Image image )
+		{
+			Collection<Color> colours = GetColours( image );
+			return GetDistinctColours( colours );
+		}
+		#endregion
+
 		#endregion
 		
 		#region GetRgbArray method

@@ -19,34 +19,37 @@
 //
 // Simon Bridewell makes no claim to be the original author of this library,
 // only to have created a derived work.
-//
-// This file is based on the Quantizer base class by Morgan Skinner - 
-// http://msdn.microsoft.com/en-us/library/aa479306.aspx
-//
-// Amended by Simon Bridewell, November 2009:
-// * Moved out of OctreeQuantizer.cs into its own file
-// * Changed various access modifiers to internal
-// * Small edits to XML comments
-// * Changed namespace to GifComponents
-// * Fixed / suppressed some FxCop warnings
-// * Style changes (e.g. add missing curly brackets around conditional blocks)
-// * Added null argument test to constructor and ConstructPalette method
 #endregion
 
 using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Text;
+// TODO: restore once TextualRepresentation is implemented using TextualRepresentation;
 
 namespace GifComponents
 {
 	/// <summary>
-	/// Class which encapsulates each node in an Octree
+	/// Class which encapsulates each node in an Octree.
+	/// Based on code downloaded from 
+	/// http://msdn.microsoft.com/en-us/library/aa479306.aspx
+	/// 
+	/// Amended by Simon Bridewell, November-December 2009:
+	/// 	* Moved out of OctreeQuantizer.cs into its own file
+	/// 	* Changed various access modifiers to internal
+	/// 	* Small edits to XML comments
+	/// 	* Changed namespace to GifComponents
+	/// 	* Fixed / suppressed some FxCop warnings
+	/// 	* Style changes (e.g. add missing curly brackets around conditional 
+	/// 	  blocks)
+	/// 	* Added null argument test to constructor and ConstructPalette method
+	/// 	* Added ToString method.
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Octree")]
-	internal unsafe class OctreeNode
+	internal unsafe class OctreeNode // TODO: restore once TextualRepresentation is implemented : SerializableItem
 	{
 		#region declarations
 		/// <summary>
@@ -114,6 +117,7 @@ namespace GifComponents
 		{
 			if( octree == null )
 			{
+				// TESTME: constructor null argument
 				throw new ArgumentNullException( "octree" );
 			}
 			
@@ -165,7 +169,7 @@ namespace GifComponents
 			else
 			{
 				// Go to the next level down in the tree
-				// FIXME: Correct the potential overflow in the operation '7-level' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233)
+				// FXCOP: Correct the potential overflow in the operation '7-level' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233)
 				int	shift = 7 - level;
 				int index = ( ( pixel->Red & mask[level] ) >> ( shift - 2 ) ) |
 							( ( pixel->Green & mask[level] ) >> ( shift - 1 ) ) |
@@ -176,13 +180,13 @@ namespace GifComponents
 				if( null == child )
 				{
 					// Create a new child node & store in the array
-					// FIXME: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233) 
+					// FXCOP: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233) 
 					child = new OctreeNode( level + 1, colourBits, octree ); 
 					_children[index] = child;
 				}
 
 				// Add the color to the child node
-				// FIXME: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233) 
+				// FXCOP: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.AddColour(Colour32*, Int32, Int32, Octree):Void'. (CA2233) 
 				child.AddColour( pixel, colourBits, level + 1, octree );
 			}
 
@@ -221,17 +225,18 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region ConstructPalette method
+		#region internal ConstructPalette method
 		/// <summary>
 		/// Traverse the tree, building up the color palette
 		/// </summary>
 		/// <param name="palette">The palette</param>
 		/// <param name="paletteIndex">The current palette index</param>
-		public void ConstructPalette( ArrayList palette, 
-		                              ref int paletteIndex )
+		internal void ConstructPalette( ArrayList palette, 
+		                                ref int paletteIndex )
 		{
 			if( palette == null )
 			{
+				// TESTME: ConstructPalette null argument
 				throw new ArgumentNullException( "palette" );
 			}
 			
@@ -270,7 +275,7 @@ namespace GifComponents
 
 			if( !_leaf )
 			{
-				// FIXME: Correct the potential overflow in the operation '7-level' in 'OctreeNode.GetPaletteIndex(Colour32*, Int32):Int32'. (CA2233)
+				// FXCOP: Correct the potential overflow in the operation '7-level' in 'OctreeNode.GetPaletteIndex(Colour32*, Int32):Int32'. (CA2233)
 				int	shift = 7 - level;
 				int index = ( ( pixel->Red & mask[level] ) >> ( shift - 2 ) ) |
 							( ( pixel->Green & mask[level] ) >> ( shift - 1 ) ) |
@@ -278,14 +283,14 @@ namespace GifComponents
 
 				if( null != _children[index] )
 				{
-					// FIXME: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.GetPaletteIndex(Colour32*, Int32):Int32'. (CA2233)
+					// FXCOP: Correct the potential overflow in the operation 'level+1' in 'OctreeNode.GetPaletteIndex(Colour32*, Int32):Int32'. (CA2233)
 					paletteIndex 
 						= _children[index].GetPaletteIndex( pixel, 
 						                                    level + 1 );
 				}
 				else
 				{
-					// TODO: test case for this?
+					// TESTME: GetPaletteIndex - _children[index] == null
 					throw new InvalidOperationException( "Didn't expect this!" );
 				}
 			}
@@ -305,6 +310,33 @@ namespace GifComponents
 			_green += pixel->Green;
 			_blue += pixel->Blue;
 		}
+		#endregion
+		
+		// TODO: restore ToString method once TextualRepresentation is implemented
+		#region override ToString method
+//		/// <summary>
+//		/// Gets a string representation of this node.
+//		/// </summary>
+//		/// <returns>A string representation of this node</returns>
+//		public override string ToString()
+//		{
+//			if( _leaf )
+//			{
+//				return _red + ", " + _green + ", " + _blue + Environment.NewLine;
+//			}
+//			else
+//			{
+//				StringBuilder sb = new StringBuilder();
+//				foreach( OctreeNode child in _children )
+//				{
+//					if( child != null )
+//					{
+//						sb.Append( child.ToString() );
+//					}
+//				}
+//				return sb.ToString();
+//			}
+//		}
 		#endregion
 
 		#endregion

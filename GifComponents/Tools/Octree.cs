@@ -19,34 +19,39 @@
 //
 // Simon Bridewell makes no claim to be the original author of this library,
 // only to have created a derived work.
-//
-// This file is based on the Quantizer base class by Morgan Skinner - 
-// http://msdn.microsoft.com/en-us/library/aa479306.aspx
-//
-// Amended by Simon Bridewell, November 2009:
-// * Moved out of OctreeQuantizer.cs into its own file
-// * Changed class access modifier from private to public and marked as unsafe
-// * Small edits to XML comments
-// * Changed namespace to GifComponents
-// * Fixed / suppressed some FxCop warnings
-// * Style changes (e.g. add missing curly brackets around conditional blocks)
-// * Changed various access modifiers to internal
-// * Moved mask ino OctreeNode.cs
 #endregion
 
 using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
+// TODO: restore once TextualRepresentation implemented using TextualRepresentation;
 
 namespace GifComponents
 {
 	/// <summary>
-	/// Class which does the actual quantization
+	/// Class which does the actual quantization.
+	/// Based on code downloaded from 
+	/// http://msdn.microsoft.com/en-us/library/aa479306.aspx
+	/// 
+	/// Amended by Simon Bridewell, November-December 2009:
+	/// 	* Moved out of OctreeQuantizer.cs into its own file
+	/// 	* Changed class access modifier from private to public and marked 
+	/// 	  as unsafe
+	/// 	* Small edits to XML comments
+	/// 	* Changed namespace to GifComponents
+	/// 	* Fixed / suppressed some FxCop warnings
+	/// 	* Style changes (e.g. add missing curly brackets around conditional 
+	/// 	  blocks)
+	/// 	* Changed various access modifiers to internal
+	/// 	* Moved mask ino OctreeNode.cs
+	/// 	* Added ToString method.
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Octree")]
-	internal unsafe class Octree
+	internal unsafe class Octree // TODO: restore once TextualRepresentation is implemented : SerializableItem
 	{
 		#region declarations
 		/// <summary>
@@ -112,13 +117,15 @@ namespace GifComponents
 				// black, with an alpha component of zero.
 				if( null == _previousNode )
 				{
-					// TODO: test case for this
+					// TESTME: AddColour - previous node is null
 					_previousColor = pixel->ARGB;
 					_root.AddColour( pixel, _maxColorBits, 0, this );
 				}
 				else
+				{
 					// Just update the previous node
 					_previousNode.Increment( pixel );
+				}
 			}
 			else
 			{
@@ -128,11 +135,11 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region Reduce method
+		#region private Reduce method
 		/// <summary>
 		/// Reduce the depth of the tree
 		/// </summary>
-		public void Reduce()
+		private void Reduce()
 		{
 			int	index;
 
@@ -168,7 +175,7 @@ namespace GifComponents
 		{
 			while( Leaves > colourCount )
 			{
-				// TODO: test case for this
+				// TESTME: Palletize - Leaves > colourCount
 				Reduce();
 			}
 
@@ -204,6 +211,26 @@ namespace GifComponents
 			_previousNode = node;
 		}
 		#endregion
+		
+		// TODO: restore ToString method once TextualRepresentation is implemented
+		#region public override ToString method
+//		/// <summary>
+//		/// Gets a string representation of this octree.
+//		/// </summary>
+//		/// <returns>A string representation of this octree</returns>
+//		public override string ToString()
+//		{
+//			StringBuilder sb = new StringBuilder();
+//			foreach( OctreeNode child in _reducibleNodes )
+//			{
+//				if( child != null )
+//				{
+//					sb.Append( child.ToString() );
+//				}
+//			}
+//			return sb.ToString();
+//		}
+		#endregion
 
 		#endregion
 
@@ -227,6 +254,16 @@ namespace GifComponents
 		public OctreeNode[] ReducibleNodes
 		{
 			get { return _reducibleNodes; }
+		}
+		#endregion
+		
+		#region Root property
+		/// <summary>
+		/// Gets the root node of this Octree.
+		/// </summary>
+		public OctreeNode Root
+		{
+			get { return _root; }
 		}
 		#endregion
 

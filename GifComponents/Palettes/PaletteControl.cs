@@ -276,7 +276,7 @@ namespace GifComponents.Palettes
         }
 		#endregion
 
-        // TODO: a public property to enable / disable keydown events?
+        // FEATURE: a public property to enable / disable keydown events?
         #region ListView KeyDown event handler
 		[SuppressMessage("Microsoft.Design", 
                          "CA1031:DoNotCatchGeneralExceptionTypes")]

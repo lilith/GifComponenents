@@ -33,7 +33,6 @@ namespace GifComponents.NUnit
 	/// <summary>
 	/// Returns data items and data streams related to the GIF example published
 	/// at http://en.wikipedia.org/wiki/Gif#Example_.gif_file
-	/// TODO: base (abstract?) class for multiple example files
 	/// </summary>
 	internal static class WikipediaExample
 	{
@@ -94,11 +93,6 @@ namespace GifComponents.NUnit
 		/// The position of the one frame in this file within the logical screen
 		/// </summary>
 		internal static readonly Point FramePosition = new Point( 0, 0 );
-		
-		/// <summary>
-		/// The background colour of the one frame in the file
-		/// </summary>
-		internal static readonly Color BackgroundColour = Color.Black;
 		
 		/// <summary>
 		/// The disposal method of the one frame in the file
@@ -189,8 +183,6 @@ namespace GifComponents.NUnit
 			{
 				ColourTable ct = new ColourTable( GlobalColourTableStream,
 				                                  GlobalColourTableSize );
-				// TODO: is CheckGlobalColourTable needed? Why is it commented out?
-//				CheckGlobalColourTable( ct );
 				return ct;
 			}
 		}
@@ -236,7 +228,6 @@ namespace GifComponents.NUnit
 
 		#endregion
 		
-		// TODO maybe frame level properties should be indexed? or in another class?
 		#region internal static frame-level properties
 		
 		#region internal static GraphicControlExtension property
@@ -257,21 +248,6 @@ namespace GifComponents.NUnit
 					                              );
 				CheckGraphicControlExtension( gce );
 				return gce;
-			}
-		}
-		#endregion
-		
-		#region internal static ImageDescriptor property
-		/// <summary>
-		/// Gets the image descriptor for the one frame in the file.
-		/// </summary>
-		internal static ImageDescriptor ImageDescriptor
-		{
-			get
-			{
-				ImageDescriptor id = new ImageDescriptor( ImageDescriptorStream );
-				CheckImageDescriptor( id );
-				return id;
 			}
 		}
 		#endregion
@@ -449,24 +425,6 @@ namespace GifComponents.NUnit
 			Assert.AreEqual( GlobalColourTableIsSorted, 
 			                 lsd.GlobalColourTableIsSorted, 
 			                 "GlobalColourTableIsSorted" );
-		}
-		#endregion
-		
-		#region CheckGlobalColourTable method
-		internal static void CheckGlobalColourTable( ColourTable gct )
-		{
-			Assert.AreEqual( GlobalColourTable.Colours.Length, 
-			                 gct.Colours.Length );
-			Assert.AreEqual( GlobalColourTable.Length, gct.Length );
-			Assert.AreEqual( GlobalColourTable.Colours.Length, gct.Length );
-			Assert.AreEqual( GlobalColourTable.Length, gct.Colours.Length );
-			
-			for( int i = 0; i < gct.Colours.Length; i++ )
-			{
-				Assert.AreEqual( GlobalColourTable.Colours[i], 
-				                 gct.Colours[i], 
-				                 "colour index: " + i );
-			}
 		}
 		#endregion
 		

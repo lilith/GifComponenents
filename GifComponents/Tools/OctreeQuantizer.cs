@@ -22,17 +22,6 @@
 //
 // This file is based on the OctreeQuantizer by Morgan Skinner - 
 // http://msdn.microsoft.com/en-us/library/aa479306.aspx
-//
-// Amended by Simon Bridewell, November 2009:
-// * Small edits to XML comments
-// * Changed namespace to GifComponents
-// * Fixed / suppressed some FxCop warnings
-// * Style changes (e.g. add missing curly brackets around conditional blocks)
-// * Added test for maxColours less than 1 into constructor
-// * Moved Octree and OctreeNode classes into their own files
-// * Changed various access modifiers to internal
-// * Added null argument test to GetPalette method
-// * Added array size test to GetPalette method
 #endregion
 
 using System;
@@ -44,7 +33,20 @@ using System.Drawing.Imaging;
 namespace GifComponents
 {
 	/// <summary>
-	/// Quantize using an Octree
+	/// Quantize using an Octree.
+	/// Based on code downloaded from 
+	/// http://msdn.microsoft.com/en-us/library/aa479306.aspx
+	/// 
+	/// Amended by Simon Bridewell, November-December 2009:
+	/// * Small edits to XML comments
+	/// 	* Changed namespace to GifComponents
+	/// 	* Fixed / suppressed some FxCop warnings
+	/// 	* Style changes (e.g. add missing curly brackets around conditional blocks)
+	/// 	* Added test for maxColours less than 1 into constructor
+	/// 	* Moved Octree and OctreeNode classes into their own files
+	/// 	* Changed various access modifiers to internal
+	/// 	* Added null argument test to GetPalette method
+	///		* Added array size test to GetPalette method
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
@@ -104,16 +106,17 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region override GetPalette method
+		#region protected override GetPalette method
 		/// <summary>
 		/// Retrieve the palette for the quantized image
 		/// </summary>
 		/// <param name="original">Any old palette, this is overwritten</param>
 		/// <returns>The new color palette</returns>
-		public override ColorPalette GetPalette( ColorPalette original )
+		protected override ColorPalette GetPalette( ColorPalette original )
 		{
 			if( original == null )
 			{
+				// TESTME: ColorPalette null argument
 				throw new ArgumentNullException( "original" );
 			}
 			
@@ -122,6 +125,7 @@ namespace GifComponents
 
 			if( original.Entries.Length < palette.Count )
 			{
+				// TESTME: GetPalette - supplied palette having not enough colours
 				string message
 					= "The supplied palette contains only "
 					+ original.Entries.Length
@@ -184,6 +188,11 @@ namespace GifComponents
 		}
 		#endregion
 
+		// TODO: remove / restore temp debug code
+//		protected override void ReportDataStructure()
+//		{
+//			Console.WriteLine( _octree.ToString() );
+//		}
 		#endregion
 
 	}

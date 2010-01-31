@@ -435,7 +435,7 @@ namespace GifComponents
 						switch( code )
 						{
 							case CodePlaintextLabel:
-								// TODO: handle plain text extension
+								// FEATURE: handle plain text extension
 								WriteDebugXmlComment( "0x01 - plain text extension" );
 								SetStatus( "Skipping plain text extension" );
 								SkipBlocks( inputStream );
@@ -450,7 +450,7 @@ namespace GifComponents
 								break;
 								
 							case CodeCommentLabel:
-								// TODO: handle comment extension
+								// FEATURE: handle comment extension
 								WriteDebugXmlComment( "0xFE - comment extension" );
 								SetStatus( "Skipping comment extension" );
 								SkipBlocks( inputStream );
@@ -470,11 +470,13 @@ namespace GifComponents
 								}
 								else
 								{
+									// TESTME: ReadContents - non-Netscape application extension
 									_applicationExtensions.Add( ext );
 								}
 								break;
 	
 							default : // uninteresting extension
+								// TESTME: ReadContents - uninteresting extension
 								WriteDebugXmlComment( "Ignoring this extension" );
 								SetStatus( "Skipping uninteresting extension" );
 								SkipBlocks( inputStream );

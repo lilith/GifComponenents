@@ -34,7 +34,6 @@ namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the GifFrame class.
-	/// TODO: aim for 100% coverage of GifFrame class
 	/// </summary>
 	[TestFixture]
 	public class GifFrameTest : GifComponentTestFixtureBase, IDisposable
@@ -487,6 +486,27 @@ namespace GifComponents.NUnit.Components
 					+ "property is read-only";
 				StringAssert.Contains( message, ex.Message );
 				ReportEnd();
+				throw;
+			}
+		}
+		#endregion
+		
+		#region PaletteNullTest
+		/// <summary>
+		/// Checks that the correct exception is thrown when the Palette 
+		/// property is set to null.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentNullException ) )]
+		public void PaletteNullTest()
+		{
+			try
+			{
+				_frame.Palette = null;
+			}
+			catch( ArgumentNullException ex )
+			{
+				Assert.AreEqual( "value", ex.ParamName );
 				throw;
 			}
 		}

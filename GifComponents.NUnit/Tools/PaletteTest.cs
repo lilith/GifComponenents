@@ -320,5 +320,30 @@ namespace GifComponents.NUnit
 			ReportEnd();
 		}
 		#endregion
+
+		#region ValidateTest
+		/// <summary>
+		/// Checks that the correct exception is thrown when the Validate
+		/// method is called on a palette with less than two colours.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( InvalidOperationException ) )]
+		public void ValidateTest()
+		{
+			_actual = new Palette();
+			_actual.Add( Color.FromArgb( 1, 1, 1 ) );
+			try
+			{
+				_actual.Validate();
+			}
+			catch( InvalidOperationException ex )
+			{
+				string message 
+					= "A palette with less than two colours is not valid.";
+				StringAssert.Contains( message, ex.Message );
+				throw;
+			}
+		}
+		#endregion
 	}
 }

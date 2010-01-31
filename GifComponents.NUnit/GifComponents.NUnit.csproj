@@ -159,6 +159,9 @@
     <None Include="DebugXml\TableBasedImageDataTest.MinimumCodeSizeTooLarge.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\AnimatedGifEncoderTest.CompareQuantizers.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\bmp.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -82,6 +82,7 @@ namespace GifComponents
 		{
 			if( source == null )
 			{
+				// TESTME: constructor - null argument
 				throw new ArgumentNullException( "source" );
 			}
 			
@@ -124,6 +125,9 @@ namespace GifComponents
 				if( !_singlePass )
 				{
 					FirstPass( sourceData, width, height );
+					// TODO: temp debug code - restore when testing with TextualRepresentation
+//					Console.WriteLine( "After first pass" );
+//					ReportDataStructure();
 				}
 
 				// Then set the color palette on the output bitmap. I'm passing 
@@ -133,6 +137,10 @@ namespace GifComponents
 
 				// Then call the second pass which actually does the conversion
 				SecondPass( sourceData, output, width, height, bounds );
+				
+				// TODO: temp debug code - restore when testing with TextualRepresentation
+//				Console.WriteLine( "After second pass" );
+//				ReportDataStructure();
 			}
 			finally
 			{
@@ -171,7 +179,7 @@ namespace GifComponents
 				for( int col = 0; col < width; col++, pSourcePixel++ )
 				{
 					// Now I have the pixel, call the FirstPassQuantize function...
-					InitialQuantizePixel( (Colour32*)pSourcePixel );
+					InitialQuantizePixel( (Colour32*) pSourcePixel );
 				}
 
 				// Add the stride to the source row
@@ -292,8 +300,11 @@ namespace GifComponents
 		/// </summary>
 		/// <param name="original">Any old palette, this is overwritten</param>
 		/// <returns>The new color palette</returns>
-		public abstract ColorPalette GetPalette( ColorPalette original ) ;
+		protected abstract ColorPalette GetPalette( ColorPalette original ) ;
 		#endregion
+		
+		// TODO: temp debug code - restore when testing with TextualRepresentation
+//		protected abstract void ReportDataStructure();
 
 		#region declarations
 		/// <summary>

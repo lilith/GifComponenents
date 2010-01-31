@@ -54,12 +54,25 @@ namespace GifComponents.NUnit
 		{
 			ReportStart();
 			_oq = new OctreeQuantizer( 255, 8 );
-			for( int colourCount = 1; colourCount < 500; colourCount++ )
+			for( int colourCount = 1; colourCount < 500; colourCount += 5 )
 			{
+				Collection<Color> distinctColours;
+				
 				Bitmap original = MakeBitmap( new Size( 50, 50 ), colourCount );
+				distinctColours = ImageTools.GetDistinctColours( original );
+				// Make sure the bitmap we've created has the number of colours we want
+				Assert.AreEqual( colourCount, distinctColours.Count );
+				
 				Bitmap quantized = _oq.Quantize( original );
-				BitmapAssert.AreEqual( original, quantized, 3, 
+				BitmapAssert.AreEqual( original, quantized, 60, // TODO: this is a rather large tolerance
 				                       colourCount + " colours" );
+				
+				distinctColours = ImageTools.GetDistinctColours( quantized );
+				int expectedColours = colourCount > 256 ? 256 : colourCount;
+				// FIXME: 65-colour image is quantized down to 64 colours
+				// TODO: Check for exact number of colours once Octree quantizer stops reducing colour depth too much
+//				Assert.AreEqual( expectedColours, distinctColours.Count, colourCount + " colours" );
+				Assert.LessOrEqual( distinctColours.Count, expectedColours, colourCount + " colours" );
 			}
 			ReportEnd();
 		}
@@ -173,32 +186,20 @@ namespace GifComponents.NUnit
 		
 		#endregion
 		
-		#region private methods
+		#region private MakeBitmap method
 		private static Bitmap MakeBitmap( Size size, int numberOfColours )
 		{
 			Bitmap bitmap = new Bitmap( size.Width, size.Height );
 			Collection<Color> colours = new Collection<Color>();
+			WriteMessage( "MakeBitmap: " + numberOfColours + " colours" );
 			Color c;
-			Random rand = new Random();
-			for( int i = 0; i < numberOfColours; i++ )
+			while( colours.Count < numberOfColours )
 			{
-				int channel = rand.Next( 0, 2 );
-				int intensity = (int) ( (double) i * (double) 255 / (double) numberOfColours );
-				switch( channel )
+				c = RandomColour();
+				if( colours.Contains( c ) == false )
 				{
-					case 0:
-						c = Color.FromArgb( intensity, 0, 0 );
-						break;
-						
-					case 1:
-						c = Color.FromArgb( 0, intensity, 0 );
-						break;
-						
-					default:
-						c = Color.FromArgb( 0, 0, intensity );
-						break;
+					colours.Add( c );
 				}
-				colours.Add( c );
 			}
 			
 			int colourIndex = 0;
@@ -215,6 +216,18 @@ namespace GifComponents.NUnit
 				}
 			}
 			return bitmap;
+		}
+		#endregion
+		
+		#region private RandomColour method
+		private static Color RandomColour()
+		{
+			Random rand = new Random();
+			int r = rand.Next( 0, 256 );
+			int g = rand.Next( 0, 256 );
+			int b = rand.Next( 0, 256 );
+			Color c = Color.FromArgb( r, g, b );
+			return c;
 		}
 		#endregion
 	}

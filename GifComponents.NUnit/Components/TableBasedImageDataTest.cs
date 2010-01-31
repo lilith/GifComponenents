@@ -32,7 +32,6 @@ namespace GifComponents.NUnit.Components
 {
 	/// <summary>
 	/// Test fixture for the TableBasedImageData class.
-	/// TODO: aim for 100% coverage of TableBasedImageData.cs
 	/// </summary>
 	[TestFixture]
 	public class TableBasedImageDataTest : GifComponentTestFixtureBase, IDisposable

@@ -52,7 +52,7 @@ namespace GifComponents
 	/// Modified by Phil Garcia (phil@thinkedge.com) 
 	///		1. Add support to output the Gif to a MemoryStream (9/2/2005)
 	/// 
-	/// Modified by Simon Bridewell, June-August 2009:
+	/// Modified by Simon Bridewell, June-December 2009:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	/// 	* Corrected FxCop code analysis errors.
@@ -66,6 +66,8 @@ namespace GifComponents
 	/// 	  256 colours.
 	/// 	* User can now supply their own palette as a global or local colour
 	/// 	  table.
+	/// 	* New QuantizerType property - allows user to choose between NeuQuant
+	/// 	  and Octree quantizers.
 	/// </summary>
 	public class AnimatedGifEncoder : GifComponent
 	{
@@ -423,6 +425,7 @@ namespace GifComponents
 				{
 					if( _palette == null )
 					{
+						// TESTME: WriteToStream - UseSuppliedPalette, no palette supplied
 						string message
 							= "You have chosen to encode this animation using "
 							+ "a global colour table and a supplied palette, "
@@ -486,6 +489,7 @@ namespace GifComponents
 		{
 			if( colourTable == null )
 			{
+				// TESTME: FindClosest - null colour table
 				return -1;
 			}
 			int r = colourToFind.R;
@@ -538,7 +542,7 @@ namespace GifComponents
 					= "Frame " + _processingFrame 
 					+ " of " + _frames.Count 
 					+ ": finding closest to transparent colour";
-				// TODO: test case for this once transparency is understood
+				// TESTME: WriteFrame - _transparent != Color.Empty
 				transparentColourIndex = FindClosest( _transparent, act );
 			}
 			_status 
@@ -644,6 +648,7 @@ namespace GifComponents
 				{
 					if( _frames[_processingFrame].Palette == null )
 					{
+						// TESTME: SetActiveColourTable - SetActiveColourTable, UseSuppliedPalette, no palette supplied
 						string message
 							= "You have opted to use a local colour table built "
 							+ "from a supplied palette, but frame "
@@ -672,8 +677,8 @@ namespace GifComponents
 						+ ": building local colour table - analysing pixels";
 					Image thisImage = _frames[_processingFrame].TheImage;
 					_pixelAnalysis = new PixelAnalysis( thisImage, 
-					                                    _quality, 
 					                                    _quantizerType );
+					_pixelAnalysis.ColourQuality = _quality;
 					// make local colour table active
 					act = _pixelAnalysis.ColourTable;
 				}
@@ -718,7 +723,7 @@ namespace GifComponents
 			} 
 			else 
 			{
-				// TODO: test case for this once transparency is better understood
+				// TESTME: WriteGraphicCtrlExt - _transparent != Color.Empty
 				hasTransparentColour = true;
 				disposalMethod = DisposalMethod.RestoreToBackgroundColour; // force clear if using transparent color
 			}
@@ -821,7 +826,8 @@ namespace GifComponents
 						Image thisImage = thisFrame.TheImage;
 						images.Add( thisImage );
 					}
-					_pixelAnalysis = new PixelAnalysis( images, _quality );
+					_pixelAnalysis = new PixelAnalysis( images );
+					_pixelAnalysis.ColourQuality = _quality;
 					_globalColourTable = _pixelAnalysis.ColourTable;
 				}
 				_status = "Writing logical screen descriptor (global)";

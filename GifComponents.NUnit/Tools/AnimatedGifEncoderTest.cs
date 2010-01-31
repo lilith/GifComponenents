@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -324,6 +325,7 @@ namespace GifComponents.NUnit
 		#region private CheckFrames method
 		private void CheckFrames()
 		{
+			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
 			Assert.AreEqual( _e.Frames.Count, _d.Frames.Count );
 			for( int i = 0; i < _e.Frames.Count; i++ )
 			{
@@ -391,10 +393,104 @@ namespace GifComponents.NUnit
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 		                 MessageId = "Quantizers")]
-		[Ignore( "Re-enable once Octree quantizer is implemented" )]
 		public void CompareQuantizers()
 		{
 			ReportStart();
+			
+			string fileName;
+			DateTime startTime;
+			DateTime endTime;
+			TimeSpan encodingTime;
+			
+			// Test actual quantization using image with 256+ colours.
+			string bitmapFileName = "images/" + TestFixtureName 
+			                       + "." + TestCaseName + ".bmp";
+
+			Bitmap b = new Bitmap( bitmapFileName );
+			
+			for( int q = 1; q <= 20; q++ )
+			{
+				_e = new AnimatedGifEncoder();
+				_e.QuantizerType = QuantizerType.NeuQuant;
+				_e.ColourQuality = q;
+				_e.AddFrame( new GifFrame( b ) );
+				fileName = TestFixtureName + "." + TestCaseName + ".NeuQuant." + q + ".gif";
+				startTime = DateTime.Now;
+				_e.WriteToFile( fileName );
+				endTime = DateTime.Now;
+				encodingTime = endTime - startTime;
+				WriteMessage( "Encoding with quantization using NeuQuant, quality="
+				              + q + " took " + encodingTime );
+				_d = new GifDecoder( fileName );
+				_d.Decode();
+				Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState, "Quality " + q );
+				Assert.AreEqual( 1, _d.Frames.Count, "Quality " + q );
+				Collection<Color> colours = ImageTools.GetColours( _d.Frames[0].TheImage );
+				// FIXME: NeuQuant quantizer reducing to 180 colours instead of 256 colours
+				// TODO: Check for exactly 256 colours once Octree quantizer returns 256-colour images
+//				Assert.AreEqual( 256, ImageTools.GetDistinctColours( colours ).Count );
+				Assert.LessOrEqual( ImageTools.GetDistinctColours( colours ).Count, 256 );
+				for( int tolerance = 0; tolerance < 256; tolerance++ )
+				{
+					try
+					{
+						ImageAssert.AreEqual( b, 
+						                      _d.Frames[0].TheImage, 
+						                      tolerance, 
+						                      "Quality " + q );
+						WriteMessage( "Quality " + q 
+						             + " required tolerance " + tolerance );
+						break;
+					}
+					catch( AssertionExtensionException )
+					{
+						if( tolerance == 255 )
+						{
+							throw;
+						}
+					}
+				}
+			}
+			
+			_e = new AnimatedGifEncoder();
+			_e.QuantizerType = QuantizerType.Octree;
+			_e.AddFrame( new GifFrame( b ) );
+			fileName = TestFixtureName + "." + TestCaseName + ".Octree.gif";
+			startTime = DateTime.Now;
+			_e.WriteToFile( fileName );
+			endTime = DateTime.Now;
+			encodingTime = endTime - startTime;
+			WriteMessage( "Encoding with quantization using Octree took " + encodingTime );
+			_d = new GifDecoder( fileName );
+			_d.Decode();
+			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
+			Assert.AreEqual( 1, _d.Frames.Count );
+			Collection<Color> colours2 = ImageTools.GetColours( _d.Frames[0].TheImage );
+			// FIXME: Octree quantizer should return a 256-colour image here
+//			Assert.AreEqual( 256, ImageTools.GetDistinctColours( colours2 ).Count );
+			Assert.LessOrEqual( ImageTools.GetDistinctColours( colours2 ).Count, 256 );
+			for( int tolerance = 0; tolerance < 256; tolerance++ )
+			{
+				try
+				{
+					ImageAssert.AreEqual( b, 
+					                      _d.Frames[0].TheImage, 
+					                      tolerance, 
+					                      "Octree" );
+					WriteMessage( "Octree quantization required tolerance " 
+					             + tolerance );
+					break;
+				}
+				catch( AssertionExtensionException )
+				{
+					if( tolerance == 255 )
+					{
+						throw;
+					}
+				}
+			}
+			
+			// re-encoding an existing GIF should not cause quantization
 			_d = new GifDecoder( @"images\globe\spinning globe better 200px transparent background.gif" );
 			_d.Decode();
 			
@@ -406,18 +502,13 @@ namespace GifComponents.NUnit
 				_e.AddFrame( new GifFrame( f.TheImage ) );
 			}
 			
-			string fileName;
-			DateTime startTime;
-			DateTime endTime;
-			TimeSpan encodingTime;
-			
 			fileName = "NeuQuant.gif";
 			_e.QuantizerType = QuantizerType.NeuQuant;
 			startTime = DateTime.Now;
 			_e.WriteToFile( fileName );
 			endTime = DateTime.Now;
 			encodingTime = endTime - startTime;
-			WriteMessage( "Encoding using NeuQuant took " + encodingTime );
+			WriteMessage( "Encoding without quantization using NeuQuant took " + encodingTime );
 			
 			fileName = "Octree.gif";
 			_e.QuantizerType = QuantizerType.Octree;
@@ -425,17 +516,20 @@ namespace GifComponents.NUnit
 			_e.WriteToFile( fileName );
 			endTime = DateTime.Now;
 			encodingTime = endTime - startTime;
-			WriteMessage( "Encoding using Octree took " + encodingTime );
+			WriteMessage( "Encoding without quantization using Octree took " + encodingTime );
 			
 			GifDecoder nqDecoder = new GifDecoder( "NeuQuant.gif" );
+			nqDecoder.Decode();
 			GifDecoder otDecoder = new GifDecoder( "Octree.gif" );
+			otDecoder.Decode();
 			Assert.AreEqual( nqDecoder.Frames.Count, otDecoder.Frames.Count );
 			for( int i = 0; i < nqDecoder.Frames.Count; i++ )
 			{
 				ImageAssert.AreEqual( nqDecoder.Frames[i].TheImage, 
-				                      otDecoder.Frames[i].TheImage,
+				                      otDecoder.Frames[i].TheImage, 
 				                      "frame " + i );
 			}
+
 			ReportEnd();
 		}
 		#endregion

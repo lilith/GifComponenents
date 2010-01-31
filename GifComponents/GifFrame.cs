@@ -34,6 +34,7 @@ namespace GifComponents
 	/// </summary>
 	public class GifFrame : GifComponents.Components.GifFrame
 	{
+		#region Constructor( Image )
 		/// <summary>
 		/// Constructor.
 		/// </summary>
@@ -42,6 +43,7 @@ namespace GifComponents
 		/// </param>
 		public GifFrame( Image theImage ) : base( theImage )
 		{}
+		#endregion
 		
 		#region constructor( Stream, , , , ,  )
 		/// <summary>

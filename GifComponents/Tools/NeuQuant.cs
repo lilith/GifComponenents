@@ -50,11 +50,12 @@ namespace GifComponents
 	///
 	/// Ported to Java 12/00 K Weiner
 	/// 
-	/// Modified by Simon Bridewell, June-November 2009:
+	/// Modified by Simon Bridewell, June-December 2009:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	/// Adapted for FxCop code analysis compliance and documentation comments 
 	/// converted to .net XML comments.
+	/// Removed "len" parameter from constructor.
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
@@ -148,20 +149,22 @@ namespace GifComponents
 		/// A collection of byte colour intensities, in the order red, green, 
 		/// blue, representing the colours of each of the pixels in an image.
 		/// </param>
-		/// <param name="len">
-		/// TODO: len is used to populate _lengthsize - what is this used for?
-		/// </param>
 		/// <param name="sample">
-		/// Image quantization quality. // TODO: is this correct?
+		/// Image quantization quality.
 		/// </param>
-		public NeuQuant( byte[] thePicture, int len, int sample)
+		public NeuQuant( byte[] thePicture, int sample )
 		{
+			if( thePicture == null )
+			{
+				// TESTME: constructor - null picture
+				throw new ArgumentNullException( "thePicture" );
+			}
 
 			int i;
 			int[] p;
 
 			_thepicture = thePicture;
-			_lengthcount = len;
+			_lengthcount = thePicture.Length / 3;
 			_samplefac = sample;
 
 			_network = new int[_netsize][];
@@ -264,7 +267,7 @@ namespace GifComponents
 
 			rad = radius >> _radiusbiasshift;
 			if (rad <= 1)
-				rad = 0;
+				rad = 0; // TESTME: Learn - rad <= 1
 			for (i = 0; i < rad; i++)
 				_radpower[i] =
 					alpha * (((rad * rad - i * i) * _radbias) / (rad * rad));
@@ -277,6 +280,7 @@ namespace GifComponents
 				step = 3 * _prime1;
 			else 
 			{
+				// TESTME: Learn - _lengthcount >= _minpicturebytes and divisible by _prime1
 				if ((_lengthcount % _prime2) != 0)
 					step = 3 * _prime2;
 				else 
@@ -395,7 +399,7 @@ namespace GifComponents
 					{
 						j--;
 						if (dist < 0)
-							dist = -dist;
+							dist = -dist; // TESTME: Map - dist < 0
 						a = p[0] - blue;
 						if (a < 0)
 							a = -a;
@@ -502,7 +506,8 @@ namespace GifComponents
 					} 
 					catch( Exception ex ) 
 					{
-						// TODO: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
+						// FXCOP: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
+						// REDUNDANT: is this exception handling needed?
 						Utils.Handle( ex );
 						throw;
 					} // prevents 1.3 miscompilation
@@ -518,7 +523,8 @@ namespace GifComponents
 					} 
 					catch( Exception ex ) 
 					{
-						// TODO: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
+						// FXCOP: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
+						// REDUNDANT: is this exception handling needed?
 						Utils.Handle( ex );
 						throw;
 					}
@@ -610,7 +616,6 @@ namespace GifComponents
 		#region private ColorMap method
 		/// <summary>
 		/// ColorMap method.
-		/// TODO: make this a property?
 		/// </summary>
 		/// <returns>
 		/// A colour table containing up to 256 colours, being the colours of

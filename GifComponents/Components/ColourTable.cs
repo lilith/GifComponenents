@@ -234,6 +234,7 @@ namespace GifComponents.Components
 						return 1;
 						
 					default:
+						// TESTME: SizeBits default condition
 						return 0;
 				}
 			}

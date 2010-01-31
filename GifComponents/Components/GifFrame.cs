@@ -61,6 +61,7 @@ namespace GifComponents.Components
 
 		#region constructors
 		
+		#region constructor( Image )
 		/// <summary>
 		/// Constructor.
 		/// </summary>
@@ -72,6 +73,7 @@ namespace GifComponents.Components
 			_image = theImage;
 			_delay = 10; // 10 1/100ths of a second, i.e. 1/10 of a second.
 		}
+		#endregion
 		
 		#region constructor( Stream, , , , ,  )
 		/// <summary>
@@ -189,7 +191,7 @@ namespace GifComponents.Components
 			ColourTable localColourTable;
 			if( imageDescriptor.HasLocalColourTable ) 
 			{
-				// TODO: test case for local colour table
+				// TESTME: constructor with local colour table
 				localColourTable 
 					= new ColourTable( inputStream,
 					                   imageDescriptor.LocalColourTableSize, 
@@ -234,9 +236,9 @@ namespace GifComponents.Components
 				= new TableBasedImageData( inputStream, pixelCount, XmlDebugging );
 			WriteDebugXmlNode( indexedPixels.DebugXmlReader );
 			
-			// TODO: can this ever happen? Test case needed
 			if( indexedPixels.Pixels.Count == 0 )
 			{
+				// TESTME: constructor - indexedPixels.Pixels.Count == 0
 				Bitmap emptyBitmap = new Bitmap( lsd.LogicalScreenSize.Width, 
 				                                 lsd.LogicalScreenSize.Height );
 				_image = emptyBitmap;
@@ -615,7 +617,7 @@ namespace GifComponents.Components
 						} 
 						else 
 						{
-							// TODO: does this ever happen?
+							// TESTME: CreateBitmap - gce.HasTransparentColour == false
 							// use given background color
 							c = previousFrame.BackgroundColour;
 						}
@@ -673,7 +675,7 @@ namespace GifComponents.Components
 					int dlim = dx + id.Size.Width; // end of dest line
 					if( (k + lsd.LogicalScreenSize.Width) < dlim ) 
 					{
-						// TODO: does this ever happen? Test case needed
+						// TESTME: CreateBitmap - past dest edge
 						dlim = k + lsd.LogicalScreenSize.Width; // past dest edge
 					}
 					int sx = i * id.Size.Width; // start of line in source
@@ -694,7 +696,7 @@ namespace GifComponents.Components
 							}
 							else
 							{
-								// TODO: test case for BadColourIndex
+								// TESTME: CreateBitmap - BadColourIndex
 								c = Color.Black;
 								string message 
 									= "Colour index: "

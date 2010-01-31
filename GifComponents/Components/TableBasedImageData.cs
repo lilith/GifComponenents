@@ -226,9 +226,10 @@ namespace GifComponents.Components
 						}
 						// Append the contents of the current byte in the data 
 						// block to the beginning of the datum
-						datum += block[indexInDataBlock] << meaningfulBitsInDatum;
-						
-						// so we've now got 8 more bits of information in the 
+						int newDatum = block[indexInDataBlock] << meaningfulBitsInDatum;
+						datum += newDatum;
+
+						// so we've now got 8 more bits of information in the
 						// datum.
 						meaningfulBitsInDatum += 8;
 						
@@ -334,7 +335,7 @@ namespace GifComponents.Components
 					#region add a new string to the string table
 					if( nextAvailableCode >= _maxStackSize )
 					{
-						// TODO: test case for this scenario
+						// TESTME: constructor - next available code >- _maxStackSize
 						break;
 					}
 					pixelStack.Push( (byte) firstCode );
@@ -346,7 +347,6 @@ namespace GifComponents.Components
 					#region do we need to increase the code size?
 					if( ( nextAvailableCode & GetMaximumPossibleCode( currentCodeSize ) ) == 0 )
 					{
-						// TODO: test case for increasing the code size
 						// We've reached the largest code possible for this size
 						if( nextAvailableCode < _maxStackSize )
 						{
