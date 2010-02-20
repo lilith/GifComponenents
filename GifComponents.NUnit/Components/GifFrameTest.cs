@@ -514,6 +514,33 @@ namespace GifComponents.NUnit.Components
 		
 		#endregion
 
+		#region Bug2940635
+		/// <summary>
+		/// Attempts to decode an image which has a frame with a colour table
+		/// size of 2 and a (zero-based) transparent colour index of 2,
+		/// to ensure that no IndexOutOfRangeException is thrown.
+		/// </summary>
+		[Test]
+		public void Bug2940635()
+		{
+			string gifName 
+				= @"images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif";
+			_decoder = new GifDecoder( gifName );
+			_decoder.Decode();
+			
+			string bmpName;
+			Image expectedBitmap;
+			Image actualBitmap;
+			for( int i = 0; i < _decoder.Frames.Count; i++ )
+			{
+				actualBitmap = _decoder.Frames[i].TheImage;
+				bmpName = gifName + ".frame " + i + ".bmp";
+				expectedBitmap = Bitmap.FromFile( bmpName );
+				ImageAssert.AreEqual( expectedBitmap, actualBitmap, "Frame " + i );
+			}
+		}
+		#endregion
+		
 		#region private CreateStream method
 		private static MemoryStream CreateStream()
 		{

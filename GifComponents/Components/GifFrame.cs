@@ -36,12 +36,14 @@ namespace GifComponents.Components
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	///
-	/// Amended by Simon Bridewell June-December 2009:
+	/// Amended by Simon Bridewell June 2009-February 2010:
 	/// 1. Made member variables private.
 	/// 2. Added various properties to expose all the elements of the GifFrame.
 	/// 3. Added constructors for use in both encoding and decoding.
 	/// 4. Derive from GifComponent.
 	/// 5. Added constructor( Stream... )
+	/// 6. Removed code to swap out transparent colour and replace with black
+	///    (bug 2940635).
 	/// </summary>
 	[TypeConverter( typeof( ExpandableObjectConverter ) )]
 	public class GifFrame : GifComponent
@@ -221,15 +223,6 @@ namespace GifComponents.Components
 			}
 			#endregion
 
-			// If this frame has a transparent colour then replace its entry in
-			// the active colour table with black // TODO: (why?)
-			Color savedTransparentColour = Color.FromArgb( 0 );
-			if( gce.HasTransparentColour )
-			{
-				savedTransparentColour = activeColourTable[transparentColourIndex];
-				activeColourTable[transparentColourIndex] = Color.FromArgb( 0 );
-			}
-
 			// decode pixel data
 			int pixelCount = imageDescriptor.Size.Width * imageDescriptor.Size.Height;
 			TableBasedImageData indexedPixels 
@@ -251,13 +244,6 @@ namespace GifComponents.Components
 			// Skip any remaining blocks up to the next block terminator (in
 			// case there is any surplus data before the next frame)
 			SkipBlocks( inputStream );
-
-			// If we replaced the transparent colour's entry in the active 
-			// colour table with black, then restore its original colour.
-			if( gce.HasTransparentColour )
-			{
-				activeColourTable[transparentColourIndex] = savedTransparentColour;
-			}
 
 			_indexedPixels = indexedPixels;
 

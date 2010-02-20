@@ -165,6 +165,147 @@
     <None Include="images\bmp.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 10.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 11.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 12.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 13.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 14.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 15.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 16.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 17.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 18.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 19.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 20.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 21.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 22.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 23.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 24.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 25.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 26.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 27.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 28.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 29.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 30.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 31.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 32.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 33.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 34.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 35.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 36.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 37.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 38.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 39.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 4.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 40.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 41.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 42.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 43.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 44.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 45.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 5.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 6.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 7.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 8.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 9.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\GifDecoderTest.LsdEndOfInputStream.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -346,6 +487,7 @@
   <ItemGroup>
     <Folder Include="Components" />
     <Folder Include="images" />
+    <Folder Include="images\Bug2940635" />
     <Folder Include="images\globe" />
     <Folder Include="images\PaletteBitmaps" />
     <Folder Include="images\smiley" />
@@ -353,7 +495,7 @@
     <Folder Include="Types" />
     <Folder Include="Tools" />
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">
-      <Project>{1C3A03CA-5E55-4CC4-9746-194A4188960A}</Project>
+      <Project>{19D45270-91BE-4AD2-9F2E-84B3F792324F}</Project>
       <Name>GifComponents</Name>
     </ProjectReference>
   </ItemGroup>

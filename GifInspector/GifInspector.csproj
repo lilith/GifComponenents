@@ -74,7 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">
-      <Project>{1C3A03CA-5E55-4CC4-9746-194A4188960A}</Project>
+      <Project>{19D45270-91BE-4AD2-9F2E-84B3F792324F}</Project>
       <Name>GifComponents</Name>
     </ProjectReference>
   </ItemGroup>
