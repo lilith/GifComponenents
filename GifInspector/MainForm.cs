@@ -124,20 +124,27 @@ namespace GifInspector
 		#region private UpdateUI method
 		private void UpdateUI()
 		{
+			// Display the decoder status
 			if( _decoder != null )
 			{
 				textBoxStatus.Text = _decoder.Status;
 			}
-			textBoxFrameNumber.Text = _imageIndex.ToString( CultureInfo.InvariantCulture );
+			
+			// Display the number of the frame we're looking at
+			textBoxFrameNumber.Text 
+				= _imageIndex.ToString( CultureInfo.InvariantCulture );
+			
 			if( _decoder != null )
 			{
 				if( _decoder.Frames == null || _decoder.Frames.Count == 0 )
 				{
+					// Decoder isn't initialised so display nothing
 					pictureBox1.Image = null;
 					propertyGridFrame.SelectedObject = null;
 				}
 				else
 				{
+					// Display frame count, current frame and frame properties
 					textBoxFrameCount.Text = _decoder.Frames.Count.ToString( CultureInfo.InvariantCulture );
 					pictureBox1.Image = _decoder.Frames[_imageIndex].TheImage;
 					propertyGridFrame.SelectedObject = _decoder.Frames[_imageIndex];
@@ -184,6 +191,10 @@ namespace GifInspector
 			DialogResult result = openFileDialog1.ShowDialog();
 			if( result == DialogResult.OK )
 			{
+				// Point at the first frame to avoid IndexOutOfRangeException
+				// whilst loading the GIF.
+				_imageIndex = 0;
+				
 				DisableControls();
 				_t = new Thread( LoadGif );
 				_t.IsBackground = true;
