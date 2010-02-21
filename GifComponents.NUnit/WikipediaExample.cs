@@ -173,6 +173,29 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region internal static LogicalScreenDescriptorUseLocal property
+		/// <summary>
+		/// Gets the logical screen descriptor for the file, if local colour
+		/// tables are to be used.
+		/// </summary>
+		internal static LogicalScreenDescriptor LogicalScreenDescriptorUseLocal
+		{
+			get
+			{
+				LogicalScreenDescriptor lsd =
+					new LogicalScreenDescriptor( LogicalScreenSize,
+					                             false,
+					                             ColourResolution,
+					                             GlobalColourTableIsSorted,
+					                             GlobalColourTableSizeBits,
+					                             BackgroundColourIndex,
+					                             PixelAspectRatio
+					                            );
+				return lsd;
+			}
+		}
+		#endregion
+		
 		#region internal static GlobalColourTable property
 		/// <summary>
 		/// Gets the global colour table for the GIF file

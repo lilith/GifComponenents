@@ -159,6 +159,9 @@
     <None Include="DebugXml\TableBasedImageDataTest.MinimumCodeSizeTooLarge.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="DebugXml\GifFrameTest.ConstructorStreamUseLocalTest.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\AnimatedGifEncoderTest.CompareQuantizers.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -304,6 +307,141 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif.frame 9.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 4.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-bestiolequimache.gif.frame 5.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-chinesetoon.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-chinesetoon.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-chinesetoon.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-chinesetoon.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-chinesetoon.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-fillekermit.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-fillekermit.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-fillekermit.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-fillekermit.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-fillekermit.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-k-manrainbow.gif.frame 4.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 0.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 10.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 11.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 12.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 13.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 14.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 15.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 16.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 17.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 18.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 19.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 2.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 20.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 3.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 4.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 5.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 6.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 7.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 8.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\Bug2940669\Bug2940669-sucks-rot2.gif.frame 9.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="images\GifDecoderTest.LsdEndOfInputStream.gif">
@@ -477,6 +615,9 @@
     <None Include="images\smiley\Smiley-windows.bmp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\wikipedia example UseLocal.gif">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\wikipedia example.bmp">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -488,6 +629,7 @@
     <Folder Include="Components" />
     <Folder Include="images" />
     <Folder Include="images\Bug2940635" />
+    <Folder Include="images\Bug2940669" />
     <Folder Include="images\globe" />
     <Folder Include="images\PaletteBitmaps" />
     <Folder Include="images\smiley" />

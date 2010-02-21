@@ -59,7 +59,7 @@ namespace GifComponents.NUnit.Components
 		
 		#region ConstructorStreamTest
 		/// <summary>
-		/// Checks that the constructor( Stream )works correctly under normal
+		/// Checks that the constructor( Stream ) works correctly under normal
 		/// circumstances.
 		/// </summary>
 		[Test]
@@ -213,6 +213,54 @@ namespace GifComponents.NUnit.Components
 			if( xmlDebugging )
 			{
 				Assert.AreEqual( ExpectedDebugXml, _decoder.Frames[0].DebugXml );
+			}
+		}
+		#endregion
+		
+		#region ConstructorStreamUseLocalTest
+		/// <summary>
+		/// Checks that the constructor( Stream ) works correctly under normal
+		/// circumstances, with an image with local colour tables.
+		/// </summary>
+		[Test]
+		public void ConstructorStreamUseLocalTest()
+		{
+			ReportStart();
+			ConstructorStreamUseLocalTest( true );
+			ConstructorStreamUseLocalTest( false );
+			ReportEnd();
+		}
+		
+		private void ConstructorStreamUseLocalTest( bool xmlDebugging )
+		{
+			_decoder = new GifDecoder( @"images\wikipedia example UseLocal.gif", 
+			                           xmlDebugging );
+			_decoder.Decode();
+			_frame = _decoder.Frames[0];
+			
+			Assert.AreEqual( ErrorState.Ok, _frame.ConsolidatedState );
+
+			WikipediaExample.CheckImage( _frame.TheImage );
+			
+			// Check image descriptor
+			ImageDescriptor id = _frame.ImageDescriptor;
+			Assert.AreEqual( true, id.HasLocalColourTable, 
+			                 "HasLocalColourTable" );
+			Assert.AreEqual( false, id.IsInterlaced, "IsInterlaced" );
+			Assert.AreEqual( false, id.IsSorted, "LocalColourTableIsSorted" );
+			Assert.AreEqual( 4, id.LocalColourTableSize, "LocalColourTableSize" );
+			Assert.AreEqual( new Point( 0, 0 ), id.Position, "Position" );
+			Assert.AreEqual( new Size( 3, 5 ), id.Size, "Size" );
+
+			WikipediaExample.CheckGraphicControlExtension( _frame.GraphicControlExtension );
+			WikipediaExample.CheckImageData( _frame.IndexedPixels );
+			Assert.AreEqual( 0, _frame.BackgroundColour.R );
+			Assert.AreEqual( 0, _frame.BackgroundColour.G );
+			Assert.AreEqual( 0, _frame.BackgroundColour.B );
+			
+			if( xmlDebugging )
+			{
+				Assert.AreEqual( ExpectedDebugXml, _frame.DebugXml );
 			}
 		}
 		#endregion
@@ -523,6 +571,7 @@ namespace GifComponents.NUnit.Components
 		[Test]
 		public void Bug2940635()
 		{
+			ReportStart();
 			string gifName 
 				= @"images\Bug2940635\Bug2940635TransparentColourIndexOutOfRangeException.gif";
 			_decoder = new GifDecoder( gifName );
@@ -538,6 +587,38 @@ namespace GifComponents.NUnit.Components
 				expectedBitmap = Bitmap.FromFile( bmpName );
 				ImageAssert.AreEqual( expectedBitmap, actualBitmap, "Frame " + i );
 			}
+			ReportEnd();
+		}
+		#endregion
+		
+		#region Bug2940669
+		/// <summary>
+		/// Attempts to decode a selection of images which make use of 
+		/// transparency and compares the decoded frames against the same frames
+		/// exported as bitmaps using GIMP 2.0.
+		/// </summary>
+		[Test]
+		public void Bug2940669()
+		{
+			ReportStart();
+			string folder = @"images\Bug2940669\";
+			string bmpName;
+			Image expectedBitmap;
+			Image actualBitmap;
+			foreach( string gifName in Directory.GetFiles( folder, "*.gif" ) )
+			{
+				_decoder = new GifDecoder( gifName );
+				_decoder.Decode();
+				for( int i = 0; i < _decoder.Frames.Count; i++ )
+				{
+					actualBitmap = _decoder.Frames[i].TheImage;
+					bmpName = gifName + ".frame " + i + ".bmp";
+					expectedBitmap = Bitmap.FromFile( bmpName );
+					ImageAssert.AreEqual( expectedBitmap, actualBitmap, 
+					                      gifName + " Frame " + i );
+				}
+			}
+			ReportEnd();
 		}
 		#endregion
 		

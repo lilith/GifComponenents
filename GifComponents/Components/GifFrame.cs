@@ -44,6 +44,7 @@ namespace GifComponents.Components
 	/// 5. Added constructor( Stream... )
 	/// 6. Removed code to swap out transparent colour and replace with black
 	///    (bug 2940635).
+	/// 7. Corrected decoding of frames with transparent pixels (bug 2940669)
 	/// </summary>
 	[TypeConverter( typeof( ExpandableObjectConverter ) )]
 	public class GifFrame : GifComponent
@@ -116,7 +117,9 @@ namespace GifComponents.Components
 		                 GifFrame previousFrame,
 		                 GifFrame previousFrameBut1 )
 			: this( inputStream, lsd, gct, gce, previousFrame, previousFrameBut1, false )
-		{}
+		{
+			
+		}
 		#endregion
 		
 		#region constructor( Stream, , , , , bool )
@@ -190,20 +193,17 @@ namespace GifComponents.Components
 			Color backgroundColour = Color.FromArgb( 0 ); // TODO: is this the right background colour?
 			// TODO: use backgroundColourIndex from the logical screen descriptor?
 			ColourTable activeColourTable;
-			ColourTable localColourTable;
 			if( imageDescriptor.HasLocalColourTable ) 
 			{
-				// TESTME: constructor with local colour table
-				localColourTable 
+				_localColourTable 
 					= new ColourTable( inputStream,
 					                   imageDescriptor.LocalColourTableSize, 
 					                   XmlDebugging );
-				WriteDebugXmlNode( localColourTable.DebugXmlReader );
-				activeColourTable = localColourTable; // make local table active
+				WriteDebugXmlNode( _localColourTable.DebugXmlReader );
+				activeColourTable = _localColourTable; // make local table active
 			} 
 			else 
 			{
-				localColourTable = null;
 				if( gct == null )
 				{
 					// We have neither local nor global colour table, so we
@@ -246,16 +246,6 @@ namespace GifComponents.Components
 			SkipBlocks( inputStream );
 
 			_indexedPixels = indexedPixels;
-
-			if( imageDescriptor.HasLocalColourTable )
-			{
-				// TODO: test case for this condition
-				_localColourTable = activeColourTable;
-			}
-			else
-			{
-				_localColourTable = null;
-			}
 
 			_extension = gce;
 			if( gce != null )
@@ -416,6 +406,7 @@ namespace GifComponents.Components
 				{
 					throw new ArgumentNullException( "value" );
 				}
+				// TESTME: set_Palette not null
 				value.Validate();
 				_palette = value; 
 			}
@@ -558,65 +549,11 @@ namespace GifComponents.Components
 			Color[] pixelsForThisFrame = new Color[lsd.LogicalScreenSize.Width 
 			                                       * lsd.LogicalScreenSize.Height];
 			
-			#region Get the disposal method of the previous frame read from the GIF stream
-			DisposalMethod previousDisposalMethod;
-			if( previousFrame == null )
-			{
-				previousDisposalMethod = DisposalMethod.NotSpecified;
-			}
-			else
-			{
-				previousDisposalMethod = previousFrame.GraphicControlExtension.DisposalMethod;
-			}
-			#endregion
-
-			// fill in starting image contents based on last image's dispose code
-			Image previousImageBut1;
-			if( previousDisposalMethod > 0 )
-			{
-				if( previousFrameBut1 == null )
-				{
-					previousImageBut1 = null;
-				}
-				else
-				{
-					previousImageBut1 = previousFrameBut1.TheImage;
-				}
-
-				if( previousImageBut1 != null ) 
-				{
-					Color[] previousFramePixels = GetPixels( new Bitmap( previousImageBut1 ) );
-					int size = lsd.LogicalScreenSize.Width 
-							 * lsd.LogicalScreenSize.Height;
-					Array.Copy( previousFramePixels, 0, pixelsForThisFrame, 0, size );
-					// copy pixels
-
-					if( previousDisposalMethod == DisposalMethod.RestoreToBackgroundColour ) 
-					{
-						// fill last image rect area with background color
-						Graphics g = Graphics.FromImage( previousFrame.TheImage );
-						Color c = Color.Empty;
-						if( gce.HasTransparentColour )
-						{
-							// assume background is transparent // TODO: why?
-							c = Color.FromArgb( 0, 0, 0, 0 ); 	
-						} 
-						else 
-						{
-							// TESTME: CreateBitmap - gce.HasTransparentColour == false
-							// use given background color
-							c = previousFrame.BackgroundColour;
-						}
-						Brush brush = new SolidBrush( c );
-						Rectangle previousImageRectangle 
-							= new Rectangle( previousFrame.ImageDescriptor.Position, 
-							                 previousFrame.ImageDescriptor.Size );
-						g.FillRectangle( brush, previousImageRectangle );
-						brush.Dispose();
-						g.Dispose();
-					}
-				}
-			}
+			Bitmap baseImage = GetBaseImage( previousFrame, 
+			                                 previousFrameBut1, 
+			                                 lsd, 
+			                                 gce, 
+			                                 activeColourTable );
 
 			// copy each source line to the appropriate place in the destination
 			int pass = 1;
@@ -672,10 +609,13 @@ namespace GifComponents.Components
 						// Set this pixel's colour if its index isn't the 
 						// transparent colour index, or if this frame doesn't
 						// have a transparent colour.
-						if( indexInColourTable != gce.TransparentColourIndex 
-						    || gce.HasTransparentColour == false )
+						Color c;
+						if( gce.HasTransparentColour && indexInColourTable == gce.TransparentColourIndex )
 						{
-							Color c;
+							c = Color.Empty; // transparent pixel
+						}
+						else
+						{
 							if( indexInColourTable < activeColourTable.Length )
 							{
 								c = activeColourTable[indexInColourTable];
@@ -693,66 +633,146 @@ namespace GifComponents.Components
 								status = new GifComponentStatus( ErrorState.BadColourIndex, 
 								                                 message );
 							}
-							pixelsForThisFrame[dx] = c;
 						}
+						pixelsForThisFrame[dx] = c;
 						dx++;
 					}
 				}
 			}
-			Size screenSize = new Size( lsd.LogicalScreenSize.Width, 
-			                            lsd.LogicalScreenSize.Height );
-			return CreateBitmap( screenSize, pixelsForThisFrame );
+			return CreateBitmap( baseImage, pixelsForThisFrame );
+		}
+		#endregion
+		
+		#region private static GetBaseImage method
+		/// <summary>
+		/// Gets the base image for this frame. This will be overpainted with
+		/// the pixels for this frame, where they are not transparent.
+		/// </summary>
+		/// <param name="previousFrame">
+		/// The frame which preceded this frame in the GIF stream.
+		/// Null if this is the first frame in the stream.
+		/// </param>
+		/// <param name="previousFrameBut1">
+		/// The frame which preceded the previous frame in the GIF stream.
+		/// Null if this is the first or seond frame in the stream.
+		/// </param>
+		/// <param name="lsd">
+		/// The logical screen descriptor for this GIF stream.
+		/// </param>
+		/// <param name="gce">
+		/// The graphic control extension for this frame.
+		/// </param>
+		/// <param name="act">
+		/// The active colour table for this frame.
+		/// </param>
+		/// <returns></returns>
+		private static Bitmap GetBaseImage( GifFrame previousFrame, 
+		                                    GifFrame previousFrameBut1, 
+		                                    LogicalScreenDescriptor lsd, 
+		                                    GraphicControlExtension gce, 
+		                                    ColourTable act )
+		{
+			#region Get the disposal method of the previous frame read from the GIF stream
+			DisposalMethod previousDisposalMethod;
+			if( previousFrame == null )
+			{
+				previousDisposalMethod = DisposalMethod.NotSpecified;
+			}
+			else
+			{
+				previousDisposalMethod = previousFrame.GraphicControlExtension.DisposalMethod;
+			}
+			#endregion
+
+			Bitmap baseImage;
+			int width = lsd.LogicalScreenSize.Width;
+			int height = lsd.LogicalScreenSize.Height;
+			
+			#region paint baseImage
+			switch( previousDisposalMethod )
+			{
+				case DisposalMethod.DoNotDispose:
+					// pre-populate image with previous frame
+					baseImage = new Bitmap( previousFrame.TheImage );
+					break;
+					
+				case DisposalMethod.RestoreToBackgroundColour:
+					// pre-populate image with background colour
+					Color backgroundColour ;
+					if( lsd.BackgroundColourIndex == gce.TransparentColourIndex )
+					{
+						backgroundColour = Color.Empty;
+					}
+					else
+					{
+						// TESTME: background colour index different to transparent colour
+						backgroundColour = act[lsd.BackgroundColourIndex];
+					}
+					baseImage = new Bitmap( width, height );
+					for( int y = 0; y < height; y++ )
+					{
+						for( int x = 0; x < height; x++ )
+						{
+							baseImage.SetPixel( x, y, backgroundColour );
+						}
+					}
+					break;
+					
+				case DisposalMethod.RestoreToPrevious:
+					// pre-populate image with previous frame but 1
+					// TESTME: DisposalMethod.RestoreToPrevious
+					baseImage = new Bitmap( previousFrameBut1.TheImage );
+					break;
+					
+				default: // DisposalMethod.NotSpecified
+					if( previousFrame == null )
+					{
+						// this is the first frame so start with an empty bitmap
+						baseImage = new Bitmap( width, height );
+					}
+					else
+					{
+						// pre-populate image with previous frame
+						// TESTME: DisposalMethod.NotSpecified on 2nd frame or later
+						baseImage = new Bitmap( previousFrame.TheImage );
+					}
+					break;
+			}
+			#endregion
+
+			return baseImage;
 		}
 		#endregion
 
-		#region private static CreateBitmap( Size, Color[] ) method
+		#region private static CreateBitmap( Bitmap, Color[] ) method
 		/// <summary>
 		/// Creates and returns a Bitmap of the supplied size composed of pixels
 		/// of the supplied colours, working left to right and then top to 
 		/// bottom.
 		/// </summary>
-		/// <param name="size">
-		/// The size of the bitmap to be created.
+		/// <param name="baseImage">
+		/// The image to start with; this is overpainted with the supplied 
+		/// pixels where they are not transparent.
 		/// </param>
 		/// <param name="pixels">
 		/// An array of the colours of the pixels for the bitmap to be created.
 		/// </param>
-		private static Bitmap CreateBitmap( Size size, Color[] pixels )
+		private static Bitmap CreateBitmap( Bitmap baseImage, Color[] pixels )
 		{
-			Bitmap returnBitmap = new Bitmap( size.Width, size.Height );
 			int count = 0;
-			for( int th = 0; th < returnBitmap.Height; th++ )
+			for( int th = 0; th < baseImage.Height; th++ )
 			{
-				for( int tw = 0; tw < returnBitmap.Width; tw++ )
+				for( int tw = 0; tw < baseImage.Width; tw++ )
 				{
-					returnBitmap.SetPixel( tw, th, pixels[count++] );
-				}
-			}
-			return returnBitmap;
-		}
-		#endregion
-
-		#region private static GetPixels method
-		/// <summary>
-		/// Returns an array of the colours of the pixels in the supplied image,
-		/// working from left to right and top to bottom.
-		/// </summary>
-		/// <param name="bitmap"></param>
-		/// <returns></returns>
-		private static Color[] GetPixels( Bitmap bitmap )
-		{
-			Color[] pixels = new Color[ bitmap.Width * bitmap.Height ];
-			int count = 0;
-			for (int th = 0; th < bitmap.Height; th++)
-			{
-				for (int tw = 0; tw < bitmap.Width; tw++)
-				{
-					Color color = bitmap.GetPixel(tw, th);
-					pixels[count] = color;
+					if( pixels[count] != Color.Empty )
+					{
+						// then it's not a transparent pixel
+						baseImage.SetPixel( tw, th, pixels[count] );
+					}
 					count++;
 				}
 			}
-			return pixels;
+			return baseImage;
 		}
 		#endregion
 
