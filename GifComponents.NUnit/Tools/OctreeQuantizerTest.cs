@@ -54,7 +54,7 @@ namespace GifComponents.NUnit
 		{
 			ReportStart();
 			_oq = new OctreeQuantizer( 255, 8 );
-			for( int colourCount = 1; colourCount < 500; colourCount += 5 )
+			for( int colourCount = 1; colourCount < 500; colourCount += 50 )
 			{
 				Collection<Color> distinctColours;
 				
