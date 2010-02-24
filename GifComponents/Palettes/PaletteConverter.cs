@@ -86,6 +86,11 @@ namespace GifComponents.Palettes
 		                                  object value, 
 		                                  Type destType )
 		{
+			if( value == null )
+			{
+				return null;
+			}
+			
 			Palette p = (Palette) value;
 			if( destType == typeof( InstanceDescriptor ) ) 
 			{
