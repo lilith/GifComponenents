@@ -385,14 +385,11 @@ namespace GifComponents.NUnit
 		/// Compares the results of encoding an animation using the NeuQuant and
 		/// Octree quantizers.
 		/// </summary>
-		/// <remarks>
-		/// This test fails at the moment because the Octree quantizer has not
-		/// been implemented.
-		/// </remarks>
 		[Test]
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 		                 MessageId = "Quantizers")]
+		[Ignore( "Takes a while to run" )]
 		public void CompareQuantizers()
 		{
 			ReportStart();
@@ -642,7 +639,7 @@ namespace GifComponents.NUnit
 					+ actFileWithoutExtension 
 					+ ".bmp";
 				Image expected = Image.FromFile( expectedFileName );
-				ImageAssert.AreEqual( expected, _d.Frames[0].TheImage );
+				ImageAssert.AreEqual( expected, _d.Frames[0].TheImage, expectedFileName );
 			}
 			
 			// now encode a multi-frame animation with a user-supplied palette

@@ -286,7 +286,6 @@ namespace GifComponents.Palettes
 			}
 			else if( numberOfColours > 32 )
 			{
-				// TESTME: GetBrushSize - numberOfColours between 16 and 32
 				brushSize = new Size( 2, 2 );
 			}
 			else if( numberOfColours > 16 )
@@ -305,17 +304,10 @@ namespace GifComponents.Palettes
 			{
 				brushSize = new Size( 8, 8 );
 			}
-			else if( numberOfColours > 1 )
-			{
-				brushSize = new Size( 16, 8 );
-			}
-			else if( numberOfColours > 0 )
-			{
-				brushSize = new Size( 16, 16 );
-			}
 			else
 			{
-				brushSize = Size.Empty;
+				// 2 colours (1 and 0 colours not permitted)
+				brushSize = new Size( 16, 8 );
 			}
 			return brushSize;
 		}

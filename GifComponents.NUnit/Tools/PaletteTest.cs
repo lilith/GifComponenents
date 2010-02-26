@@ -314,7 +314,17 @@ namespace GifComponents.NUnit
 				_actual = Palette.FromFile( file );
 				Bitmap b = _actual.ToBitmap();
 				
-				Bitmap expected = new Bitmap( file.Replace( "ColourTables", "images/PaletteBitmaps" ).Replace( ".act", ".bmp" ) );
+				string expectedBitmapFile 
+					= file.Replace( "ColourTables", "images/PaletteBitmaps" ).Replace( ".act", ".bmp" );
+				if( File.Exists( expectedBitmapFile ) == false )
+				{
+					string message 
+						= "Expected bitmap file "
+						+ Path.GetFullPath( expectedBitmapFile )
+						+ " not found";
+					throw new FileNotFoundException( message );
+				}
+				Bitmap expected = new Bitmap( expectedBitmapFile );
 				BitmapAssert.AreEqual( expected, b, file );
 			}
 			ReportEnd();
@@ -330,6 +340,25 @@ namespace GifComponents.NUnit
 		[ExpectedException( typeof( InvalidOperationException ) )]
 		public void ValidateTest()
 		{
+			ReportStart();
+			// Check that each of the sample palettes pass validation
+			foreach( string paletteFile in _paletteFiles )
+			{
+				try
+				{
+					Palette p = Palette.FromFile( paletteFile );
+					p.Validate();
+				}
+				catch( InvalidOperationException ioe )
+				{
+					string message
+						= "Sample palette fails validation: "
+						+ paletteFile;
+					throw new AssertionExtensionException( message, ioe );
+				}
+			}
+			
+			// Try a palette which doesn't pass validation
 			_actual = new Palette();
 			_actual.Add( Color.FromArgb( 1, 1, 1 ) );
 			try
@@ -341,6 +370,7 @@ namespace GifComponents.NUnit
 				string message 
 					= "A palette with less than two colours is not valid.";
 				StringAssert.Contains( message, ex.Message );
+				ReportEnd();
 				throw;
 			}
 		}

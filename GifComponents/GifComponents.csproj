@@ -96,6 +96,12 @@
     <Compile Include="Types\GifComponentStatus.cs" />
     <Compile Include="Types\IndexedPixels.cs" />
     <Compile Include="Types\PackedFields.cs" />
+    <None Include="ColourTables\2colours.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="ColourTables\33colours.act">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="ColourTables\C64.act">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
