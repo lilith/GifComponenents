@@ -57,7 +57,6 @@
     <Compile Include="Components\ApplicationExtensionTest.cs" />
     <Compile Include="Components\ColourTableTest.cs" />
     <Compile Include="Components\DataBlockTest.cs" />
-    <Compile Include="Components\GifComponentTest.cs" />
     <Compile Include="Components\GifComponentTestFixtureBase.cs" />
     <Compile Include="Components\GifFrameTest.cs" />
     <Compile Include="Components\GifHeaderTest.cs" />
