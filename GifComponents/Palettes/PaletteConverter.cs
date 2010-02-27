@@ -54,7 +54,8 @@ namespace GifComponents.Palettes
 		                                   Type destType )
 		{
 			if( destType == typeof( InstanceDescriptor ) 
-			   || destType == typeof( string ) )
+			   || destType == typeof( string ) 
+			   || destType == typeof( Palette) )
 			{
 				return true;
 			}

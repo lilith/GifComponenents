@@ -64,7 +64,8 @@ namespace GifComponents.Palettes
 	            NewPalette();
 	            
 	            string[] standardPalettes 
-	            	= Directory.GetFiles( Application.StartupPath + "/ColourTables", 
+	            	= Directory.GetFiles( AppDomain.CurrentDomain.BaseDirectory 
+	            	                      + @"\ColourTables",
 	            	                      "*.act" );
 	            foreach( string file in standardPalettes )
 	            {
@@ -79,6 +80,9 @@ namespace GifComponents.Palettes
             }
             catch( Exception ex )
             {
+            	// TESTME: exception thrown in constructor
+            	// Needs changes to CommonForms.ExceptionForm to detect when 
+            	// being run as a unit test
             	ExceptionForm ef = new ExceptionForm( ex );
             	ef.ShowDialog();
             }
@@ -95,14 +99,7 @@ namespace GifComponents.Palettes
 		                 "CA2227:CollectionPropertiesShouldBeReadOnly")]
 		public Palette Value
 		{
-		    get
-		    {
-		        if( _palette == null )
-		        {
-		        	_palette = new Palette();
-		        }
-		        return _palette;
-		    }
+		    get { return _palette; }
 		    set
 		    { 
 		    	_palette = value;
@@ -588,6 +585,7 @@ namespace GifComponents.Palettes
         {
             if( _isDirty )
             {
+            	// TESTME: CheckSaveChangedPalette method - _isDirty = true
 				string message = "Palette was changed, do you want to save it first ?";
 				string caption = "Save first ?";
 				

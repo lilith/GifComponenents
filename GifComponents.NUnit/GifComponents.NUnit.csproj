@@ -66,12 +66,16 @@
     <Compile Include="Components\LogicalScreenDescriptorTest.cs" />
     <Compile Include="Components\NetscapeExtensionTest.cs" />
     <Compile Include="Components\TableBasedImageDataTest.cs" />
+    <Compile Include="Palettes\PaletteControlTest.cs" />
+    <Compile Include="Palettes\PaletteConverterTest.cs" />
+    <Compile Include="Palettes\PaletteEditorTest.cs" />
+    <Compile Include="Palettes\PaletteFormTest.cs" />
+    <Compile Include="Palettes\PaletteTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools\AnimatedGifEncoderSpeedTests.cs" />
     <Compile Include="Tools\AnimatedGifEncoderTest.cs" />
     <Compile Include="Tools\ImageToolsTest.cs" />
     <Compile Include="Tools\OctreeQuantizerTest.cs" />
-    <Compile Include="Tools\PaletteTest.cs" />
     <Compile Include="Tools\RandomBitmap.cs" />
     <Compile Include="Tools\GifDecoderTest.cs" />
     <Compile Include="Tools\LzwEncoderTest.cs" />
@@ -646,6 +650,7 @@
     <Folder Include="images\PaletteBitmaps" />
     <Folder Include="images\smiley" />
     <Folder Include="DebugXml" />
+    <Folder Include="Palettes" />
     <Folder Include="Types" />
     <Folder Include="Tools" />
     <ProjectReference Include="..\GifComponents\GifComponents.csproj">
