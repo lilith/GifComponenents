@@ -24,7 +24,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Utility class containing various static methods.

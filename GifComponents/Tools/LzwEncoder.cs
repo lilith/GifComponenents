@@ -27,7 +27,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// GIFCOMPR.C       - GIF Image compression routines

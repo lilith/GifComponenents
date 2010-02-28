@@ -28,8 +28,9 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Tools;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Tools
 {
 	/// <summary>
 	/// Test fixture for the ImageTools class.

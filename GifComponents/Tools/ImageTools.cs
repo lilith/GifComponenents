@@ -27,7 +27,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Provides a set of static methods for working with 

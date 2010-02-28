@@ -30,8 +30,9 @@ using System.Text;
 using NUnit.Framework;
 using NUnit.Extensions;
 using GifComponents.Components;
+using GifComponents.Tools;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Tools
 {
 	/// <summary>
 	/// Test fixture for the LZWEncoder class.

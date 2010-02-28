@@ -34,7 +34,9 @@ using NUnit.Framework;
 using NUnit.Extensions;
 using GifComponents.Components;
 using GifComponents.NUnit.Components;
+using GifComponents.NUnit.Tools;
 using GifComponents.Palettes;
+using GifComponents.Tools;
 
 namespace GifComponents.NUnit
 {

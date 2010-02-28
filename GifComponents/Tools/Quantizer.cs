@@ -38,7 +38,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Base class for a colour quantizer.

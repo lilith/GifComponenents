@@ -28,7 +28,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using GifComponents.Components;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// PixelAnalysis wraps various classes for quantizing images (i.e. changing

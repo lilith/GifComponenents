@@ -29,6 +29,7 @@ using System.Globalization;
 using NUnit.Framework;
 using NUnit.Extensions;
 using GifComponents.Components;
+using GifComponents.NUnit.Tools;
 
 namespace GifComponents.NUnit
 {

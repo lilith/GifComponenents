@@ -27,8 +27,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using NUnit.Framework;
 using NUnit.Extensions;
+using GifComponents.Tools;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Tools
 {
 	/// <summary>
 	/// Test fixture for the PixelAnalysis class.

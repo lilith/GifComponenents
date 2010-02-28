@@ -30,6 +30,7 @@ using System.Drawing;
 using System.IO;
 using GifComponents.Components;
 using GifComponents.Palettes;
+using GifComponents.Tools;
 
 namespace GifComponents
 {

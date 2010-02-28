@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnimatedGifEncoder.cs" />
     <Compile Include="Components\ApplicationExtension.cs" />
     <Compile Include="Components\ColourTable.cs" />
     <Compile Include="Components\DataBlock.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Enums\DisposalMethod.cs" />
     <Compile Include="Enums\ErrorState.cs" />
     <Compile Include="Enums\QuantizerType.cs" />
+    <Compile Include="GifDecoder.cs" />
     <Compile Include="GifFrame.cs" />
     <Compile Include="Palettes\Palette.cs" />
     <Compile Include="Palettes\PaletteControl.cs" />
@@ -81,9 +83,7 @@
       <DependentUpon>PaletteForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tools\AnimatedGifEncoder.cs" />
     <Compile Include="Tools\Colour32.cs" />
-    <Compile Include="Tools\GifDecoder.cs" />
     <Compile Include="Tools\ImageTools.cs" />
     <Compile Include="Tools\LzwEncoder.cs" />
     <Compile Include="Tools\NeuQuant.cs" />

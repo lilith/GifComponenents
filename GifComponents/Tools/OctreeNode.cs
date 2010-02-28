@@ -28,7 +28,7 @@ using System.Drawing;
 using System.Text;
 // TODO: restore once TextualRepresentation is implemented using TextualRepresentation;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Class which encapsulates each node in an Octree.

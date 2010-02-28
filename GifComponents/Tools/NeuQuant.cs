@@ -26,7 +26,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using GifComponents.Components;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// NeuQuant Neural-Net Quantization Algorithm

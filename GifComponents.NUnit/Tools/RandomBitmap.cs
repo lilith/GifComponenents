@@ -26,7 +26,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace GifComponents.NUnit
+namespace GifComponents.NUnit.Tools
 {
 	/// <summary>
 	/// Helper class for creating random bitmap files.

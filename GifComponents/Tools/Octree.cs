@@ -28,7 +28,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 // TODO: restore once TextualRepresentation implemented using TextualRepresentation;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Class which does the actual quantization.

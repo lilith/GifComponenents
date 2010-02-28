@@ -32,7 +32,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace GifComponents
+namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Struct that defines a 32 bpp colour
