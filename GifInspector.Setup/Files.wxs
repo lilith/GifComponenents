@@ -3,6 +3,8 @@
 	<Fragment>
 		<DirectoryRef Id="TARGETDIR">
 			<Directory Id="ProgramFilesFolder" Name="PFiles">
+				
+				<!-- Application files -->
 				<Directory Id="INSTALLDIR" Name="GifComponents">
 					<Component Id="LicenseRtf" 
 					           Guid="463CB361-65ED-419B-B039-7C87FBA48C43" 
@@ -23,14 +25,49 @@
 					           DiskId="1">
 						<File Id="GifInspector" 
 						      Name="GifInspector.exe" 
-						      Source="..\GifInspector\bin\release\GifInspector.exe"/>
+						      Source="..\GifInspector\bin\release\GifInspector.exe" 
+						      KeyPath="yes">
+						</File>
+					</Component>
+					<Component Id="GifInspectorShortcut" Guid="3E6C10A9-B78D-4D0E-A353-83AB49E209F2" DiskId="1">
+						<CreateFolder/>
+						<RegistryKey Root="HKCU" 
+						             Key="Software\GifComponents\Application\Install" 
+						             Action="createAndRemoveOnUninstall">
+							<RegistryValue Name="GifInspectorShortcut" 
+							               Type="integer" 
+							               Value="1"/>
+						</RegistryKey>
+						<Shortcut Id="GifInspectorShortCut" 
+						          Directory="ProgramMenuSubFolder" 
+						          Name="GifInspector.exe" 
+						          Target="[INSTALLDIR]GifInspector.exe"
+						          WorkingDirectory="INSTALLDIR"/>
 					</Component>
 					<Component Id="GifBuilder" 
 					           Guid="4FC185E5-C1C4-4D81-B68E-802DB7359A54"
 					           DiskId="1">
 						<File Id="GifBuilder" 
 						      Name="GifBuilder.exe" 
-						      Source="..\GifBuilder\bin\release\GifBuilder.exe"/>
+						      Source="..\GifBuilder\bin\release\GifBuilder.exe">
+						</File>
+					</Component>
+					<Component Id="GifBuilderShortcut" 
+					           Guid="33F8FE04-C16A-4018-9320-5CFF0CF0694A" 
+					           DiskId="1">
+						<CreateFolder/>
+						<RegistryKey Root="HKCU" 
+						             Key="Software\GifComponents\Application\Install" 
+						             Action="createAndRemoveOnUninstall">
+							<RegistryValue Name="GifBuilderShortcut" 
+							               Type="integer" 
+							               Value="1"/>
+						</RegistryKey>
+						<Shortcut Id="GifBuilderShortcut" 
+						          Directory="ProgramMenuSubFolder" 
+						          Name="GifBuilder.exe" 
+						          Target="[INSTALLDIR]GifBuilder.exe"
+						          WorkingDirectory="INSTALLDIR"/>
 					</Component>
 					<Component Id="GifComponents" 
 					           Guid="BA1252C1-6AB0-4422-92D1-7B7EF3F10836"
@@ -138,6 +175,23 @@
 					</Directory>
 				</Directory>
 			</Directory>
+
+			<!-- Folder in the start menu -> programs for shortcuts -->
+			<Directory Id="ProgramMenuFolder" Name="Programs">
+				<Directory Id="ProgramMenuSubFolder" 
+				           Name="GifComponents">
+					<Component Id="ProgramMenuFolderApp" 
+					           Guid="4AE27E38-8D17-40F6-92DF-E5BB2FCB08E8">
+						<RemoveFolder Id="ProgramMenuFolder" On="uninstall"/>
+						<RegistryValue Root="HKCU" 
+						               Key="Software\GifComponents" 
+						               Type="string" 
+						               Value="" 
+						               KeyPath="yes"/>
+					</Component>
+				</Directory>
+			</Directory>
+		
 		</DirectoryRef>
 	</Fragment>
 </Wix>

@@ -22,6 +22,9 @@
 		         Title="All components"
 		         Description="Installs the GifComponents library and the GifInspector and GifBuilder applications"
 		         Level="1">
+			<ComponentRef Id="ProgramMenuFolderApp"/>
+			<ComponentRef Id="GifInspectorShortcut"/>
+			<ComponentRef Id="GifBuilderShortcut"/>
 			<ComponentRef Id="LicenseRtf"/>
 			<ComponentRef Id="LicenseTxt"/>
 			<ComponentRef Id="GifInspector"/>
