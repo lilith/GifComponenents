@@ -66,6 +66,7 @@
     <Compile Include="Components\NetscapeExtension.cs" />
     <Compile Include="Components\TableBasedImageData.cs" />
     <Compile Include="Enums\ColourTableStrategy.cs" />
+    <Compile Include="Enums\GifDecoderState.cs" />
     <Compile Include="Enums\DisposalMethod.cs" />
     <Compile Include="Enums\ErrorState.cs" />
     <Compile Include="Enums\QuantizerType.cs" />

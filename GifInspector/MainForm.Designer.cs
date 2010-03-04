@@ -101,7 +101,7 @@ namespace GifInspector
 			this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pictureBox1.Location = new System.Drawing.Point(0, 0);
 			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(347, 113);
+			this.pictureBox1.Size = new System.Drawing.Size(347, 106);
 			this.pictureBox1.TabIndex = 1;
 			this.pictureBox1.TabStop = false;
 			// 
@@ -156,7 +156,7 @@ namespace GifInspector
 			this.tabPageImages.Location = new System.Drawing.Point(4, 22);
 			this.tabPageImages.Name = "tabPageImages";
 			this.tabPageImages.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageImages.Size = new System.Drawing.Size(349, 325);
+			this.tabPageImages.Size = new System.Drawing.Size(349, 306);
 			this.tabPageImages.TabIndex = 1;
 			this.tabPageImages.Text = "Images";
 			this.tabPageImages.UseVisualStyleBackColor = true;
@@ -178,8 +178,8 @@ namespace GifInspector
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.pictureBox1);
-			this.splitContainer1.Size = new System.Drawing.Size(349, 296);
-			this.splitContainer1.SplitterDistance = 177;
+			this.splitContainer1.Size = new System.Drawing.Size(349, 277);
+			this.splitContainer1.SplitterDistance = 165;
 			this.splitContainer1.TabIndex = 6;
 			// 
 			// propertyGridFrame
@@ -187,7 +187,7 @@ namespace GifInspector
 			this.propertyGridFrame.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.propertyGridFrame.Location = new System.Drawing.Point(0, 0);
 			this.propertyGridFrame.Name = "propertyGridFrame";
-			this.propertyGridFrame.Size = new System.Drawing.Size(347, 175);
+			this.propertyGridFrame.Size = new System.Drawing.Size(347, 163);
 			this.propertyGridFrame.TabIndex = 6;
 			// 
 			// buttonNext
@@ -256,6 +256,7 @@ namespace GifInspector
 			// 
 			// timer1
 			// 
+			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
 			// 
 			// buttonExtractFrames

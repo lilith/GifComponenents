@@ -134,6 +134,7 @@ namespace GifInspector
 			textBoxFrameNumber.Text 
 				= _imageIndex.ToString( CultureInfo.InvariantCulture );
 			
+			// If the decoder hasn't been instantiated then stop here
 			if( _decoder != null )
 			{
 				if( _decoder.Frames == null || _decoder.Frames.Count == 0 )
@@ -147,7 +148,17 @@ namespace GifInspector
 					// Display frame count, current frame and frame properties
 					textBoxFrameCount.Text = _decoder.Frames.Count.ToString( CultureInfo.InvariantCulture );
 					pictureBox1.Image = _decoder.Frames[_imageIndex].TheImage;
-					propertyGridFrame.SelectedObject = _decoder.Frames[_imageIndex];
+
+					// If the decoder isn't in a Done state then it could be in
+					// the process of decoding a GIF stream, so don't try to
+					// update any PropertyGrids else we could get an XmlException
+					// due to the decoder's DebugXml being incomplete.
+					if( _decoder.State == GifDecoderState.Done )
+					{
+						propertyGridFrame.SelectedObject = _decoder.Frames[_imageIndex];
+						// TODO: update propertyGridFile.SelectedObject here too?
+//						propertyGridFile.SelectedObject = _decoder;
+					}
 				}
 			}
 		}

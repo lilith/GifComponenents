@@ -45,7 +45,7 @@ namespace GifComponents
 	/// 	Cristy's ImageMagick.
 	/// @version 1.03 November 2003
 	/// 
-	/// Modified by Simon Bridewell, June-July 2009:
+	/// Modified by Simon Bridewell, June 2009 - March 2010:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/blogengine/post/2008/02/20/Animated-GIF-Encoder-for-NET-Update.aspx
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
@@ -59,6 +59,8 @@ namespace GifComponents
 	/// 	which encapsulate the types of the components of a GIF file.
 	/// 5. Removed all private declarations which are not components of a GIF
 	/// 	file.
+	/// 6. Added State property to indicate whether decoding is not started,
+	/// 	in progress or complete.
 	/// </summary>
 	public class GifDecoder : GifComponent
 	{
@@ -109,6 +111,12 @@ namespace GifComponents
 		/// Holds a string representing the progress through the decoding process
 		/// </summary>
 		private string _status;
+		
+		/// <summary>
+		/// An enum indicating whether the decoder has not started, is in 
+		/// progress, or has finished.
+		/// </summary>
+		private GifDecoderState _state;
 
 		/// <summary>
 		/// Holds the <see cref="System.IO.Stream"/> from which the GIF is being
@@ -204,6 +212,7 @@ namespace GifComponents
 				throw new ArgumentException( message, "inputStream" );
 			}
 			_stream = inputStream;
+			_state = GifDecoderState.NotStarted;
 		}
 		#endregion
 		
@@ -215,9 +224,11 @@ namespace GifComponents
 		/// </summary>
 		public void Decode()
 		{
+			_state = GifDecoderState.Decoding;
 			SetStatus( "Starting decoding" );
 			ReadStream( _stream );
 			SetStatus( "Finished decoding" );
+			_state = GifDecoderState.Done;
 		}
 		#endregion
 		
@@ -343,6 +354,17 @@ namespace GifComponents
 		public string Status
 		{
 			get { return _status; }
+		}
+		#endregion
+		
+		#region State property
+		/// <summary>
+		/// Gets one of the GifDecoderState values indicating whether the 
+		/// GifDecoder has not started, is in progress, or has finished decoding.
+		/// </summary>
+		public GifDecoderState State
+		{
+			get { return _state; }
 		}
 		#endregion
 		
