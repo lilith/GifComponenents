@@ -73,7 +73,8 @@ namespace GifBuilder
 		
 		#region event handlers
 		
-		#region menu item click handlers
+		// TODO: make this generic for all ToolStripMenuItems
+		#region menu item click handler
 		[SuppressMessage("Microsoft.Design", 
 		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
 		void AboutToolStripMenuItemClick(object sender, EventArgs e)
@@ -94,6 +95,7 @@ namespace GifBuilder
 		}
 		#endregion
 		
+		// TODO: replace buttons with menu items
 		#region button click event handler
 		[SuppressMessage("Microsoft.Design", 
 		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
@@ -174,6 +176,7 @@ namespace GifBuilder
 		}
 		#endregion
 
+		// TODO: move form closing logic into base class in CommonForms
 		#region Form closing event handler
 		void MainFormFormClosing(object sender, FormClosingEventArgs e)
 		{
@@ -201,6 +204,7 @@ namespace GifBuilder
 		}
 		#endregion
 
+		// TODO: replace Timer1Tick with timer tick event handler in base class
 		#region Timer1 tick event handler
 		void Timer1Tick(object sender, EventArgs e)
 		{
@@ -276,6 +280,7 @@ namespace GifBuilder
 		}
 		#endregion
 		
+		// TODO: rename RefreshUI to UpdateUI
 		#region RefreshUI
 		private void RefreshUI()
 		{
@@ -324,6 +329,7 @@ namespace GifBuilder
 		}
 		#endregion
 		
+		// TODO: replace UpdateStatusBar with a progress box form in CommonForms
 		#region UpdateStatusBar
 		private void UpdateStatusBar()
 		{
