@@ -4,7 +4,7 @@
   <Icon />
   <ApplicationName>GIF Inspector</ApplicationName>
   <Author>Simon Bridewell</Author>
-  <CopyrightYear>2009</CopyrightYear>
+  <CopyrightYear>2009-2010</CopyrightYear>
   <ExtraCopyrightStatement>This program is free software</ExtraCopyrightStatement>
   <CreditableWorks>
     <CreditableWork Author="gOODiDEA.NET, Phil Garcia (www.thinkedge.com)" WorkName="nGif library (GifComponents library is heavily based on this)" />
@@ -12,6 +12,7 @@
     <CreditableWork Author="John Christy" WorkName="ImageMagick (used in GIF decoder)" />
     <CreditableWork Author="David Rowley, Jef Poskanzer, J.M.G. Elliott, Spencer W Thomas, Jim McKie, Steve Davies, Ken Turowski, James A Woods and Joe Orost" WorkName="LZW encoder" />
     <CreditableWork Author="Anthony Dekker" WorkName="Neural net quantizer (used by GIF encoder)" />
+  	<CreditableWork Author="Morgan Skinner" WorkName="Octree quantizer (used by GIF encoder)" />
     <CreditableWork Author="CompuServe" WorkName="Graphics Interchange Format" />
     <CreditableWork Author="Unisys" WorkName="LZW compression algorithm (patent expired in 2004)" />
   </CreditableWorks>
