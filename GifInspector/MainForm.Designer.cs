@@ -52,7 +52,6 @@ namespace GifInspector
 		{
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-			this.buttonLoadGif = new System.Windows.Forms.Button();
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
@@ -68,11 +67,15 @@ namespace GifInspector
 			this.textBoxFrameNumber = new System.Windows.Forms.TextBox();
 			this.textBoxStatus = new System.Windows.Forms.TextBox();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
-			this.buttonExtractFrames = new System.Windows.Forms.Button();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.loadGIFFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.extractFramesToBitmapsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.createDebugXMLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.checkBoxXmlDebugging = new System.Windows.Forms.CheckBox();
+			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageFile.SuspendLayout();
@@ -83,25 +86,12 @@ namespace GifInspector
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
-			// buttonLoadGif
-			// 
-			this.buttonLoadGif.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.buttonLoadGif.Location = new System.Drawing.Point(5, 57);
-			this.buttonLoadGif.Name = "buttonLoadGif";
-			this.buttonLoadGif.Size = new System.Drawing.Size(353, 23);
-			this.buttonLoadGif.TabIndex = 0;
-			this.buttonLoadGif.TabStop = false;
-			this.buttonLoadGif.Text = "Load GIF file...";
-			this.buttonLoadGif.UseVisualStyleBackColor = true;
-			this.buttonLoadGif.Click += new System.EventHandler(this.ButtonLoadGifClick);
-			// 
 			// pictureBox1
 			// 
 			this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pictureBox1.Location = new System.Drawing.Point(0, 0);
 			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(347, 106);
+			this.pictureBox1.Size = new System.Drawing.Size(347, 143);
 			this.pictureBox1.TabIndex = 1;
 			this.pictureBox1.TabStop = false;
 			// 
@@ -119,10 +109,10 @@ namespace GifInspector
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.tabControl1.Controls.Add(this.tabPageFile);
 			this.tabControl1.Controls.Add(this.tabPageImages);
-			this.tabControl1.Location = new System.Drawing.Point(5, 141);
+			this.tabControl1.Location = new System.Drawing.Point(5, 51);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(357, 332);
+			this.tabControl1.Size = new System.Drawing.Size(357, 422);
 			this.tabControl1.TabIndex = 0;
 			this.tabControl1.TabStop = false;
 			// 
@@ -132,7 +122,7 @@ namespace GifInspector
 			this.tabPageFile.Location = new System.Drawing.Point(4, 22);
 			this.tabPageFile.Name = "tabPageFile";
 			this.tabPageFile.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageFile.Size = new System.Drawing.Size(349, 306);
+			this.tabPageFile.Size = new System.Drawing.Size(349, 396);
 			this.tabPageFile.TabIndex = 0;
 			this.tabPageFile.Text = "File";
 			this.tabPageFile.UseVisualStyleBackColor = true;
@@ -142,7 +132,7 @@ namespace GifInspector
 			this.propertyGridFile.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.propertyGridFile.Location = new System.Drawing.Point(3, 3);
 			this.propertyGridFile.Name = "propertyGridFile";
-			this.propertyGridFile.Size = new System.Drawing.Size(343, 300);
+			this.propertyGridFile.Size = new System.Drawing.Size(343, 390);
 			this.propertyGridFile.TabIndex = 6;
 			// 
 			// tabPageImages
@@ -156,7 +146,7 @@ namespace GifInspector
 			this.tabPageImages.Location = new System.Drawing.Point(4, 22);
 			this.tabPageImages.Name = "tabPageImages";
 			this.tabPageImages.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageImages.Size = new System.Drawing.Size(349, 306);
+			this.tabPageImages.Size = new System.Drawing.Size(349, 396);
 			this.tabPageImages.TabIndex = 1;
 			this.tabPageImages.Text = "Images";
 			this.tabPageImages.UseVisualStyleBackColor = true;
@@ -178,8 +168,8 @@ namespace GifInspector
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.pictureBox1);
-			this.splitContainer1.Size = new System.Drawing.Size(349, 277);
-			this.splitContainer1.SplitterDistance = 165;
+			this.splitContainer1.Size = new System.Drawing.Size(349, 367);
+			this.splitContainer1.SplitterDistance = 218;
 			this.splitContainer1.TabIndex = 6;
 			// 
 			// propertyGridFrame
@@ -187,7 +177,7 @@ namespace GifInspector
 			this.propertyGridFrame.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.propertyGridFrame.Location = new System.Drawing.Point(0, 0);
 			this.propertyGridFrame.Name = "propertyGridFrame";
-			this.propertyGridFrame.Size = new System.Drawing.Size(347, 163);
+			this.propertyGridFrame.Size = new System.Drawing.Size(347, 216);
 			this.propertyGridFrame.TabIndex = 6;
 			// 
 			// buttonNext
@@ -201,7 +191,7 @@ namespace GifInspector
 			this.buttonNext.TabStop = false;
 			this.buttonNext.Text = ">";
 			this.buttonNext.UseVisualStyleBackColor = true;
-			this.buttonNext.Click += new System.EventHandler(this.ButtonNextClick);
+			this.buttonNext.Click += new System.EventHandler(this.ButtonClick);
 			// 
 			// buttonPrevious
 			// 
@@ -214,7 +204,7 @@ namespace GifInspector
 			this.buttonPrevious.TabStop = false;
 			this.buttonPrevious.Text = "<";
 			this.buttonPrevious.UseVisualStyleBackColor = true;
-			this.buttonPrevious.Click += new System.EventHandler(this.ButtonPreviousClick);
+			this.buttonPrevious.Click += new System.EventHandler(this.ButtonClick);
 			// 
 			// label1
 			// 
@@ -247,7 +237,7 @@ namespace GifInspector
 			// 
 			this.textBoxStatus.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
 									| System.Windows.Forms.AnchorStyles.Right)));
-			this.textBoxStatus.Location = new System.Drawing.Point(5, 115);
+			this.textBoxStatus.Location = new System.Drawing.Point(5, 25);
 			this.textBoxStatus.Name = "textBoxStatus";
 			this.textBoxStatus.ReadOnly = true;
 			this.textBoxStatus.Size = new System.Drawing.Size(353, 20);
@@ -259,30 +249,57 @@ namespace GifInspector
 			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
 			// 
-			// buttonExtractFrames
-			// 
-			this.buttonExtractFrames.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.buttonExtractFrames.Enabled = false;
-			this.buttonExtractFrames.Location = new System.Drawing.Point(5, 86);
-			this.buttonExtractFrames.Name = "buttonExtractFrames";
-			this.buttonExtractFrames.Size = new System.Drawing.Size(353, 23);
-			this.buttonExtractFrames.TabIndex = 4;
-			this.buttonExtractFrames.TabStop = false;
-			this.buttonExtractFrames.Text = "Extract frames to bitmaps";
-			this.buttonExtractFrames.UseVisualStyleBackColor = true;
-			this.buttonExtractFrames.Click += new System.EventHandler(this.ButtonExtractFramesClick);
-			// 
 			// menuStrip1
 			// 
 			this.menuStrip1.BackColor = System.Drawing.SystemColors.MenuBar;
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.fileToolStripMenuItem,
+									this.optionsToolStripMenuItem,
 									this.helpToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(365, 24);
 			this.menuStrip1.TabIndex = 12;
 			this.menuStrip1.Text = "menuStrip1";
+			// 
+			// fileToolStripMenuItem
+			// 
+			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.loadGIFFileToolStripMenuItem,
+									this.extractFramesToBitmapsToolStripMenuItem});
+			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+			this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
+			this.fileToolStripMenuItem.Text = "File";
+			// 
+			// loadGIFFileToolStripMenuItem
+			// 
+			this.loadGIFFileToolStripMenuItem.Name = "loadGIFFileToolStripMenuItem";
+			this.loadGIFFileToolStripMenuItem.Size = new System.Drawing.Size(221, 22);
+			this.loadGIFFileToolStripMenuItem.Text = "Load GIF file...";
+			this.loadGIFFileToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// extractFramesToBitmapsToolStripMenuItem
+			// 
+			this.extractFramesToBitmapsToolStripMenuItem.Name = "extractFramesToBitmapsToolStripMenuItem";
+			this.extractFramesToBitmapsToolStripMenuItem.Size = new System.Drawing.Size(221, 22);
+			this.extractFramesToBitmapsToolStripMenuItem.Text = "Extract frames to bitmaps...";
+			this.extractFramesToBitmapsToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// optionsToolStripMenuItem
+			// 
+			this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.createDebugXMLToolStripMenuItem});
+			this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+			this.optionsToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+			this.optionsToolStripMenuItem.Text = "Options";
+			// 
+			// createDebugXMLToolStripMenuItem
+			// 
+			this.createDebugXMLToolStripMenuItem.CheckOnClick = true;
+			this.createDebugXMLToolStripMenuItem.Name = "createDebugXMLToolStripMenuItem";
+			this.createDebugXMLToolStripMenuItem.Size = new System.Drawing.Size(173, 22);
+			this.createDebugXMLToolStripMenuItem.Text = "Create debug XML";
+			this.createDebugXMLToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
 			// 
 			// helpToolStripMenuItem
 			// 
@@ -297,30 +314,20 @@ namespace GifInspector
 			this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
 			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
 			this.aboutToolStripMenuItem.Text = "About...";
-			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItemClick);
+			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
 			// 
-			// checkBoxXmlDebugging
+			// folderBrowserDialog1
 			// 
-			this.checkBoxXmlDebugging.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.checkBoxXmlDebugging.Location = new System.Drawing.Point(9, 27);
-			this.checkBoxXmlDebugging.Name = "checkBoxXmlDebugging";
-			this.checkBoxXmlDebugging.Size = new System.Drawing.Size(349, 24);
-			this.checkBoxXmlDebugging.TabIndex = 13;
-			this.checkBoxXmlDebugging.Text = "Create debug XML";
-			this.checkBoxXmlDebugging.UseVisualStyleBackColor = true;
+			this.folderBrowserDialog1.Description = "Where do you want to save the extracted frames?";
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(365, 472);
-			this.Controls.Add(this.checkBoxXmlDebugging);
 			this.Controls.Add(this.menuStrip1);
-			this.Controls.Add(this.buttonExtractFrames);
 			this.Controls.Add(this.textBoxStatus);
 			this.Controls.Add(this.tabControl1);
-			this.Controls.Add(this.buttonLoadGif);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainForm";
 			this.Text = "GifInspector";
@@ -337,11 +344,15 @@ namespace GifInspector
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
-		private System.Windows.Forms.CheckBox checkBoxXmlDebugging;
+		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+		private System.Windows.Forms.ToolStripMenuItem createDebugXMLToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem extractFramesToBitmapsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem loadGIFFileToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
 		private System.Windows.Forms.MenuStrip menuStrip1;
-		private System.Windows.Forms.Button buttonExtractFrames;
 		private System.Windows.Forms.TabPage tabPageFile;
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		private System.Windows.Forms.PropertyGrid propertyGridFile;
@@ -355,7 +366,6 @@ namespace GifInspector
 		private System.Windows.Forms.TabPage tabPageImages;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.TabControl tabControl1;
-		private System.Windows.Forms.Button buttonLoadGif;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 		private System.Windows.Forms.PictureBox pictureBox1;
 	}
