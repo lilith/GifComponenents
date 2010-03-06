@@ -33,11 +33,14 @@ namespace GifComponents.NUnit.Palettes
 	[TestFixture]
 	public class PaletteFormTest : TestFixtureBase
 	{
+		/// <summary>
+		/// Write some tests!
+		/// </summary>
 		[Test]
 		[Ignore( "Write some tests" )]
 		public void WriteSomeTests()
 		{
-			
+			Console.WriteLine( this );
 		}
 	}
 }
