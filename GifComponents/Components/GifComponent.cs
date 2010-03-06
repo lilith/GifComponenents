@@ -297,6 +297,7 @@ namespace GifComponents.Components
 		/// Gets the XML which provides insight into how the GIF stream or 
 		/// component was interpreted by this library.
 		/// For debugging use if the GIF stream cannot be decoded.
+		/// TODO: view DebugXml in a multi-line text box in PropertyGrid
 		/// </summary>
 		[Category( "Status" )]
 		public string DebugXml
