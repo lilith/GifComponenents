@@ -24,6 +24,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using CommonForms.Responsiveness;
 using GifComponents.Components;
 
 namespace GifComponents.Tools
@@ -39,6 +40,8 @@ namespace GifComponents.Tools
 	/// in "Network: Computation in Neural Systems" Vol. 5 (1994) pp 351-367.
 	/// for a discussion of the algorithm.
 	/// 
+	/// http://members.ozemail.com.au/~dekker/NeuQuant.pdf
+	/// 
 	/// Any party obtaining a copy of these files from the author, directly or
 	/// indirectly, is granted, free of charge, a full and unrestricted irrevocable,
 	/// world-wide, paid up, royalty-free, nonexclusive right and license to deal
@@ -50,17 +53,20 @@ namespace GifComponents.Tools
 	///
 	/// Ported to Java 12/00 K Weiner
 	/// 
-	/// Modified by Simon Bridewell, June-December 2009:
+	/// Modified by Simon Bridewell, June 2009 - April 2010:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
-	/// Adapted for FxCop code analysis compliance and documentation comments 
-	/// converted to .net XML comments.
-	/// Removed "len" parameter from constructor.
+	/// * Adapted for FxCop code analysis compliance and documentation comments 
+	///   converted to .net XML comments.
+	/// * Removed "len" parameter from constructor.
+	/// * Added AnalysingPixel property.
+	/// * Made Learn, UnbiasNetwork and BuildIndex methods private
+	/// * Derive from LongRunningProcess to allow use of ProgressCounters
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Neu")]
-	public class NeuQuant 
+	public class NeuQuant : LongRunningProcess
 	{
 		#region declarations
 		private const int _netsize = 256; /* number of colours used */
@@ -138,6 +144,7 @@ namespace GifComponents.Tools
 		private int[] _freq = new int[_netsize];
 		private int[] _radpower = new int[_initrad];
 		/* radpower for precomputation */
+		
 		#endregion
 
 		#region constructor
@@ -159,7 +166,7 @@ namespace GifComponents.Tools
 				// TESTME: constructor - null picture
 				throw new ArgumentNullException( "thePicture" );
 			}
-
+			
 			int i;
 			int[] p;
 
@@ -179,151 +186,21 @@ namespace GifComponents.Tools
 		}
 		#endregion
 
-		#region BuildIndex method
+		#region Process method
 		/// <summary>
-		/// Insertion sort of network and building of netindex[0..255] (to do 
-		/// after unbias)
+		/// Calls the Learn, UnbiasNetwork and BuildIndex method and returns the
+		/// ColorMap.
 		/// </summary>
-		public void BuildIndex() 
+		/// <returns>
+		/// The colour table containing the colours of the image after 
+		/// quantization.
+		/// </returns>
+		public ColourTable Process()
 		{
-
-			int i, j, smallpos, smallval;
-			int[] p;
-			int[] q;
-			int previouscol, startpos;
-
-			previouscol = 0;
-			startpos = 0;
-			for (i = 0; i < _netsize; i++) 
-			{
-				p = _network[i];
-				smallpos = i;
-				smallval = p[1]; /* index on g */
-				/* find smallest in i..netsize-1 */
-				for (j = i + 1; j < _netsize; j++) 
-				{
-					q = _network[j];
-					if (q[1] < smallval) 
-					{ /* index on g */
-						smallpos = j;
-						smallval = q[1]; /* index on g */
-					}
-				}
-				q = _network[smallpos];
-				/* swap p (i) and q (smallpos) entries */
-				if (i != smallpos) 
-				{
-					j = q[0];
-					q[0] = p[0];
-					p[0] = j;
-					j = q[1];
-					q[1] = p[1];
-					p[1] = j;
-					j = q[2];
-					q[2] = p[2];
-					p[2] = j;
-					j = q[3];
-					q[3] = p[3];
-					p[3] = j;
-				}
-				/* smallval entry is now in position i */
-				if (smallval != previouscol) 
-				{
-					_netindex[previouscol] = (startpos + i) >> 1;
-					for (j = previouscol + 1; j < smallval; j++)
-						_netindex[j] = i;
-					previouscol = smallval;
-					startpos = i;
-				}
-			}
-			_netindex[previouscol] = (startpos + _maxnetpos) >> 1;
-			for (j = previouscol + 1; j < 256; j++)
-				_netindex[j] = _maxnetpos; /* really 256 */
-		}
-		#endregion
-	
-		#region Learn method
-		/// <summary>
-		/// Main Learning Loop
-		/// </summary>
-		public void Learn() 
-		{
-
-			int i, j, b, g, r;
-			int radius, rad, alpha, step, delta, samplepixels;
-			byte[] p;
-			int pix, lim;
-
-			if (_lengthcount < _minpicturebytes)
-				_samplefac = 1;
-			_alphadec = 30 + ((_samplefac - 1) / 3);
-			p = _thepicture;
-			pix = 0;
-			lim = _lengthcount;
-			samplepixels = _lengthcount / (3 * _samplefac);
-			delta = samplepixels / _ncycles;
-			alpha = _initalpha;
-			radius = _initradius;
-
-			rad = radius >> _radiusbiasshift;
-			if (rad <= 1)
-				rad = 0; // TESTME: Learn - rad <= 1
-			for (i = 0; i < rad; i++)
-				_radpower[i] =
-					alpha * (((rad * rad - i * i) * _radbias) / (rad * rad));
-
-			//fprintf(stderr,"beginning 1D learning: initial radius=%d\n", rad);
-
-			if (_lengthcount < _minpicturebytes)
-				step = 3;
-			else if ((_lengthcount % _prime1) != 0)
-				step = 3 * _prime1;
-			else 
-			{
-				// TESTME: Learn - _lengthcount >= _minpicturebytes and divisible by _prime1
-				if ((_lengthcount % _prime2) != 0)
-					step = 3 * _prime2;
-				else 
-				{
-					if ((_lengthcount % _prime3) != 0)
-						step = 3 * _prime3;
-					else
-						step = 3 * _prime4;
-				}
-			}
-
-			i = 0;
-			while (i < samplepixels) 
-			{
-				b = (p[pix + 0] & 0xff) << _netbiasshift;
-				g = (p[pix + 1] & 0xff) << _netbiasshift;
-				r = (p[pix + 2] & 0xff) << _netbiasshift;
-				j = Contest(b, g, r);
-
-				Altersingle(alpha, j, b, g, r);
-				if (rad != 0)
-					Alterneigh(rad, j, b, g, r); /* alter neighbours */
-
-				pix += step;
-				if (pix >= lim)
-					pix -= _lengthcount;
-
-				i++;
-				if (delta == 0)
-					delta = 1;
-				if (i % delta == 0) 
-				{
-					alpha -= alpha / _alphadec;
-					radius -= radius / _radiusdec;
-					rad = radius >> _radiusbiasshift;
-					if (rad <= 1)
-						rad = 0;
-					for (j = 0; j < rad; j++)
-						_radpower[j] =
-							alpha * (((rad * rad - j * j) * _radbias) / (rad * rad));
-				}
-			}
-			//fprintf(stderr,"finished 1D learning: readonly alpha=%f !\n",((float)alpha)/initalpha);
+			Learn();
+			UnbiasNetwork();
+			BuildIndex();
+			return ColourMap();
 		}
 		#endregion
 	
@@ -423,21 +300,92 @@ namespace GifComponents.Tools
 		}
 		#endregion
 
-		#region Process method
+		#region private methods
+		
+		#region Learn method
 		/// <summary>
-		/// Calls the Learn, UnbiasNetwork and BuildIndex method and returns the
-		/// ColorMap.
+		/// Main Learning Loop
 		/// </summary>
-		/// <returns>
-		/// The colour table containing the colours of the image after 
-		/// quantization.
-		/// </returns>
-		public ColourTable Process()
+		private void Learn() 
 		{
-			Learn();
-			UnbiasNetwork();
-			BuildIndex();
-			return ColourMap();
+			int i, j, b, g, r;
+			int radius, rad, alpha, step, delta, samplepixels;
+			byte[] p;
+			int pix, lim;
+
+			if (_lengthcount < _minpicturebytes)
+				_samplefac = 1;
+			_alphadec = 30 + ((_samplefac - 1) / 3);
+			p = _thepicture;
+			pix = 0;
+			lim = _lengthcount;
+			samplepixels = _lengthcount / (3 * _samplefac);
+			string learnCounterText = "Neural net quantizer - learning";
+			AddCounter( learnCounterText, samplepixels );
+			delta = samplepixels / _ncycles;
+			alpha = _initalpha;
+			radius = _initradius;
+
+			rad = radius >> _radiusbiasshift;
+			if (rad <= 1)
+				rad = 0; // TESTME: Learn - rad <= 1
+			for (i = 0; i < rad; i++)
+				_radpower[i] =
+					alpha * (((rad * rad - i * i) * _radbias) / (rad * rad));
+
+			//fprintf(stderr,"beginning 1D learning: initial radius=%d\n", rad);
+
+			if (_lengthcount < _minpicturebytes)
+				step = 3;
+			else if ((_lengthcount % _prime1) != 0)
+				step = 3 * _prime1;
+			else 
+			{
+				// TESTME: Learn - _lengthcount >= _minpicturebytes and divisible by _prime1
+				if ((_lengthcount % _prime2) != 0)
+					step = 3 * _prime2;
+				else 
+				{
+					if ((_lengthcount % _prime3) != 0)
+						step = 3 * _prime3;
+					else
+						step = 3 * _prime4;
+				}
+			}
+
+			i = 0;
+			while (i < samplepixels) 
+			{
+				MyProgressCounters[learnCounterText].Value = i;
+				b = (p[pix + 0] & 0xff) << _netbiasshift;
+				g = (p[pix + 1] & 0xff) << _netbiasshift;
+				r = (p[pix + 2] & 0xff) << _netbiasshift;
+				j = Contest(b, g, r);
+
+				Altersingle(alpha, j, b, g, r);
+				if (rad != 0)
+					Alterneigh(rad, j, b, g, r); /* alter neighbours */
+
+				pix += step;
+				if (pix >= lim)
+					pix -= _lengthcount;
+
+				i++;
+				if (delta == 0)
+					delta = 1;
+				if (i % delta == 0) 
+				{
+					alpha -= alpha / _alphadec;
+					radius -= radius / _radiusdec;
+					rad = radius >> _radiusbiasshift;
+					if (rad <= 1)
+						rad = 0;
+					for (j = 0; j < rad; j++)
+						_radpower[j] =
+							alpha * (((rad * rad - j * j) * _radbias) / (rad * rad));
+				}
+			}
+			RemoveCounter( learnCounterText );
 		}
 		#endregion
 	
@@ -449,23 +397,89 @@ namespace GifComponents.Tools
 		[SuppressMessage("Microsoft.Naming", 
 		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 		                 MessageId = "Unbias")]
-		public void UnbiasNetwork() 
+		private void UnbiasNetwork() 
 		{
-
-			int i;
-
-			for (i = 0; i < _netsize; i++) 
+			string unbiasCounterText = "Neural net quantizer - unbiasing network";
+			AddCounter( unbiasCounterText, _netsize );
+			for( int i = 0; i < _netsize; i++ ) 
 			{
+				MyProgressCounters[unbiasCounterText].Value = i;
 				_network[i][0] >>= _netbiasshift;
 				_network[i][1] >>= _netbiasshift;
 				_network[i][2] >>= _netbiasshift;
 				_network[i][3] = i; /* record colour no */
 			}
+			RemoveCounter( unbiasCounterText );
 		}
 		#endregion
 
-		#region private methods
-		
+		#region BuildIndex method
+		/// <summary>
+		/// Insertion sort of network and building of netindex[0..255] (to do 
+		/// after unbias)
+		/// </summary>
+		private void BuildIndex() 
+		{
+			string buildIndexCounterText = "Neural net quantizer - building index";
+			AddCounter( buildIndexCounterText, _netsize );
+
+			int i, j, smallpos, smallval;
+			int[] p;
+			int[] q;
+			int previouscol, startpos;
+
+			previouscol = 0;
+			startpos = 0;
+			for (i = 0; i < _netsize; i++) 
+			{
+				MyProgressCounters[buildIndexCounterText].Value = i;
+				p = _network[i];
+				smallpos = i;
+				smallval = p[1]; /* index on g */
+				/* find smallest in i..netsize-1 */
+				for (j = i + 1; j < _netsize; j++) 
+				{
+					q = _network[j];
+					if (q[1] < smallval) 
+					{ /* index on g */
+						smallpos = j;
+						smallval = q[1]; /* index on g */
+					}
+				}
+				q = _network[smallpos];
+				/* swap p (i) and q (smallpos) entries */
+				if (i != smallpos) 
+				{
+					j = q[0];
+					q[0] = p[0];
+					p[0] = j;
+					j = q[1];
+					q[1] = p[1];
+					p[1] = j;
+					j = q[2];
+					q[2] = p[2];
+					p[2] = j;
+					j = q[3];
+					q[3] = p[3];
+					p[3] = j;
+				}
+				/* smallval entry is now in position i */
+				if (smallval != previouscol) 
+				{
+					_netindex[previouscol] = (startpos + i) >> 1;
+					for (j = previouscol + 1; j < smallval; j++)
+						_netindex[j] = i;
+					previouscol = smallval;
+					startpos = i;
+				}
+			}
+			_netindex[previouscol] = (startpos + _maxnetpos) >> 1;
+			for (j = previouscol + 1; j < 256; j++)
+				_netindex[j] = _maxnetpos; /* really 256 */
+			RemoveCounter( buildIndexCounterText );
+		}
+		#endregion
+	
 		#region private Alterneigh method
 		/// <summary>
 		/// Move adjacent neurons by precomputed alpha*(1-((i-j)^2/[r]^2)) in 

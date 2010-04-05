@@ -21,6 +21,7 @@
 // only to have created a derived work.
 #endregion
 
+#region using directives
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ using System.IO;
 using GifComponents.Components;
 using GifComponents.Palettes;
 using GifComponents.Tools;
+#endregion
 
 namespace GifComponents
 {
@@ -53,7 +55,7 @@ namespace GifComponents
 	/// Modified by Phil Garcia (phil@thinkedge.com) 
 	///		1. Add support to output the Gif to a MemoryStream (9/2/2005)
 	/// 
-	/// Modified by Simon Bridewell, June-December 2009:
+	/// Modified by Simon Bridewell, June 2009 - April 2010:
 	/// Downloaded from 
 	/// http://www.thinkedge.com/BlogEngine/file.axd?file=NGif_src2.zip
 	/// 	* Corrected FxCop code analysis errors.
@@ -69,6 +71,7 @@ namespace GifComponents
 	/// 	  table.
 	/// 	* New QuantizerType property - allows user to choose between NeuQuant
 	/// 	  and Octree quantizers.
+	/// 	* Add ProgressCounters to allow UI to provide feedback to the user.
 	/// </summary>
 	public class AnimatedGifEncoder : GifComponent
 	{
@@ -125,9 +128,10 @@ namespace GifComponents
 		
 		private Palette _palette;
 		
-		private string _status;
-		private int _processingFrame;
 		private PixelAnalysis _pixelAnalysis;
+
+		private int _encodingFrame;
+		
 		#endregion
 
 		#region default constructor
@@ -311,71 +315,14 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region Status property
+		#region PixelAnalysis property
 		/// <summary>
-		/// Gets a string indicating the current status of the encoder.
-		/// For use while the WriteToFile or WriteToStream method is running,
-		/// to indicate how far through the process it is.
+		/// Gets the PixelAnalyis used to quantize the images
 		/// </summary>
-		[Browsable( false )]
-		public string Status
+		[Browsable(false)]
+		public PixelAnalysis PixelAnalysis
 		{
-			get { return _status; }
-		}
-		#endregion
-		
-		#region PixelAnalysisStatus property
-		/// <summary>
-		/// Gets the status of the PixelAnalysis used to calculate colour tables.
-		/// </summary>
-		[Browsable( false )]
-		public string PixelAnalysisStatus
-		{
-			get
-			{
-				if( _pixelAnalysis == null )
-				{
-					return string.Empty;
-				}
-				else
-				{
-					return _pixelAnalysis.Status;
-				}
-			}
-		}
-		#endregion
-		
-		#region ProcessingFrame property
-		/// <summary>
-		/// Gets the frame number currently being processed by the encoder.
-		/// For use while the WriteToFile or WriteToStream method is running,
-		/// to indicate how far through the process it is.
-		/// </summary>
-		[Browsable( false )]
-		public int ProcessingFrame
-		{
-			get { return _processingFrame; }
-		}
-		#endregion
-		
-		#region PixelAnalysisProcessingFrame property
-		/// <summary>
-		/// Gets the frame number being analysed by the PixelAnalysis.
-		/// </summary>
-		[Browsable( false )]
-		public int PixelAnalysisProcessingFrame
-		{
-			get
-			{
-				if( _pixelAnalysis == null )
-				{
-					return 0;
-				}
-				else
-				{
-					return _pixelAnalysis.ProcessingFrame;
-				}
-			}
+			get { return _pixelAnalysis; }
 		}
 		#endregion
 		
@@ -436,23 +383,29 @@ namespace GifComponents
 				}
 			}
 			
+			_encodingFrame = 0;
+			
 			WriteGifHeader( outputStream );
 			
 			WriteLogicalScreenDescriptor( outputStream );
 			
 			WriteNetscapeExtension( outputStream );
 			
-			for( _processingFrame = 0; 
-			     _processingFrame < _frames.Count; 
-			     _processingFrame++ )
+			string encodingFrameText = "Encoding frame";
+			AddCounter( encodingFrameText, _frames.Count );
+			
+			for( _encodingFrame = 0; 
+			     _encodingFrame < _frames.Count; 
+			     _encodingFrame++ )
 			{
+				MyProgressCounters[encodingFrameText].Value = _encodingFrame + 1;
 				WriteFrame( outputStream );
 			}
 			
+			RemoveCounter( encodingFrameText );
+			
 			// GIF trailer
-			_status = "Writing GIF trailer";
 			WriteByte( CodeTrailer, outputStream );
-			_status = "Done";
 		}
 		#endregion
 		
@@ -515,21 +468,18 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region private WriteGifHeader method
-		private void WriteGifHeader( Stream outputStream )
+		#region private static WriteGifHeader method
+		private static void WriteGifHeader( Stream outputStream )
 		{
-			_status = "Writing GIF header";
 			GifHeader header = new GifHeader( "GIF", "89a" );
 			header.WriteToStream( outputStream );
-			_status = "Done writing GIF header";
 		}
 		#endregion
 
 		#region private WriteFrame method
 		private void WriteFrame( Stream outputStream )
 		{
-			_status = "Frame " + _processingFrame + " of " + _frames.Count;
-			GifFrame thisFrame = _frames[_processingFrame];
+			GifFrame thisFrame = _frames[_encodingFrame];
 			Image thisImage = thisFrame.TheImage;
 			ColourTable act = SetActiveColourTable();
 			int transparentColourIndex;
@@ -539,24 +489,12 @@ namespace GifComponents
 			}
 			else
 			{
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": finding closest to transparent colour";
 				// TESTME: WriteFrame - _transparent != Color.Empty
 				transparentColourIndex = FindClosest( _transparent, act );
 			}
-			_status 
-				= "Frame " + _processingFrame 
-				+ " of " + _frames.Count 
-				+ ": writing graphic control extension";
 			WriteGraphicCtrlExt( thisFrame, 
 			                     transparentColourIndex, 
 			                     outputStream );
-			_status 
-				= "Frame " + _processingFrame 
-				+ " of " + _frames.Count 
-				+ ": writing image descriptor";
 			ColourTable lct;
 			if( _strategy == ColourTableStrategy.UseLocal )
 			{
@@ -574,15 +512,7 @@ namespace GifComponents
 			// Write a local colour table if the strategy is to do so
 			if( _strategy == ColourTableStrategy.UseLocal )
 			{
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": writing local colour table";
 				act.WriteToStream( outputStream );
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": encoding pixel data";
 				IndexedPixels ip;
 				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
@@ -596,10 +526,6 @@ namespace GifComponents
 			}
 			else // global colour table
 			{
-				_status 
-					= "Frame " + _processingFrame 
-					+ " of " + _frames.Count 
-					+ ": encoding pixel data";
 				IndexedPixels ip;
 				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
@@ -607,23 +533,27 @@ namespace GifComponents
 				}
 				else
 				{
-					ip = _pixelAnalysis.IndexedPixelsCollection[_processingFrame];
+					ip = _pixelAnalysis.IndexedPixelsCollection[_encodingFrame];
 				}
 				WritePixels( ip, outputStream );
 			}
 		}
 		#endregion
 		
-		#region private static MakeIndexedPixels method
+		#region private MakeIndexedPixels method
 		/// <summary>
 		/// Converts the supplied image to a collection of pixel indices using
 		/// the supplied colour table.
+		/// Only used when the QuantizerType is set to UseSuppliedPalette
 		/// </summary>
 		/// <param name="act">The active colour table</param>
 		/// <param name="image">The image</param>
 		/// <returns></returns>
-		private static IndexedPixels MakeIndexedPixels( ColourTable act, Image image )
+		private IndexedPixels MakeIndexedPixels( ColourTable act, Image image )
 		{
+			int pixelCount = image.Height * image.Width;
+			string counterText = "Getting indices in colour table";
+			AddCounter( counterText, pixelCount );
 			Bitmap bitmap = (Bitmap) image;
 			IndexedPixels ip = new IndexedPixels();
 			for( int y = 0; y < image.Height; y++ )
@@ -633,8 +563,10 @@ namespace GifComponents
 					Color c = bitmap.GetPixel( x, y );
 					int index = FindClosest( c, act );
 					ip.Add( (byte) index );
+					MyProgressCounters[counterText].Value = ip.Count;
 				}
 			}
+			RemoveCounter( counterText );
 			return ip;
 		}
 		#endregion
@@ -647,13 +579,13 @@ namespace GifComponents
 			{
 				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
-					if( _frames[_processingFrame].Palette == null )
+					if( _frames[_encodingFrame].Palette == null )
 					{
 						// TESTME: SetActiveColourTable - SetActiveColourTable, UseSuppliedPalette, no palette supplied
 						string message
 							= "You have opted to use a local colour table built "
 							+ "from a supplied palette, but frame "
-							+ _processingFrame
+							+ _encodingFrame
 							+ "does not have a palette.";
 						throw new InvalidOperationException( message );
 					}
@@ -662,7 +594,7 @@ namespace GifComponents
 						// Build local colour table from colours in the frame's
 						// supplied palette.
 						act = new ColourTable();
-						foreach( Color c in _frames[_processingFrame].Palette )
+						foreach( Color c in _frames[_encodingFrame].Palette )
 						{
 							act.Add( c );
 						}
@@ -672,14 +604,11 @@ namespace GifComponents
 				else
 				{
 					// Build local colour table based on colours in the image.
-					_status 
-						= "Frame " + _processingFrame 
-						+ " of " + _frames.Count 
-						+ ": building local colour table - analysing pixels";
-					Image thisImage = _frames[_processingFrame].TheImage;
+					Image thisImage = _frames[_encodingFrame].TheImage;
 					_pixelAnalysis = new PixelAnalysis( thisImage, 
 					                                    _quantizerType );
 					_pixelAnalysis.ColourQuality = _quality;
+					_pixelAnalysis.Analyse();
 					// make local colour table active
 					act = _pixelAnalysis.ColourTable;
 				}
@@ -807,18 +736,25 @@ namespace GifComponents
 			{
 				if( _quantizerType == QuantizerType.UseSuppliedPalette )
 				{
-					_status = "Creating global colour table from supplied palette";
 					// use supplied palette
 					_globalColourTable = new ColourTable();
+					string buildColourTableCounterText 
+						= "Building colour table from supplied palette";
+					AddCounter( buildColourTableCounterText, 
+					            _palette.Count );
+					int paletteIndex = 0;
 					foreach( Color c in _palette )
 					{
 						_globalColourTable.Add( c );
+						MyProgressCounters[buildColourTableCounterText].Value 
+							= paletteIndex;
+						paletteIndex++;
 					}
 					_globalColourTable.Pad();
+					RemoveCounter( buildColourTableCounterText );
 				}
 				else
 				{
-					_status = "Building global colour table - analysing pixels";
 					// Analyse the pixels in all the images to build the
 					// global colour table.
 					Collection<Image> images = new Collection<Image>();
@@ -829,9 +765,9 @@ namespace GifComponents
 					}
 					_pixelAnalysis = new PixelAnalysis( images );
 					_pixelAnalysis.ColourQuality = _quality;
+					_pixelAnalysis.Analyse();
 					_globalColourTable = _pixelAnalysis.ColourTable;
 				}
-				_status = "Writing logical screen descriptor (global)";
 				LogicalScreenDescriptor lsd = 
 					new LogicalScreenDescriptor( _logicalScreenSize, 
 					                             hasGlobalColourTable, 
@@ -841,12 +777,10 @@ namespace GifComponents
 					                             backgroundColorIndex, 
 					                             pixelAspectRatio );
 				lsd.WriteToStream( outputStream );
-				_status = "Writing global colour table";
 				_globalColourTable.WriteToStream( outputStream );
 			}
 			else
 			{
-				_status = "Writing logical screen descriptor (local)";
 				LogicalScreenDescriptor lsd = 
 					new LogicalScreenDescriptor( _logicalScreenSize, 
 					                             hasGlobalColourTable, 

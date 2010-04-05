@@ -50,16 +50,18 @@ namespace GifBuilder
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.encodeGIFFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.framesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.addFrameBeforeCurrentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.addFrameAfterCurrentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.removeCurrentFrameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.reorderFramesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-			this.buttonReorderFrames = new System.Windows.Forms.Button();
 			this.propertyGridFrame = new System.Windows.Forms.PropertyGrid();
-			this.buttonAddFrameAfter = new System.Windows.Forms.Button();
-			this.buttonRemoveFrame = new System.Windows.Forms.Button();
-			this.buttonAddFrameBefore = new System.Windows.Forms.Button();
 			this.buttonNextFrame = new System.Windows.Forms.Button();
 			this.buttonPreviousFrame = new System.Windows.Forms.Button();
 			this.labelFrameNumber = new System.Windows.Forms.Label();
@@ -68,17 +70,9 @@ namespace GifBuilder
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageEncoder = new System.Windows.Forms.TabPage();
-			this.statusStrip2 = new System.Windows.Forms.StatusStrip();
-			this.toolStripProgressBarPixelAnalysis = new System.Windows.Forms.ToolStripProgressBar();
-			this.toolStripStatusLabelPixelAnalysis = new System.Windows.Forms.ToolStripStatusLabel();
-			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-			this.toolStripProgressBarEncoder = new System.Windows.Forms.ToolStripProgressBar();
-			this.toolStripStatusLabelEncoder = new System.Windows.Forms.ToolStripStatusLabel();
 			this.propertyGridEncoder = new System.Windows.Forms.PropertyGrid();
-			this.buttonEncode = new System.Windows.Forms.Button();
 			this.tabPageFrames = new System.Windows.Forms.TabPage();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.menuStrip1.SuspendLayout();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -86,14 +80,14 @@ namespace GifBuilder
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageEncoder.SuspendLayout();
-			this.statusStrip2.SuspendLayout();
-			this.statusStrip1.SuspendLayout();
 			this.tabPageFrames.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// menuStrip1
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.fileToolStripMenuItem,
+									this.framesToolStripMenuItem,
 									this.helpToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
@@ -101,20 +95,74 @@ namespace GifBuilder
 			this.menuStrip1.TabIndex = 0;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
+			// fileToolStripMenuItem
+			// 
+			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.encodeGIFFileToolStripMenuItem});
+			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+			this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
+			this.fileToolStripMenuItem.Text = "&File";
+			// 
+			// encodeGIFFileToolStripMenuItem
+			// 
+			this.encodeGIFFileToolStripMenuItem.Name = "encodeGIFFileToolStripMenuItem";
+			this.encodeGIFFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+			this.encodeGIFFileToolStripMenuItem.Text = "&Encode GIF file...";
+			this.encodeGIFFileToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// framesToolStripMenuItem
+			// 
+			this.framesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+									this.addFrameBeforeCurrentToolStripMenuItem,
+									this.addFrameAfterCurrentToolStripMenuItem,
+									this.removeCurrentFrameToolStripMenuItem,
+									this.reorderFramesToolStripMenuItem});
+			this.framesToolStripMenuItem.Name = "framesToolStripMenuItem";
+			this.framesToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+			this.framesToolStripMenuItem.Text = "Fr&ames";
+			// 
+			// addFrameBeforeCurrentToolStripMenuItem
+			// 
+			this.addFrameBeforeCurrentToolStripMenuItem.Name = "addFrameBeforeCurrentToolStripMenuItem";
+			this.addFrameBeforeCurrentToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+			this.addFrameBeforeCurrentToolStripMenuItem.Text = "Add frame &before current...";
+			this.addFrameBeforeCurrentToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// addFrameAfterCurrentToolStripMenuItem
+			// 
+			this.addFrameAfterCurrentToolStripMenuItem.Name = "addFrameAfterCurrentToolStripMenuItem";
+			this.addFrameAfterCurrentToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+			this.addFrameAfterCurrentToolStripMenuItem.Text = "Add frame &after current...";
+			this.addFrameAfterCurrentToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// removeCurrentFrameToolStripMenuItem
+			// 
+			this.removeCurrentFrameToolStripMenuItem.Name = "removeCurrentFrameToolStripMenuItem";
+			this.removeCurrentFrameToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+			this.removeCurrentFrameToolStripMenuItem.Text = "&Remove current frame";
+			this.removeCurrentFrameToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
+			// reorderFramesToolStripMenuItem
+			// 
+			this.reorderFramesToolStripMenuItem.Name = "reorderFramesToolStripMenuItem";
+			this.reorderFramesToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+			this.reorderFramesToolStripMenuItem.Text = "Re&order frames...";
+			this.reorderFramesToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
+			// 
 			// helpToolStripMenuItem
 			// 
 			this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
 									this.aboutToolStripMenuItem});
 			this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
 			this.helpToolStripMenuItem.Size = new System.Drawing.Size(40, 20);
-			this.helpToolStripMenuItem.Text = "Help";
+			this.helpToolStripMenuItem.Text = "&Help";
 			// 
 			// aboutToolStripMenuItem
 			// 
 			this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
 			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
-			this.aboutToolStripMenuItem.Text = "About";
-			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItemClick);
+			this.aboutToolStripMenuItem.Text = "&About";
+			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.ToolStripMenuItemClick);
 			// 
 			// splitContainer1
 			// 
@@ -125,11 +173,7 @@ namespace GifBuilder
 			// 
 			// splitContainer1.Panel1
 			// 
-			this.splitContainer1.Panel1.Controls.Add(this.buttonReorderFrames);
 			this.splitContainer1.Panel1.Controls.Add(this.propertyGridFrame);
-			this.splitContainer1.Panel1.Controls.Add(this.buttonAddFrameAfter);
-			this.splitContainer1.Panel1.Controls.Add(this.buttonRemoveFrame);
-			this.splitContainer1.Panel1.Controls.Add(this.buttonAddFrameBefore);
 			this.splitContainer1.Panel1.Controls.Add(this.buttonNextFrame);
 			this.splitContainer1.Panel1.Controls.Add(this.buttonPreviousFrame);
 			this.splitContainer1.Panel1.Controls.Add(this.labelFrameNumber);
@@ -142,62 +186,18 @@ namespace GifBuilder
 			this.splitContainer1.SplitterDistance = 231;
 			this.splitContainer1.TabIndex = 1;
 			// 
-			// buttonReorderFrames
-			// 
-			this.buttonReorderFrames.Location = new System.Drawing.Point(318, 30);
-			this.buttonReorderFrames.Name = "buttonReorderFrames";
-			this.buttonReorderFrames.Size = new System.Drawing.Size(97, 23);
-			this.buttonReorderFrames.TabIndex = 7;
-			this.buttonReorderFrames.TabStop = false;
-			this.buttonReorderFrames.Text = "Re&order frames...";
-			this.buttonReorderFrames.UseVisualStyleBackColor = true;
-			this.buttonReorderFrames.Click += new System.EventHandler(this.ButtonClick);
-			// 
 			// propertyGridFrame
 			// 
 			this.propertyGridFrame.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
 									| System.Windows.Forms.AnchorStyles.Left) 
 									| System.Windows.Forms.AnchorStyles.Right)));
-			this.propertyGridFrame.Location = new System.Drawing.Point(0, 60);
+			this.propertyGridFrame.Location = new System.Drawing.Point(0, 26);
 			this.propertyGridFrame.Name = "propertyGridFrame";
-			this.propertyGridFrame.Size = new System.Drawing.Size(622, 169);
+			this.propertyGridFrame.Size = new System.Drawing.Size(633, 203);
 			this.propertyGridFrame.TabIndex = 6;
 			this.propertyGridFrame.TabStop = false;
 			this.propertyGridFrame.ToolbarVisible = false;
 			this.propertyGridFrame.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.PropertyGridFramePropertyValueChanged);
-			// 
-			// buttonAddFrameAfter
-			// 
-			this.buttonAddFrameAfter.Location = new System.Drawing.Point(113, 30);
-			this.buttonAddFrameAfter.Name = "buttonAddFrameAfter";
-			this.buttonAddFrameAfter.Size = new System.Drawing.Size(97, 23);
-			this.buttonAddFrameAfter.TabIndex = 5;
-			this.buttonAddFrameAfter.TabStop = false;
-			this.buttonAddFrameAfter.Text = "Add frame &after...";
-			this.buttonAddFrameAfter.UseVisualStyleBackColor = true;
-			this.buttonAddFrameAfter.Click += new System.EventHandler(this.ButtonClick);
-			// 
-			// buttonRemoveFrame
-			// 
-			this.buttonRemoveFrame.Location = new System.Drawing.Point(219, 30);
-			this.buttonRemoveFrame.Name = "buttonRemoveFrame";
-			this.buttonRemoveFrame.Size = new System.Drawing.Size(93, 23);
-			this.buttonRemoveFrame.TabIndex = 4;
-			this.buttonRemoveFrame.TabStop = false;
-			this.buttonRemoveFrame.Text = "&Remove frame";
-			this.buttonRemoveFrame.UseVisualStyleBackColor = true;
-			this.buttonRemoveFrame.Click += new System.EventHandler(this.ButtonClick);
-			// 
-			// buttonAddFrameBefore
-			// 
-			this.buttonAddFrameBefore.Location = new System.Drawing.Point(0, 30);
-			this.buttonAddFrameBefore.Name = "buttonAddFrameBefore";
-			this.buttonAddFrameBefore.Size = new System.Drawing.Size(107, 23);
-			this.buttonAddFrameBefore.TabIndex = 3;
-			this.buttonAddFrameBefore.TabStop = false;
-			this.buttonAddFrameBefore.Text = "Add frame &before...";
-			this.buttonAddFrameBefore.UseVisualStyleBackColor = true;
-			this.buttonAddFrameBefore.Click += new System.EventHandler(this.ButtonClick);
 			// 
 			// buttonNextFrame
 			// 
@@ -275,10 +275,7 @@ namespace GifBuilder
 			// 
 			// tabPageEncoder
 			// 
-			this.tabPageEncoder.Controls.Add(this.statusStrip2);
-			this.tabPageEncoder.Controls.Add(this.statusStrip1);
 			this.tabPageEncoder.Controls.Add(this.propertyGridEncoder);
-			this.tabPageEncoder.Controls.Add(this.buttonEncode);
 			this.tabPageEncoder.Location = new System.Drawing.Point(4, 22);
 			this.tabPageEncoder.Name = "tabPageEncoder";
 			this.tabPageEncoder.Padding = new System.Windows.Forms.Padding(3);
@@ -287,72 +284,14 @@ namespace GifBuilder
 			this.tabPageEncoder.Text = "Encoder properties";
 			this.tabPageEncoder.UseVisualStyleBackColor = true;
 			// 
-			// statusStrip2
-			// 
-			this.statusStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-									this.toolStripProgressBarPixelAnalysis,
-									this.toolStripStatusLabelPixelAnalysis});
-			this.statusStrip2.Location = new System.Drawing.Point(3, 311);
-			this.statusStrip2.Name = "statusStrip2";
-			this.statusStrip2.Size = new System.Drawing.Size(633, 22);
-			this.statusStrip2.TabIndex = 3;
-			this.statusStrip2.Text = "statusStrip2";
-			// 
-			// toolStripProgressBarPixelAnalysis
-			// 
-			this.toolStripProgressBarPixelAnalysis.Name = "toolStripProgressBarPixelAnalysis";
-			this.toolStripProgressBarPixelAnalysis.Size = new System.Drawing.Size(100, 16);
-			// 
-			// toolStripStatusLabelPixelAnalysis
-			// 
-			this.toolStripStatusLabelPixelAnalysis.Name = "toolStripStatusLabelPixelAnalysis";
-			this.toolStripStatusLabelPixelAnalysis.Size = new System.Drawing.Size(164, 17);
-			this.toolStripStatusLabelPixelAnalysis.Text = "toolStripStatusLabelPixelAnalysis";
-			// 
-			// statusStrip1
-			// 
-			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-									this.toolStripProgressBarEncoder,
-									this.toolStripStatusLabelEncoder});
-			this.statusStrip1.Location = new System.Drawing.Point(3, 333);
-			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(633, 22);
-			this.statusStrip1.TabIndex = 2;
-			this.statusStrip1.Text = "statusStrip1";
-			// 
-			// toolStripProgressBarEncoder
-			// 
-			this.toolStripProgressBarEncoder.Name = "toolStripProgressBarEncoder";
-			this.toolStripProgressBarEncoder.Size = new System.Drawing.Size(100, 16);
-			// 
-			// toolStripStatusLabelEncoder
-			// 
-			this.toolStripStatusLabelEncoder.Name = "toolStripStatusLabelEncoder";
-			this.toolStripStatusLabelEncoder.Size = new System.Drawing.Size(142, 17);
-			this.toolStripStatusLabelEncoder.Text = "toolStripStatusLabelEncoder";
-			// 
 			// propertyGridEncoder
 			// 
-			this.propertyGridEncoder.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-									| System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.propertyGridEncoder.Location = new System.Drawing.Point(0, 29);
+			this.propertyGridEncoder.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.propertyGridEncoder.Location = new System.Drawing.Point(3, 3);
 			this.propertyGridEncoder.Name = "propertyGridEncoder";
-			this.propertyGridEncoder.Size = new System.Drawing.Size(639, 279);
+			this.propertyGridEncoder.Size = new System.Drawing.Size(633, 352);
 			this.propertyGridEncoder.TabIndex = 1;
 			this.propertyGridEncoder.TabStop = false;
-			// 
-			// buttonEncode
-			// 
-			this.buttonEncode.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.buttonEncode.Location = new System.Drawing.Point(0, 0);
-			this.buttonEncode.Name = "buttonEncode";
-			this.buttonEncode.Size = new System.Drawing.Size(639, 23);
-			this.buttonEncode.TabIndex = 0;
-			this.buttonEncode.Text = "Encode GIF file...";
-			this.buttonEncode.UseVisualStyleBackColor = true;
-			this.buttonEncode.Click += new System.EventHandler(this.ButtonClick);
 			// 
 			// tabPageFrames
 			// 
@@ -372,10 +311,6 @@ namespace GifBuilder
 			this.saveFileDialog1.RestoreDirectory = true;
 			this.saveFileDialog1.Title = "Save GIF file...";
 			// 
-			// timer1
-			// 
-			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -386,7 +321,6 @@ namespace GifBuilder
 			this.MainMenuStrip = this.menuStrip1;
 			this.Name = "MainForm";
 			this.Text = "GifBuilder";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFormFormClosing);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.splitContainer1.Panel1.ResumeLayout(false);
@@ -397,34 +331,24 @@ namespace GifBuilder
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
 			this.tabControl1.ResumeLayout(false);
 			this.tabPageEncoder.ResumeLayout(false);
-			this.tabPageEncoder.PerformLayout();
-			this.statusStrip2.ResumeLayout(false);
-			this.statusStrip2.PerformLayout();
-			this.statusStrip1.ResumeLayout(false);
-			this.statusStrip1.PerformLayout();
 			this.tabPageFrames.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
-		private System.Windows.Forms.Button buttonReorderFrames;
-		private System.Windows.Forms.StatusStrip statusStrip2;
-		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarEncoder;
-		private System.Windows.Forms.ToolStripProgressBar toolStripProgressBarPixelAnalysis;
-		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelEncoder;
-		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelPixelAnalysis;
-		private System.Windows.Forms.Timer timer1;
-		private System.Windows.Forms.StatusStrip statusStrip1;
+		private System.Windows.Forms.ToolStripMenuItem addFrameBeforeCurrentToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem encodeGIFFileToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem reorderFramesToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem removeCurrentFrameToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem addFrameAfterCurrentToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem framesToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
 		private System.Windows.Forms.PropertyGrid propertyGridFrame;
 		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
 		private System.Windows.Forms.TabPage tabPageFrames;
-		private System.Windows.Forms.Button buttonEncode;
 		private System.Windows.Forms.PropertyGrid propertyGridEncoder;
 		private System.Windows.Forms.TabPage tabPageEncoder;
 		private System.Windows.Forms.TabControl tabControl1;
-		private System.Windows.Forms.Button buttonAddFrameBefore;
-		private System.Windows.Forms.Button buttonAddFrameAfter;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
-		private System.Windows.Forms.Button buttonRemoveFrame;
 		private System.Windows.Forms.Label labelNoImages;
 		private System.Windows.Forms.PictureBox pictureBox1;
 		private System.Windows.Forms.Label labelFrameNumber;

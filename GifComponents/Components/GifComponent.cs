@@ -31,6 +31,7 @@ using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.XPath;
+using CommonForms.Responsiveness;
 
 namespace GifComponents.Components
 {
@@ -39,7 +40,7 @@ namespace GifComponents.Components
 	/// stream.
 	/// </summary>
 	[TypeConverter( typeof( ExpandableObjectConverter ) )]
-	public abstract class GifComponent : IDisposable
+	public abstract class GifComponent : LongRunningProcess, IDisposable
 	{
 		#region declarations
 		/// <summary>

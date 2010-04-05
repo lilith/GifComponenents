@@ -424,11 +424,10 @@ namespace GifComponents.NUnit
 				_d.Decode();
 				Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState, "Quality " + q );
 				Assert.AreEqual( 1, _d.Frames.Count, "Quality " + q );
-				Collection<Color> colours = ImageTools.GetColours( _d.Frames[0].TheImage );
 				// FIXME: NeuQuant quantizer reducing to 180 colours instead of 256 colours
 				// TODO: Check for exactly 256 colours once Octree quantizer returns 256-colour images
 //				Assert.AreEqual( 256, ImageTools.GetDistinctColours( colours ).Count );
-				Assert.LessOrEqual( ImageTools.GetDistinctColours( colours ).Count, 256 );
+				Assert.LessOrEqual( ImageTools.GetDistinctColours( _d.Frames[0].TheImage ).Count, 256 );
 				for( int tolerance = 0; tolerance < 256; tolerance++ )
 				{
 					try
@@ -464,10 +463,9 @@ namespace GifComponents.NUnit
 			_d.Decode();
 			Assert.AreEqual( ErrorState.Ok, _d.ConsolidatedState );
 			Assert.AreEqual( 1, _d.Frames.Count );
-			Collection<Color> colours2 = ImageTools.GetColours( _d.Frames[0].TheImage );
 			// FIXME: Octree quantizer should return a 256-colour image here
 //			Assert.AreEqual( 256, ImageTools.GetDistinctColours( colours2 ).Count );
-			Assert.LessOrEqual( ImageTools.GetDistinctColours( colours2 ).Count, 256 );
+			Assert.LessOrEqual( ImageTools.GetDistinctColours( _d.Frames[0].TheImage ).Count, 256 );
 			for( int tolerance = 0; tolerance < 256; tolerance++ )
 			{
 				try

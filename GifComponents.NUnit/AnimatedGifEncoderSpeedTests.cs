@@ -28,6 +28,7 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using NUnit.Framework;
 using NUnit.Extensions;
+using CommonForms.Responsiveness;
 using GifComponents.Components;
 using GifComponents.NUnit.Tools;
 
@@ -62,8 +63,10 @@ namespace GifComponents.NUnit
 			t.Start();
 			while( t.IsAlive )
 			{
-				WriteMessage( _encoder.Status 
-				              + " / " + _encoder.PixelAnalysisStatus );
+				foreach( ProgressCounter counter in _encoder.AllProgressCounters.Values )
+				{
+					WriteMessage( counter.ToString() );
+				}
 				System.Threading.Thread.Sleep( 100 );
 			}
 			ReportEnd();

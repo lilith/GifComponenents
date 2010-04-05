@@ -32,6 +32,7 @@ namespace GifComponents.Tools
 	/// <summary>
 	/// Provides a set of static methods for working with 
 	/// <see cref="System.Drawing.Image"/> instances.
+	/// TODO: move into GifComponents.NUnit project
 	/// </summary>
 	public static class ImageTools
 	{
@@ -46,19 +47,24 @@ namespace GifComponents.Tools
 		/// <returns>
 		/// A collection of the colours of all the pixels in the supplied image.
 		/// </returns>
-		public static Collection<Color> GetColours( Image image )
+		public static Color[] GetColours( Image image )
 		{
+			if( image == null )
+			{
+				return new Color[0];
+			}
 			// SB comment - this comment was present when I downloaded the
 			// code from thinkedge.com
 			// FEATURE: improve performance: use unsafe code
-			Collection<Color> pixelColours = new Collection<Color>();
+			int pixelCount = image.Height * image.Width;
+			Color[] pixelColours = new Color[pixelCount];
 			Bitmap tempBitmap = new Bitmap( image );
 			for( int y = 0; y < image.Height; y++ )
 			{
 				for( int x = 0; x < image.Width; x++ )
 				{
 					Color color = tempBitmap.GetPixel( x, y );
-					pixelColours.Add( color );
+					pixelColours[y * image.Height + x] = color;
 				}
 			}
 			return pixelColours;
@@ -98,6 +104,36 @@ namespace GifComponents.Tools
 		}
 		#endregion
 		
+		#region GetDistinctColours( Color[] ) method
+		/// <summary>
+		/// Gets a generic collection of all the distinct 
+		/// <see cref="System.Drawing.Color"/>s contained in the supplied 
+		/// image, i.e. each colour is included in the return value only once,
+		/// regardless of how many pixels in the image are of that colour.
+		/// </summary>
+		/// <param name="imageColours">
+		/// A collection of the colours of all the pixels in the image.
+		/// </param>
+		/// <returns></returns>
+		public static Collection<Color> GetDistinctColours( Color[] imageColours )
+		{
+			Hashtable t = new Hashtable();
+			foreach( Color c in imageColours )
+			{
+				if( t.Contains( c ) == false )
+				{
+					t.Add( c, c );
+				}
+			}
+			Collection<Color> distinctColours = new Collection<Color>();
+			foreach( Color c in t.Values )
+			{
+				distinctColours.Add( c );
+			}
+			return distinctColours;
+		}
+		#endregion
+		
 		#region GetDistinctColours( Image ) method
 		/// <summary>
 		/// Gets a generic collection of all the distinct 
@@ -109,14 +145,14 @@ namespace GifComponents.Tools
 		/// <returns>The distinct colours in the supplied image</returns>
 		public static Collection<Color> GetDistinctColours( Image image )
 		{
-			Collection<Color> colours = GetColours( image );
+			Color[] colours = GetColours( image );
 			return GetDistinctColours( colours );
 		}
 		#endregion
 
 		#endregion
 		
-		#region GetRgbArray method
+		#region GetRgbArray( Collection<Color> ) method
 		/// <summary>
 		/// Gets a byte array consisting of the red, green and blue intensities 
 		/// of the colours in the supplied collection.
@@ -147,7 +183,42 @@ namespace GifComponents.Tools
 		}
 		#endregion
 		
-		#region GetRgbCollection method
+		#region GetRgbArray( Color[] method ) method
+		/// <summary>
+		/// Gets a byte array consisting of the red, green and blue intensities 
+		/// of the colours in the supplied array of colours.
+		/// </summary>
+		/// <param name="colours">
+		/// The array of colours to convert to a byte array
+		/// </param>
+		/// <returns>
+		/// A byte array consiting of red, green and blue intensities.
+		/// 3 bytes per pixel - red first, then green, then blue.
+		/// </returns>
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Rgb")]
+		public static byte[] GetRgbArray( Color[] colours )
+		{
+			if( colours == null )
+			{
+				throw new ArgumentNullException( "colours" );
+			}
+			int len = colours.Length;
+			byte[] rgb = new byte[len * 3];
+			int rgbIndex;
+			for( int colourIndex = 0; colourIndex < len; colourIndex++ )
+			{
+				rgbIndex = colourIndex * 3;
+				rgb[rgbIndex] = (byte) colours[colourIndex].R;
+				rgb[rgbIndex + 1] = (byte) colours[colourIndex].G;
+				rgb[rgbIndex + 2] = (byte) colours[colourIndex].B;
+			}
+			return rgb;
+		}
+		#endregion
+		
+		#region GetRgbCollection( Collection<Color> ) method
 		/// <summary>
 		/// Gets a generic collection of bytes consisting of the red, green and 
 		/// blue intensities of the colours in the supplied collection.
@@ -163,6 +234,33 @@ namespace GifComponents.Tools
 		public static Collection<byte> GetRgbCollection( Collection<Color> colours )
 		{
 			int len = colours.Count;
+			Collection<byte> rgb = new Collection<byte>();
+			for( int i = 0; i < len; i++ )
+			{
+				rgb.Add( (byte) colours[i].R );
+				rgb.Add( (byte) colours[i].G );
+				rgb.Add( (byte) colours[i].B );
+			}
+			return rgb;
+		}
+		#endregion
+
+		#region GetRgbCollection( Color[] ) method
+		/// <summary>
+		/// Gets a generic collection of bytes consisting of the red, green and 
+		/// blue intensities of the colours in the supplied collection.
+		/// </summary>
+		/// <param name="colours">
+		/// The collection of colours to convert to a collection of bytes
+		/// </param>
+		/// <returns>
+		/// A collection of bytes consiting of red, green and blue intensities.
+		/// 3 bytes per pixel - red first, then green, then blue.
+		/// </returns>
+		[Obsolete( "Use the GetRgbArray method instead - it's around 60% faster" )]
+		public static Collection<byte> GetRgbCollection( Color[] colours )
+		{
+			int len = colours.Length;
 			Collection<byte> rgb = new Collection<byte>();
 			for( int i = 0; i < len; i++ )
 			{

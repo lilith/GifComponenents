@@ -117,7 +117,7 @@ namespace GifComponents.NUnit.Tools
 			g.Dispose();
 			brush.Dispose();
 			
-			Collection<Color> colours = ImageTools.GetColours( b );
+			Color[] colours = ImageTools.GetColours( b );
 			_rgb = ImageTools.GetRgbArray( colours );
 			_nq = new NeuQuant( _rgb, 1 );
 			_table = _nq.Process();

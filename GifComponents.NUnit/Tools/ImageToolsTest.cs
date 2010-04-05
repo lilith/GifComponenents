@@ -67,9 +67,9 @@ namespace GifComponents.NUnit.Tools
 				}
 			}
 			
-			Collection<Color> actualColours = ImageTools.GetColours( _bitmap );
+			Color[] actualColours = ImageTools.GetColours( _bitmap );
 			
-			Assert.AreEqual( expectedColours.Count, actualColours.Count );
+			Assert.AreEqual( expectedColours.Count, actualColours.Length );
 			
 			for( int i = 0; i < expectedColours.Count; i++ )
 			{
@@ -107,7 +107,7 @@ namespace GifComponents.NUnit.Tools
 				}
 			}
 			
-			Collection<Color> actualColours = ImageTools.GetColours( _bitmap );
+			Color[] actualColours = ImageTools.GetColours( _bitmap );
 			Collection<Color> actualDistinctColours 
 				= ImageTools.GetDistinctColours( actualColours );
 			
@@ -140,9 +140,9 @@ namespace GifComponents.NUnit.Tools
 			_bitmap = RandomBitmap.Create( new Size( 50, 50 ), 10, 
 			                               PixelFormat.Format32bppArgb );
 			
-			Collection<Color> colours = ImageTools.GetColours( _bitmap );
+			Color[] colours = ImageTools.GetColours( _bitmap );
 			
-			int len = colours.Count;
+			int len = colours.Length;
 			byte[] exected = new byte[len * 3];
 			int rgbIndex;
 			for( int colourIndex = 0; colourIndex < len; colourIndex++ )
@@ -182,9 +182,9 @@ namespace GifComponents.NUnit.Tools
 			_bitmap = RandomBitmap.Create( new Size( 50, 50 ), 10, 
 			                               PixelFormat.Format32bppArgb );
 			
-			Collection<Color> colours = ImageTools.GetColours( _bitmap );
+			Color[] colours = ImageTools.GetColours( _bitmap );
 			
-			int len = colours.Count;
+			int len = colours.Length;
 			byte[] exected = new byte[len * 3];
 			int rgbIndex;
 			for( int colourIndex = 0; colourIndex < len; colourIndex++ )
@@ -225,7 +225,7 @@ namespace GifComponents.NUnit.Tools
 			_bitmap = RandomBitmap.Create( new Size( 1000, 1000 ), 100, 
 			                               PixelFormat.Format32bppArgb );
 			_bitmap.Save( "GetRgbSpeedComparisonTest.bmp" );
-			Collection<Color> colours = ImageTools.GetColours( _bitmap );
+			Color[] colours = ImageTools.GetColours( _bitmap );
 			
 			DateTime startTime;
 			DateTime endTime;

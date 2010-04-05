@@ -61,6 +61,9 @@ namespace GifComponents
 	/// 	file.
 	/// 6. Added State property to indicate whether decoding is not started,
 	/// 	in progress or complete.
+	/// 7. Added StreamLength and StreamPosition properties.
+	/// 8. Added progress counters for use with LongRunningProcess and 
+	///    ResponsiveForm.
 	/// </summary>
 	public class GifDecoder : GifComponent
 	{
@@ -108,9 +111,9 @@ namespace GifComponents
 		private Collection<GifFrame> _frames;
 		
 		/// <summary>
-		/// Holds a string representing the progress through the decoding process
+		/// Text to appear on a progress counter.
 		/// </summary>
-		private string _status;
+		private string _readStreamCounterText;
 		
 		/// <summary>
 		/// An enum indicating whether the decoder has not started, is in 
@@ -225,9 +228,7 @@ namespace GifComponents
 		public void Decode()
 		{
 			_state = GifDecoderState.Decoding;
-			SetStatus( "Starting decoding" );
 			ReadStream( _stream );
-			SetStatus( "Finished decoding" );
 			_state = GifDecoderState.Done;
 		}
 		#endregion
@@ -346,14 +347,59 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region Status property
+		#region StreamLength property
 		/// <summary>
-		/// Gets a string indicating progress through the decoding process.
+		/// Gets the length, in bytes, of the stream being decoder.
 		/// </summary>
 		[Browsable( false )]
-		public string Status
+		public long StreamLength
 		{
-			get { return _status; }
+			get
+			{
+				if( _stream == null )
+				{
+					return 0;
+				}
+				else
+				{
+					if( _stream.CanRead )
+					{
+						return _stream.Length;
+					}
+					else
+					{
+						return 0;
+					}
+				}
+			}
+		}
+		#endregion
+		
+		#region StreamPosition property
+		/// <summary>
+		/// Gets the current position in the stream being decoded.
+		/// </summary>
+		[Browsable( false )]
+		public long StreamPosition
+		{
+			get
+			{
+				if( _stream == null )
+				{
+					return 0;
+				}
+				else
+				{
+					if( _stream.CanRead )
+					{
+						return _stream.Position;
+					}
+					else
+					{
+						return 0;
+					}
+				}
+			}
 		}
 		#endregion
 		
@@ -388,8 +434,11 @@ namespace GifComponents
 			_applicationExtensions = new Collection<ApplicationExtension>();
 			_gct = null;
 			
-			SetStatus( "Reading GIF header" );
+			_readStreamCounterText = "Reading stream byte";
+			AddCounter( _readStreamCounterText, (int) inputStream.Length );
 			_header = new GifHeader( inputStream, XmlDebugging );
+			MyProgressCounters[_readStreamCounterText].Value 
+				= (int) inputStream.Position;
 			WriteDebugXmlNode( _header.DebugXmlReader );
 			if( _header.ErrorState != ErrorState.Ok )
 			{
@@ -397,8 +446,9 @@ namespace GifComponents
 				return;
 			}
 
-			SetStatus( "Reading logical screen descriptor" );
 			_lsd = new LogicalScreenDescriptor( inputStream, XmlDebugging );
+			MyProgressCounters[_readStreamCounterText].Value 
+				= (int) inputStream.Position;
 			WriteDebugXmlNode( _lsd.DebugXmlReader );
 			if( TestState( ErrorState.EndOfInputStream ) )
 			{
@@ -408,19 +458,23 @@ namespace GifComponents
 			
 			if( _lsd.HasGlobalColourTable )
 			{
-				SetStatus( "Reading global colour table" );
 				_gct = new ColourTable( inputStream, 
 				                        _lsd.GlobalColourTableSize, 
 				                        XmlDebugging );
+				MyProgressCounters[_readStreamCounterText].Value 
+					= (int) inputStream.Position;
 				WriteDebugXmlNode( _gct.DebugXmlReader );
 			}
 			
 			if( ConsolidatedState == ErrorState.Ok )
 			{
 				ReadContents( inputStream );
+				MyProgressCounters[_readStreamCounterText].Value 
+					= (int) inputStream.Position;
 			}
 			inputStream.Close();
 			WriteDebugXmlFinish();
+			RemoveCounter( _readStreamCounterText );
 		}
 		#endregion
 		
@@ -440,6 +494,8 @@ namespace GifComponents
 			while( !done && ConsolidatedState == ErrorState.Ok )
 			{
 				int code = Read( inputStream );
+				MyProgressCounters[_readStreamCounterText].Value 
+					= (int) inputStream.Position;
 				WriteCodeToDebugXml( code );
 				
 				switch( code )
@@ -448,42 +504,50 @@ namespace GifComponents
 					case CodeImageSeparator:
 						WriteDebugXmlComment( "0x2C - image separator" );
 						AddFrame( inputStream, lastGce );
+						MyProgressCounters[_readStreamCounterText].Value 
+							= (int) inputStream.Position;
 						break;
 
 					case CodeExtensionIntroducer:
 						WriteDebugXmlComment( "0x21 - extension introducer" );
 						code = Read( inputStream );
+						MyProgressCounters[_readStreamCounterText].Value 
+							= (int) inputStream.Position;
 						WriteCodeToDebugXml( code );
 						switch( code )
 						{
 							case CodePlaintextLabel:
 								// FEATURE: handle plain text extension
 								WriteDebugXmlComment( "0x01 - plain text extension" );
-								SetStatus( "Skipping plain text extension" );
 								SkipBlocks( inputStream );
+								MyProgressCounters[_readStreamCounterText].Value 
+									= (int) inputStream.Position;
 								break;
 
 							case CodeGraphicControlLabel:
 								WriteDebugXmlComment( "0xF9 - graphic control label" );
-								SetStatus( "Reading graphic control extension" );
 								lastGce = new GraphicControlExtension( inputStream, 
 								                                       XmlDebugging );
+								MyProgressCounters[_readStreamCounterText].Value 
+									= (int) inputStream.Position;
 								WriteDebugXmlNode( lastGce.DebugXmlReader );
 								break;
 								
 							case CodeCommentLabel:
 								// FEATURE: handle comment extension
 								WriteDebugXmlComment( "0xFE - comment extension" );
-								SetStatus( "Skipping comment extension" );
 								SkipBlocks( inputStream );
+								MyProgressCounters[_readStreamCounterText].Value 
+									= (int) inputStream.Position;
 								break;
 
 							case CodeApplicationExtensionLabel:
 								WriteDebugXmlComment( "0xFF - application extension label" );
-								SetStatus( "Reading application extension" );
 								ApplicationExtension ext 
 									= new ApplicationExtension( inputStream, 
 									                            XmlDebugging );
+								MyProgressCounters[_readStreamCounterText].Value 
+									= (int) inputStream.Position;
 								WriteDebugXmlNode( ext.DebugXmlReader );
 								if( ext.ApplicationIdentifier == "NETSCAPE"
 								    && ext.ApplicationAuthenticationCode == "2.0" )
@@ -500,8 +564,9 @@ namespace GifComponents
 							default : // uninteresting extension
 								// TESTME: ReadContents - uninteresting extension
 								WriteDebugXmlComment( "Ignoring this extension" );
-								SetStatus( "Skipping uninteresting extension" );
 								SkipBlocks( inputStream );
+								MyProgressCounters[_readStreamCounterText].Value 
+									= (int) inputStream.Position;
 								break;
 						}
 						break;
@@ -510,7 +575,6 @@ namespace GifComponents
 						// We've reached an explicit end-of-data marker, so stop
 						// processing the stream.
 						WriteDebugXmlComment( "0x3B - end of data" );
-						SetStatus( "Reached the end of data marker" );
 						done = true;
 						break;
 
@@ -578,7 +642,6 @@ namespace GifComponents
 		private void AddFrame( Stream inputStream,
 		                       GraphicControlExtension lastGce )
 		{
-			SetStatus( "Adding frame " + (_frames.Count + 1) );
 			GifFrame previousFrame;
 			GifFrame previousFrameBut1;
 			if( _frames.Count > 0 )
@@ -604,9 +667,10 @@ namespace GifComponents
 			                               previousFrame,
 			                               previousFrameBut1,
 			                               XmlDebugging );
+			MyProgressCounters[_readStreamCounterText].Value 
+				= (int) inputStream.Position;
 			_frames.Add( frame );
 			WriteDebugXmlNode( frame.DebugXmlReader );
-			SetStatus( "Done adding frame " + (_frames.Count + 1) );
 		}
 		#endregion
 
@@ -625,25 +689,6 @@ namespace GifComponents
 		}
 		#endregion
 
-		#region private SetStatus method
-		private void SetStatus( string status )
-		{
-			if( _stream != null )
-			{
-				try
-				{
-					_status = "Stream position: " + _stream.Position 
-						+ " of " +_stream.Length + ". ";
-				}
-				catch( InvalidOperationException )
-				{
-					// TODO: try catching when the stream is closed
-				}
-			}
-			_status += status;
-		}
-		#endregion
-		
 		#endregion
 
 	}

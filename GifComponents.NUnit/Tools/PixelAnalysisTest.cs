@@ -146,6 +146,7 @@ namespace GifComponents.NUnit.Tools
 			ReportStart();
 			Bitmap image = MakeBitmap( 257 );
 			_pa = new PixelAnalysis( image, QuantizerType.NeuQuant );
+			_pa.Analyse();
 			Assert.AreEqual( 256, _pa.ColourTable.Length );
 			Assert.AreEqual( image.Width * image.Height, 
 			                 _pa.IndexedPixels.Count );
@@ -167,6 +168,7 @@ namespace GifComponents.NUnit.Tools
 			ReportStart();
 			Bitmap image = MakeBitmap( 257 );
 			_pa = new PixelAnalysis( image, QuantizerType.Octree );
+			_pa.Analyse();
 			// FIXME: Octree quantizer is quantizing too much - reducing to 128 colours instead of 256
 			// TODO: Check for exactly 256 colours once Octree quantizer returns 256-colour images
 //			Assert.AreEqual( 256, _pa.ColourTable.Length );
@@ -231,6 +233,7 @@ namespace GifComponents.NUnit.Tools
 			_images.Add( MakeBitmap( 257 ) );
 			_images.Add( MakeBitmap( 257 ) );
 			_pa = new PixelAnalysis( _images );
+			_pa.Analyse();
 			
 			// Cannot use the TestMultipleImages method this time because using
 			// more than 256 colours causes colour quantization to reduce it
@@ -264,6 +267,7 @@ namespace GifComponents.NUnit.Tools
 			_images.Add( MakeBitmap( 10 ) );
 			_images.Add( MakeBitmap( 20 ) );
 			_pa = new PixelAnalysis( _images );
+			_pa.Analyse();
 			try
 			{
 				Assert.IsNull( _pa.IndexedPixels );
@@ -295,6 +299,7 @@ namespace GifComponents.NUnit.Tools
 		{
 			ReportStart();
 			_pa = new PixelAnalysis( MakeBitmap( 10 ), QuantizerType.NeuQuant );
+			_pa.Analyse();
 			try
 			{
 				Assert.IsNull( _pa.IndexedPixelsCollection );
@@ -329,6 +334,7 @@ namespace GifComponents.NUnit.Tools
 		{
 			Bitmap image = MakeBitmap( numberOfColours );
 			_pa = new PixelAnalysis( image, qt );
+			_pa.Analyse();
 			CheckColourTable( numberOfColours );
 			CheckIndexedPixels( numberOfColours );
 		}
@@ -340,6 +346,7 @@ namespace GifComponents.NUnit.Tools
 			_images.Add( MakeBitmap( numberOfColours ) );
 			_images.Add( MakeBitmap( numberOfColours ) );
 			_pa = new PixelAnalysis( _images );
+			_pa.Analyse();
 			CheckColourTable( numberOfColours );
 			CheckIndexedPixelsCollection( numberOfColours );
 		}

@@ -23,17 +23,14 @@
 
 #region using directives
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
-using System.Threading;
 using System.Windows.Forms;
 using GifComponents;
 using CommonForms;
+using CommonForms.Responsiveness;
 #endregion
 
 namespace GifInspector
@@ -41,14 +38,12 @@ namespace GifInspector
 	/// <summary>
 	/// The main form in the GIF Inspector application
 	/// </summary>
-	public partial class MainForm : Form
+	public partial class MainForm : ResponsiveForm
 	{
 		#region declarations
 		private GifDecoder _decoder;
 		private string _extractPath;
-		private Thread _t;
 		private int _imageIndex;
-		private Exception _exception;
 		#endregion
 		
 		#region constructor
@@ -68,26 +63,6 @@ namespace GifInspector
 		}
 		#endregion
 		
-		// TODO: move TypesToDisable into base class in CommonForms and make it virtual
-		#region TypesToDisable property
-		/// <summary>
-		/// Gets a collection of types of control to disable whilst a background
-		/// thread is running.
-		/// </summary>
-		protected static Collection<Type> TypesToDisable
-		{
-			get
-			{
-				Collection<Type> types = new Collection<Type>();
-				types.Add( typeof( Button ) );
-				types.Add( typeof( PropertyGrid ) );
-				types.Add( typeof( MenuStrip ) );
-				types.Add( typeof( ToolStripMenuItem ) );
-				return types;
-			}
-		}
-		#endregion
-		
 		#region private methods
 
 		#region private DoLoadGif method - called by event handler
@@ -103,12 +78,9 @@ namespace GifInspector
 				// Point at the first frame to avoid IndexOutOfRangeException
 				// whilst loading the GIF.
 				_imageIndex = 0;
-				
-				DisableControls( this );
-				_t = new Thread( LoadGif );
-				_t.IsBackground = true;
-				_t.Start();
-				timer1.Start();
+				_decoder = new GifDecoder( openFileDialog1.FileName, 
+				                           createDebugXMLToolStripMenuItem.Checked );
+				StartBackgroundProcess( _decoder, LoadGif, "Decoding..." );
 			}
 		}
 		#endregion
@@ -120,17 +92,12 @@ namespace GifInspector
 		{
 			try
 			{
-				_decoder = new GifDecoder( openFileDialog1.FileName, 
-				                           createDebugXMLToolStripMenuItem.Checked );
 				_decoder.Decode();
+				Invoke( new MethodInvoker( StopTheClock ) );
 			}
 			catch( Exception ex )
 			{
-				_exception = ex;
-			}
-			finally
-			{
-				Invoke( new MethodInvoker( StopTheClock ) );
+				HandleException( ex );
 			}
 		}
 		#endregion
@@ -154,29 +121,37 @@ namespace GifInspector
 			DialogResult result = folderBrowserDialog1.ShowDialog();
 			if( result == DialogResult.OK )
 			{
-				DisableControls( this );
 				_extractPath = folderBrowserDialog1.SelectedPath;
-				_t = new Thread( ExtractFrames );
-				_t.IsBackground = true;
-				_t.Start();
-				timer1.Start();
+				ExtractFrames();
 			}
 		}
 		#endregion
 
-		#region private ExtractFrames method - runs on background thread
+		#region private ExtractFrames method
+		[SuppressMessage("Microsoft.Design", 
+		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
 		private void ExtractFrames()
 		{
-			string baseFileName 
-				= _extractPath
-				+ Path.DirectorySeparatorChar
-				+ Path.GetFileNameWithoutExtension( openFileDialog1.FileName );
-			for( int i = 0; i < _decoder.Frames.Count; i++ )
+			try
 			{
-				string fileName = baseFileName + ".frame " + i + ".bmp";
-				_decoder.Frames[i].TheImage.Save( fileName, ImageFormat.Bmp );
+				string baseFileName 
+					= _extractPath
+					+ Path.DirectorySeparatorChar
+					+ Path.GetFileNameWithoutExtension( openFileDialog1.FileName );
+				for( int i = 0; i < _decoder.Frames.Count; i++ )
+				{
+					string fileName = baseFileName + ".frame " + i + ".bmp";
+					_decoder.Frames[i].TheImage.Save( fileName, ImageFormat.Bmp );
+				}
 			}
-			Invoke( new MethodInvoker( StopTheClock ) );
+			catch( Exception ex )
+			{
+				HandleException( ex );
+			}
+			finally
+			{
+				Invoke( new MethodInvoker( StopTheClock ) );
+			}
 		}
 		#endregion
 		
@@ -188,7 +163,7 @@ namespace GifInspector
 			{
 				_imageIndex = 0;
 			}
-			UpdateUI();
+			RefreshUI();
 		}
 		#endregion
 
@@ -200,52 +175,20 @@ namespace GifInspector
 			{
 				_imageIndex = _decoder.Frames.Count - 1;
 			}
-			UpdateUI();
+			RefreshUI();
 		}
 		#endregion
 		
-		// TODO: move ShowAboutForm into base class in CommonForms
-		#region private static ShowAboutForm method - called by event handler
-		private static void ShowAboutForm()
+		#region private ProvideFeedback method
+		/// <summary>
+		/// Updates the user interface to provide the user with feedback on the 
+		/// progress of a long-running process.
+		/// </summary>
+		private void RefreshUI()
 		{
-			string assemblyName = Assembly.GetEntryAssembly().GetName().Name;
-			string fileName = assemblyName + ".AboutFormParameters.xml";
-			AboutFormParameters parameters
-				= AboutFormParameters.LoadXml( fileName );
-			AboutForm f = new AboutForm( parameters );
-			f.ShowDialog();
-		}
-		#endregion
-		
-		#region private StopTheClock method - invoked by background thread
-		private void StopTheClock()
-		{
-			propertyGridFile.SelectedObject = _decoder;
-			_imageIndex = 0;
-			UpdateUI();
-			EnableControls( this );
-			if( _exception != null )
-			{
-				ExceptionForm ef = new ExceptionForm( _exception );
-				ef.ShowDialog();
-				_exception = null;
-			}
-		}
-		#endregion
-		
-		#region private UpdateUI method - called by the timer tick event handler
-		private void UpdateUI()
-		{
-			// Display the decoder status
-			if( _decoder != null )
-			{
-				// TODO: replace textBoxStatus with a progress bar (progress form in CommonForms?)
-				textBoxStatus.Text = _decoder.Status;
-			}
-			
 			// Display the number of the frame we're looking at
 			textBoxFrameNumber.Text 
-				= _imageIndex.ToString( CultureInfo.InvariantCulture );
+				= (_imageIndex + 1).ToString( CultureInfo.InvariantCulture );
 			
 			// If the decoder hasn't been instantiated then stop here
 			if( _decoder != null )
@@ -277,77 +220,20 @@ namespace GifInspector
 		}
 		#endregion
 
-		// TODO: move DisableControls and EnableControls into a base class in CommonForms
-		#region protected EnableControls method
-		/// <summary>
-		/// Enables all the controls on the supplied control, and their child
-		/// controls, provided they are of a type defined in the TypesToDisable
-		/// property
-		/// </summary>
-		/// <param name="parentControl">
-		/// The parent control or form which contains the controls to enable.
-		/// </param>
-		protected void EnableControls( Control parentControl )
-		{
-			SetControlsEnabled( parentControl, true );
-		}
-		#endregion
-		
-		#region protected DisableControls method
-		/// <summary>
-		/// Disables all the controls on the supplied control, and their child
-		/// controls, provided they are of a type defined in the TypesToDisable
-		/// property
-		/// </summary>
-		/// <param name="parentControl">
-		/// The parent control or form which contains the controls to disable.
-		/// </param>
-		protected void DisableControls( Control parentControl )
-		{
-			SetControlsEnabled( parentControl, false );
-		}
-		#endregion
-		
-		#region private SetControlsEnabled method
-		private void SetControlsEnabled( Control parentControl, bool enabling )
-		{
-			foreach( Control c in parentControl.Controls )
-			{
-				// Is this a type of control that we want to disable whilst 
-				// running a process on a background thread?
-				if( TypesToDisable.Contains( c.GetType() ) )
-				{
-					// Is it a MenuStrip?
-					MenuStrip ms = c as MenuStrip;
-					if( ms == null )
-					{
-						// Not a MenuStrip so just enable/disable it
-						c.Enabled = enabling;
-					}
-					else
-					{
-						// It's a MenuStrip so don't disable/enable it but 
-						// disable/enable its child items
-						foreach( ToolStripMenuItem i in ms.Items )
-						{
-							// i is an item in the row of menus
-							foreach( ToolStripMenuItem tsmi in i.DropDownItems )
-							{
-								// tsmi is an option within one of the menus
-								tsmi.Enabled = enabling;
-							}
-						}
-					}
-				}
-				
-				// disable/enable any child controls too
-				SetControlsEnabled( c, enabling );
-			}
-		}
-		#endregion
-		
 		#endregion
 
+		#region protected override StopTheClock method - invoked by background thread
+		/// <summary>
+		/// Stops the timer, updates the UI and enables any disabled controls.
+		/// </summary>
+		protected override void StopTheClock()
+		{
+			propertyGridFile.SelectedObject = _decoder;
+			_imageIndex = 0;
+			base.StopTheClock();
+		}
+		#endregion
+		
 		#region event handlers
 		
 		#region button click event handler
@@ -375,36 +261,11 @@ namespace GifInspector
 			}
 			catch( Exception ex )
 			{
-				ExceptionForm ef = new ExceptionForm( ex );
-				ef.ShowDialog();
+				HandleException( ex );
 			}
 		}
 		#endregion
 
-		// TODO: rename the timer to BackgroundProcessTimer and move it to base class in CommonForms
-		#region timer tick handler
-		/// <summary>
-		/// Handles the Tick event from the Timer which is started when a 
-		/// process is started on a background thread.
-		/// </summary>
-		/// <param name="sender">The object which raised the Tick event</param>
-		/// <param name="e">More information about the Tick event</param>
-		[SuppressMessage("Microsoft.Design", 
-			             "CA1031:DoNotCatchGeneralExceptionTypes")]
-		private void Timer1Tick( object sender, EventArgs e )
-		{
-			try
-			{
-				UpdateUI();
-			}
-			catch( Exception ex )
-			{
-				ExceptionForm ef = new ExceptionForm( ex );
-				ef.ShowDialog();
-			}
-		}
-		#endregion
-		
 		#region menu item click handler
 		[SuppressMessage("Microsoft.Design", 
 		                 "CA1031:DoNotCatchGeneralExceptionTypes")]
@@ -429,7 +290,7 @@ namespace GifInspector
 						break;
 						
 					case "aboutToolStripMenuItem":
-						ShowAboutForm();
+						AboutForm.Show();
 						break;
 						
 					default:
@@ -439,8 +300,7 @@ namespace GifInspector
 			}
 			catch( Exception ex )
 			{
-				ExceptionForm ef = new ExceptionForm( ex );
-				ef.ShowDialog();
+				HandleException( ex );
 			}
 		}
 		#endregion

@@ -50,7 +50,6 @@ namespace GifInspector
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -65,8 +64,6 @@ namespace GifInspector
 			this.label1 = new System.Windows.Forms.Label();
 			this.textBoxFrameCount = new System.Windows.Forms.TextBox();
 			this.textBoxFrameNumber = new System.Windows.Forms.TextBox();
-			this.textBoxStatus = new System.Windows.Forms.TextBox();
-			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.loadGIFFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -91,7 +88,7 @@ namespace GifInspector
 			this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pictureBox1.Location = new System.Drawing.Point(0, 0);
 			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(347, 143);
+			this.pictureBox1.Size = new System.Drawing.Size(290, 94);
 			this.pictureBox1.TabIndex = 1;
 			this.pictureBox1.TabStop = false;
 			// 
@@ -109,10 +106,10 @@ namespace GifInspector
 									| System.Windows.Forms.AnchorStyles.Right)));
 			this.tabControl1.Controls.Add(this.tabPageFile);
 			this.tabControl1.Controls.Add(this.tabPageImages);
-			this.tabControl1.Location = new System.Drawing.Point(5, 51);
+			this.tabControl1.Location = new System.Drawing.Point(0, 24);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(357, 422);
+			this.tabControl1.Size = new System.Drawing.Size(365, 448);
 			this.tabControl1.TabIndex = 0;
 			this.tabControl1.TabStop = false;
 			// 
@@ -122,7 +119,7 @@ namespace GifInspector
 			this.tabPageFile.Location = new System.Drawing.Point(4, 22);
 			this.tabPageFile.Name = "tabPageFile";
 			this.tabPageFile.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageFile.Size = new System.Drawing.Size(349, 396);
+			this.tabPageFile.Size = new System.Drawing.Size(357, 422);
 			this.tabPageFile.TabIndex = 0;
 			this.tabPageFile.Text = "File";
 			this.tabPageFile.UseVisualStyleBackColor = true;
@@ -132,7 +129,7 @@ namespace GifInspector
 			this.propertyGridFile.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.propertyGridFile.Location = new System.Drawing.Point(3, 3);
 			this.propertyGridFile.Name = "propertyGridFile";
-			this.propertyGridFile.Size = new System.Drawing.Size(343, 390);
+			this.propertyGridFile.Size = new System.Drawing.Size(351, 416);
 			this.propertyGridFile.TabIndex = 6;
 			// 
 			// tabPageImages
@@ -146,7 +143,7 @@ namespace GifInspector
 			this.tabPageImages.Location = new System.Drawing.Point(4, 22);
 			this.tabPageImages.Name = "tabPageImages";
 			this.tabPageImages.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageImages.Size = new System.Drawing.Size(349, 396);
+			this.tabPageImages.Size = new System.Drawing.Size(292, 274);
 			this.tabPageImages.TabIndex = 1;
 			this.tabPageImages.Text = "Images";
 			this.tabPageImages.UseVisualStyleBackColor = true;
@@ -168,8 +165,8 @@ namespace GifInspector
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.pictureBox1);
-			this.splitContainer1.Size = new System.Drawing.Size(349, 367);
-			this.splitContainer1.SplitterDistance = 218;
+			this.splitContainer1.Size = new System.Drawing.Size(292, 245);
+			this.splitContainer1.SplitterDistance = 145;
 			this.splitContainer1.TabIndex = 6;
 			// 
 			// propertyGridFrame
@@ -177,7 +174,7 @@ namespace GifInspector
 			this.propertyGridFrame.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.propertyGridFrame.Location = new System.Drawing.Point(0, 0);
 			this.propertyGridFrame.Name = "propertyGridFrame";
-			this.propertyGridFrame.Size = new System.Drawing.Size(347, 216);
+			this.propertyGridFrame.Size = new System.Drawing.Size(290, 143);
 			this.propertyGridFrame.TabIndex = 6;
 			// 
 			// buttonNext
@@ -232,22 +229,6 @@ namespace GifInspector
 			this.textBoxFrameNumber.Size = new System.Drawing.Size(38, 20);
 			this.textBoxFrameNumber.TabIndex = 3;
 			this.textBoxFrameNumber.TabStop = false;
-			// 
-			// textBoxStatus
-			// 
-			this.textBoxStatus.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
-			this.textBoxStatus.Location = new System.Drawing.Point(5, 25);
-			this.textBoxStatus.Name = "textBoxStatus";
-			this.textBoxStatus.ReadOnly = true;
-			this.textBoxStatus.Size = new System.Drawing.Size(353, 20);
-			this.textBoxStatus.TabIndex = 3;
-			this.textBoxStatus.TabStop = false;
-			// 
-			// timer1
-			// 
-			this.timer1.Interval = 1000;
-			this.timer1.Tick += new System.EventHandler(this.Timer1Tick);
 			// 
 			// menuStrip1
 			// 
@@ -326,7 +307,6 @@ namespace GifInspector
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(365, 472);
 			this.Controls.Add(this.menuStrip1);
-			this.Controls.Add(this.textBoxStatus);
 			this.Controls.Add(this.tabControl1);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainForm";
@@ -357,12 +337,10 @@ namespace GifInspector
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		private System.Windows.Forms.PropertyGrid propertyGridFile;
 		private System.Windows.Forms.PropertyGrid propertyGridFrame;
-		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.TextBox textBoxFrameNumber;
 		private System.Windows.Forms.TextBox textBoxFrameCount;
 		private System.Windows.Forms.Button buttonPrevious;
 		private System.Windows.Forms.Button buttonNext;
-		private System.Windows.Forms.TextBox textBoxStatus;
 		private System.Windows.Forms.TabPage tabPageImages;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.TabControl tabControl1;
