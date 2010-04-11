@@ -60,44 +60,81 @@ namespace GifComponents.Tools
 	///   converted to .net XML comments.
 	/// * Removed "len" parameter from constructor.
 	/// * Added AnalysingPixel property.
-	/// * Made Learn, UnbiasNetwork and BuildIndex methods private
-	/// * Derive from LongRunningProcess to allow use of ProgressCounters
+	/// * Made Learn, UnbiasNetwork and BuildIndex methods private.
+	/// * Derive from LongRunningProcess to allow use of ProgressCounters.
+	/// * Renamed lots of private members, local variables and methods.
+	/// * Refactored some code into separate methods:
+	/// 	GetPixelIncrement
+	/// 	ManhattanDistance
+	/// 	MoveNeuron
+	/// 	MoveNeighbouringNeurons
+	/// 	MoveNeighbour
+	/// 	SetNeighbourhoodAlphas
+	/// * Added lots of comments.
+	/// TODO: consider a separate Neuron class - R, G, B, frequency and bias properties?
+	/// TODO: consider a separate NeuralNetwork class, not specific to quantizing images
 	/// </summary>
 	[SuppressMessage("Microsoft.Naming", 
 	                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
 	                 MessageId = "Neu")]
 	public class NeuQuant : LongRunningProcess
 	{
-		#region declarations
-		private const int _netsize = 256; /* number of colours used */
-		/* four primes near 500 - assume no image has a length so large */
-		/* that it is divisible by all four primes */
+		#region constants
+		
+		/// <summary>
+		/// Number of neurons in the neural network
+		/// -- or (in this implementation) --
+		/// Maximum number of colours in the output image.
+		/// </summary>
+		private const int _neuronCount = 256;
+		
+		// Four primes near 500 - assume no image has a length so large
+		// that it is divisible by all four primes
 		private const int _prime1 = 499;
 		private const int _prime2 = 491;
 		private const int _prime3 = 487;
 		private const int _prime4 = 503;
+		
+		/// <summary>
+		/// Minimum size for input image.
+		/// If the image has fewer pixels than this then the learning loop will
+		/// step through its pixels 3 at a time rather than using one of the
+		/// four prime constants.
+		/// </summary>
 		private const int _minpicturebytes = ( 3 * _prime4 );
-		/* minimum size for input image */
-		/* Program Skeleton
-		   ----------------
-		   [select samplefac in range 1..30]
-		   [read image from input file]
-		   pic = (unsigned char*) malloc(3*width*height);
-		   initnet(pic,3*width*height,samplefac);
-		   learn();
-		   unbiasnet();
-		   [write output image header, using writecolourmap(f)]
-		   inxbuild();
-		   write output image using inxsearch(b,g,r)      */
 
 		/* Network Definitions
 		   ------------------- */
-		private const int _maxnetpos = (_netsize - 1);
+		
+		/// <summary>
+		/// Highest possibly index for a neuron in the neural network
+		/// (the network is a zero-based array).
+		/// </summary>
+		private const int _highestNeuronIndex = _neuronCount - 1;
+		
+		/// <summary>
+		/// Bias for colour values
+		/// TODO: find a better description / name for _netbiasshift
+		/// </summary>
 		private const int _netbiasshift = 4; /* bias for colour values */
-		private const int _ncycles = 100; /* no. of learning cycles */
+		
+		/// <summary>
+		/// Number of learning cycles.
+		/// </summary>
+		private const int _numberOfLearningCycles = 100; /* no. of learning cycles */
 
-		/* defs for freq and bias */
+		#region constants for frequency and bias
+		
+		/// <summary>
+		/// This affects the value of _intbias
+		/// TODO: find a better description / name for _intbiasshift
+		/// </summary>
 		private const int _intbiasshift = 16; /* bias for fractions */
+		
+		/// <summary>
+		/// 1 * (2 to the power of (_intbiasshift - 1))
+		/// TODO: find a better description / name for _intbias
+		/// </summary>
 		private const int _intbias = (((int) 1) << _intbiasshift);
 		private const int _gammashift = 10; /* gamma = 1024 */
 		private const int _gamma = (((int) 1) << _gammashift);
@@ -105,45 +142,106 @@ namespace GifComponents.Tools
 		private const int _beta = (_intbias >> _betashift); /* beta = 1/1024 */
 		private const int _betagamma =
 			(_intbias << (_gammashift - _betashift));
+		#endregion
 
+		#region constants for decreasing radius factor
 		/* defs for decreasing radius factor */
-		private const int _initrad = (_netsize >> 3); /* for 256 cols, radius starts */
+		private const int _initrad = (_neuronCount >> 3); /* for 256 cols, radius starts */
 		private const int _radiusbiasshift = 6; /* at 32.0 biased by 6 bits */
 		private const int _radiusbias = (((int) 1) << _radiusbiasshift);
 		private const int _initradius = (_initrad * _radiusbias); /* and decreases by a */
 		private const int _radiusdec = 30; /* factor of 1/30 each cycle */
+		#endregion
 
-		/* defs for decreasing alpha factor */
-		private const int _alphabiasshift = 10; /* alpha starts at 1.0 */
-		private const int _initalpha = (((int) 1) << _alphabiasshift);
+		#region constants for decreasing alpha factor
+		/// <summary>
+		/// The initial value of alpha will be set to 1, left shifted by this
+		/// many bits.
+		/// </summary>
+		private const int _alphaBiasShift = 10;
+		
+		/// <summary>
+		/// The starting value of alpha.
+		/// Alpha is a factor which controls how far neurons are moved during
+		/// the learning loop, and it decreases as learning proceeds.
+		/// </summary>
+		private const int _initialAlpha = (((int) 1) << _alphaBiasShift);
 
-		private int _alphadec; /* biased by 10 bits */
+		/// <summary>
+		/// Controls how much alpha decreases by at each step of the learning
+		/// loop - alpha will be decremented by alpha divided by this value, so
+		/// the larger this value, the more slowly alpha will be reduced.
+		/// </summary>
+		private int _alphaDecrement;
+		#endregion
 
 		/* radbias and alpharadbias used for radpower calculation */
 		private const int _radbiasshift = 8;
 		private const int _radbias = (((int) 1) << _radbiasshift);
-		private const int _alpharadbshift = (_alphabiasshift + _radbiasshift);
+		private const int _alpharadbshift = (_alphaBiasShift + _radbiasshift);
 		private const int _alpharadbias = (((int) 1) << _alpharadbshift);
 
+		#endregion
+
+		#region declarations
+		
 		/* Types and Global Variables
 		-------------------------- */
 
-		private byte[] _thepicture; /* the input image itself */
-		private int _lengthcount; /* lengthcount = H*W*3 */
+		/// <summary>
+		/// A collection of byte colour intensities, in the order red, green, 
+		/// blue, representing the colours of each of the pixels in an image
+		/// to be quantized.
+		/// </summary>
+		private byte[] _thePicture; /* the input image itself */
+		
+		/// <summary>
+		/// Number of pixels in the input image.
+		/// </summary>
+		private int _pixelCount; /* lengthcount = H*W*3 */
 
-		private int _samplefac; /* sampling factor 1..30 */
+		/// <summary>
+		/// Sampling factor 1-30. Supplied to constructor unless input image is
+		/// very small.
+		/// The larger _samplingFactor is, the slower the value of alpha will 
+		/// be reduced during the learning loop.
+		/// TODO: comment on _samplingFactor impact on samplepixels.
+		/// </summary>
+		private int _samplingFactor;
 
 		//   typedef int pixel[4];                /* BGRc */
+		/// <summary>
+		/// The neural network used to quantize the image.
+		/// This is a two-dimensional array, with each element of the first 
+		/// dimension representing one of the colours in the colour table of 
+		/// the quantized output image, amd the elements of the second dimension 
+		/// representing the blue, green and red components of those colours, 
+		/// and ??? TODO: 4th element???
+		/// </summary>
 		private int[][] _network; /* the network itself - [netsize][4] */
 
 		private int[] _netindex = new int[256];
 		/* for network lookup - really 256 */
 
-		private int[] _bias = new int[_netsize];
 		/* bias and freq arrays for learning */
-		private int[] _freq = new int[_netsize];
-		private int[] _radpower = new int[_initrad];
-		/* radpower for precomputation */
+		
+		/// <summary>
+		/// Array of biases for each neuron.
+		/// TODO: better description for _bias array
+		/// </summary>
+		private int[] _bias = new int[_neuronCount];
+
+		/// <summary>
+		/// Array of frequencies for each neuron.
+		/// TODO: better description for frequency array, rename from _freq
+		/// </summary>
+		private int[] _freq = new int[_neuronCount];
+		
+		/// <summary>
+		/// Alpha values controlling how far towards a target colour any 
+		/// neighbouring are moved.
+		/// </summary>
+		private int[] _neighbourhoodAlphas = new int[_initrad];
 		
 		#endregion
 
@@ -151,6 +249,8 @@ namespace GifComponents.Tools
 		/// <summary>
 		/// Constructor.
 		/// Initialise network in range (0,0,0) to (255,255,255) and set parameters
+		/// TODO: consider accepting a collection / array of Colors instead of
+		/// a byte array.
 		/// </summary>
 		/// <param name="thePicture">
 		/// A collection of byte colour intensities, in the order red, green, 
@@ -167,21 +267,40 @@ namespace GifComponents.Tools
 				throw new ArgumentNullException( "thePicture" );
 			}
 			
-			int i;
-			int[] p;
+			int[] thisNeuron;
 
-			_thepicture = thePicture;
-			_lengthcount = thePicture.Length / 3;
-			_samplefac = sample;
+			_thePicture = thePicture;
+			_pixelCount = thePicture.Length / 3;
+			_samplingFactor = sample;
 
-			_network = new int[_netsize][];
-			for (i = 0; i < _netsize; i++) 
+			// Initialise the number of neurons in the neural network to the 
+			// maximum number of colours allowed in the output image.
+			_network = new int[_neuronCount][];
+			
+			for( int neuronIndex = 0; neuronIndex < _neuronCount; neuronIndex++ ) 
 			{
-				_network[i] = new int[4];
-				p = _network[i];
-				p[0] = p[1] = p[2] = (i << (_netbiasshift + 8)) / _netsize;
-				_freq[i] = _intbias / _netsize; /* 1/netsize */
-				_bias[i] = 0;
+				// Initialise the size of the second dimension of the neural 
+				// network to 4. // TODO: why 4? 3 colour intensities + ???
+				_network[neuronIndex] = new int[4];
+				
+				// Make a reference to this neuron
+				thisNeuron = _network[neuronIndex];
+				
+				// Initialise the values of the neurons so that they lie on a 
+				// diagonal line from 0,0,0 to 4080,4080,4080. They will be 
+				// adjusted during the learning loop as the pixels of the image
+				// are analysed.
+				thisNeuron[0] = thisNeuron[1] = thisNeuron[2] 
+					= (neuronIndex << (_netbiasshift + 8)) / _neuronCount;
+				
+				// Set the frequency of this neuron to _intbias divided by the
+				// number of neurons.
+				// TODO: better explanation of this step.
+				_freq[neuronIndex] = _intbias / _neuronCount; /* 1/netsize */
+				
+				// Set the bias of this neuron to zero.
+				// TODO: what is the bias?
+				_bias[neuronIndex] = 0;
 			}
 		}
 		#endregion
@@ -235,14 +354,14 @@ namespace GifComponents.Tools
 			i = _netindex[green]; /* index on g */
 			j = i - 1; /* start at netindex[g] and work outwards */
 
-			while ((i < _netsize) || (j >= 0)) 
+			while ((i < _neuronCount) || (j >= 0)) 
 			{
-				if (i < _netsize) 
+				if (i < _neuronCount) 
 				{
 					p = _network[i];
 					dist = p[1] - green; /* inx key */
 					if (dist >= bestd)
-						i = _netsize; /* stop iter */
+						i = _neuronCount; /* stop iter */
 					else 
 					{
 						i++;
@@ -302,93 +421,423 @@ namespace GifComponents.Tools
 
 		#region private methods
 		
-		#region Learn method
+		#region Learn method and methods called by it
+		
+		#region private Learn method
 		/// <summary>
 		/// Main Learning Loop
 		/// </summary>
 		private void Learn() 
 		{
-			int i, j, b, g, r;
-			int radius, rad, alpha, step, delta, samplepixels;
+			int closestNeuronIndex, blue, green, red;
+			int radius, delta, samplepixels;
 			byte[] p;
-			int pix, lim;
+			int pixelIndex, lim;
 
-			if (_lengthcount < _minpicturebytes)
-				_samplefac = 1;
-			_alphadec = 30 + ((_samplefac - 1) / 3);
-			p = _thepicture;
-			pix = 0;
-			lim = _lengthcount;
-			samplepixels = _lengthcount / (3 * _samplefac);
+			// TODO: what is _minpicturebytes and why do we set the sampling factor to 1 if we have fewer pixels than that?
+			if( _pixelCount < _minpicturebytes )
+			{
+				_samplingFactor = 1;
+			}
+			
+			// The larger _alphaDecrement is, the slower the value of alpha will 
+			// be reduced during the learning process.
+			// Therefore the larger _samplingFactor is, the slower the value of
+			// aplha will be reduced.
+			_alphaDecrement = 30 + ((_samplingFactor - 1) / 3);
+			
+			// TODO: why take a local copy of _thePicture?
+			p = _thePicture;
+			
+			// TODO: what is pix?
+			pixelIndex = 0;
+			
+			// TODO: why make a local copy of _pixelCount?
+			lim = _pixelCount;
+			
+			// TODO: why set samplepixels to _pixelCount / (3*_samplingFactor)?
+			samplepixels = _pixelCount / (3 * _samplingFactor);
+			
+			// Allows a ResponsiveForm to track the progress of this method
 			string learnCounterText = "Neural net quantizer - learning";
 			AddCounter( learnCounterText, samplepixels );
-			delta = samplepixels / _ncycles;
-			alpha = _initalpha;
+			
+			// TODO: what is delta and why is it set to this?
+			delta = samplepixels / _numberOfLearningCycles;
+			
+			// Alpha is a factor which controls how far neurons are moved during
+			// the learning loop, and it decreases as learning proceeds.
+			int alpha = _initialAlpha;
+			
+			// TODO: what is radius?
 			radius = _initradius;
 
-			rad = radius >> _radiusbiasshift;
-			if (rad <= 1)
-				rad = 0; // TESTME: Learn - rad <= 1
-			for (i = 0; i < rad; i++)
-				_radpower[i] =
-					alpha * (((rad * rad - i * i) * _radbias) / (rad * rad));
-
-			//fprintf(stderr,"beginning 1D learning: initial radius=%d\n", rad);
-
-			if (_lengthcount < _minpicturebytes)
-				step = 3;
-			else if ((_lengthcount % _prime1) != 0)
-				step = 3 * _prime1;
-			else 
+			// Set the size of the neighbourhood which makes up the neighbouring
+			// neurons which also need to be moved when a neuron is moved.
+			int neighbourhoodSize = radius >> _radiusbiasshift;
+			if( neighbourhoodSize <= 1 )
 			{
-				// TESTME: Learn - _lengthcount >= _minpicturebytes and divisible by _prime1
-				if ((_lengthcount % _prime2) != 0)
-					step = 3 * _prime2;
-				else 
-				{
-					if ((_lengthcount % _prime3) != 0)
-						step = 3 * _prime3;
-					else
-						step = 3 * _prime4;
-				}
+				neighbourhoodSize = 0; // TESTME: Learn - neighbourhoodSize <= 1
 			}
+			
+			// Set the initial alpha values for neighbouring neurons.
+			SetNeighbourhoodAlphas( neighbourhoodSize, alpha );
 
-			i = 0;
-			while (i < samplepixels) 
+			int step = GetPixelIndexIncrement();
+
+			int pixelsExamined = 0;
+			while( pixelsExamined < samplepixels ) 
 			{
-				MyProgressCounters[learnCounterText].Value = i;
-				b = (p[pix + 0] & 0xff) << _netbiasshift;
-				g = (p[pix + 1] & 0xff) << _netbiasshift;
-				r = (p[pix + 2] & 0xff) << _netbiasshift;
-				j = Contest(b, g, r);
+				// Update the progress counter for the benefit of the UI
+				MyProgressCounters[learnCounterText].Value = pixelsExamined;
+				
+				// TODO: what is pix?
+				blue = (p[pixelIndex + 0] & 0xff) << _netbiasshift;
+				green = (p[pixelIndex + 1] & 0xff) << _netbiasshift;
+				red = (p[pixelIndex + 2] & 0xff) << _netbiasshift;
+				// TODO: investigate the Contest method, particularly what it's return value actually represents
+				closestNeuronIndex = Contest( blue, green, red );
 
-				Altersingle(alpha, j, b, g, r);
-				if (rad != 0)
-					Alterneigh(rad, j, b, g, r); /* alter neighbours */
+				// Move this neuron closer to the colour of the current pixel
+				// by a factor of alpha.
+				MoveNeuron( alpha, closestNeuronIndex, blue, green, red );
+				
+				// If appropriate, move neighbouring neurons closer to the 
+				// colour of the current pixel.
+				if( neighbourhoodSize != 0 )
+				{
+					MoveNeighbouringNeurons( neighbourhoodSize, 
+					                         closestNeuronIndex, 
+					                         blue, 
+					                         green, 
+					                         red );
+				}
 
-				pix += step;
-				if (pix >= lim)
-					pix -= _lengthcount;
+				// Move on to the next pixel to be examined
+				pixelIndex += step;
+				if( pixelIndex >= lim )
+				{
+					// We've gone past the end of the image, so wrap round to
+					// the start again
+					pixelIndex -= _pixelCount;
+				}
 
-				i++;
-				if (delta == 0)
+				// Keep track of how many pixels have been examined so far
+				pixelsExamined++;
+				
+				if( delta == 0 )
+				{
+					// TODO: why does delta need to be 1 instead of 0?
 					delta = 1;
-				if (i % delta == 0) 
+				}
+				
+				if( pixelsExamined % delta == 0 ) 
 				{
-					alpha -= alpha / _alphadec;
+					// pixelsExamined is divisible by delta
+					// TODO: what is delta? better names/comments needed
+					alpha -= alpha / _alphaDecrement;
 					radius -= radius / _radiusdec;
-					rad = radius >> _radiusbiasshift;
-					if (rad <= 1)
-						rad = 0;
-					for (j = 0; j < rad; j++)
-						_radpower[j] =
-							alpha * (((rad * rad - j * j) * _radbias) / (rad * rad));
+					neighbourhoodSize = radius >> _radiusbiasshift;
+					
+					if( neighbourhoodSize <= 1 )
+					{
+						// TODO: why does rad need to be zero or greater?
+						neighbourhoodSize = 0;
+					}
+					
+					// Update the alpha values to be used for moving 
+					// neighbouring neurons.
+					SetNeighbourhoodAlphas( neighbourhoodSize, alpha );
 				}
 			}
+			
+			// This method is finished now so the UI doesn't need to monitor it
+			// any more.
 			RemoveCounter( learnCounterText );
 		}
 		#endregion
+		
+		#region private SetNeighbourhoodAlphas method
+		/// <summary>
+		/// Sets the alpha values for moving neighbouring neurons.
+		/// </summary>
+		private void SetNeighbourhoodAlphas( int neighbourhoodSize, int alpha )
+		{
+			int neighbourhoodSizeSquared = neighbourhoodSize * neighbourhoodSize;
+			for( int alphaIndex = 0; alphaIndex < neighbourhoodSize; alphaIndex++ )
+			{
+				_neighbourhoodAlphas[alphaIndex] =
+					alpha 
+					* 
+					(
+						(
+							(
+								neighbourhoodSizeSquared
+								- 
+								( alphaIndex * alphaIndex )
+							) 
+							* 
+							_radbias
+						) 
+						/ 
+						neighbourhoodSizeSquared
+					);
+			}
+		}
+		#endregion
+		
+		#region private GetPixelIndexIncrement method
+		/// <summary>
+		/// Calculates an increment to step through the pixels of the image, 
+		/// such that all pixels will eventually be examined, but not 
+		/// sequentially.
+		/// This is required because the learning loop needs to examine the
+		/// pixels in a psuedo-random order.
+		/// </summary>
+		/// <returns>The increment.</returns>
+		private int GetPixelIndexIncrement()
+		{
+			int step;
+			if( _pixelCount < _minpicturebytes )
+			{
+				step = 3;
+			}
+			else if( (_pixelCount % _prime1) != 0 )
+			{
+				// The number of pixels is not divisible by the first prime number
+				step = 3 * _prime1;
+			}
+			else if( (_pixelCount % _prime2) != 0 )
+			{
+				// TESTME: GetPixelIndexIncrement - _lengthcount >= _minpicturebytes and divisible by _prime1
+				// The number of pixels is not divisible by the second prime number
+				step = 3 * _prime2;
+			}
+			else if( (_pixelCount % _prime3) != 0 )
+			{
+				// The number of pixels is not divisible by the third prime number
+				step = 3 * _prime3;
+			}
+			else
+			{
+				// The number of pixels is divisible by the first, second and
+				// third prime numbers.
+				step = 3 * _prime4;
+			}
+			return step;
+		}
+		#endregion
+		
+		#region private Contest method and methods called by it
+		
+		#region private Contest method
+		/// <summary>
+		/// Search for biased BGR values
+		/// TODO: comment and understand (and rename?) Contest method
+		/// </summary>
+		/// <param name="blue">The blue component of the colour</param>
+		/// <param name="green">The green component of the colour</param>
+		/// <param name="red">The red component of the colour</param>
+		/// <returns>
+		/// TODO: what does the return value of Contest represent?
+		/// </returns>
+		private int Contest( int blue, int green, int red ) 
+		{
+
+			/* finds closest neuron (min dist) and updates freq */
+			/* finds best neuron (min dist-bias) and returns position */
+			/* for frequently chosen neurons, freq[i] is high and bias[i] is negative */
+			/* bias[i] = gamma*((1/netsize)-freq[i]) */
+
+			int distance, biasdist, betafreq;
+			int[] thisNeuron;
+
+			// Initialise closest neuron distance and its index in the network
+			int closestDistance = ~(((int) 1) << 31); // bitwise complement of 2^31 - returns 2147483647
+			int bestBiasDistance = closestDistance;
+			int closestNeuronIndex = -1;
+			int bestBiasNeuronIndex = closestNeuronIndex;
+
+			for( int neuronIndex = 0; neuronIndex < _neuronCount; neuronIndex++ ) 
+			{
+				// How close is this neuron to the supplied colour?
+				thisNeuron = _network[neuronIndex];
+				distance = ManhattanDistance( thisNeuron, red, green, blue );
+				
+				// If it's closer than the closest one found so far, then it's
+				// now the closest one.
+				if( distance < closestDistance ) 
+				{
+					closestDistance = distance;
+					closestNeuronIndex = neuronIndex;
+				}
+				
+				// TODO: what's happening here with biases?
+				biasdist = distance - ((_bias[neuronIndex]) >> (_intbiasshift - _netbiasshift));
+				if( biasdist < bestBiasDistance ) 
+				{
+					bestBiasDistance = biasdist;
+					bestBiasNeuronIndex = neuronIndex;
+				}
+				
+				// TODO: what do we mean by beta and gamma here?
+				betafreq = _freq[neuronIndex] >> _betashift;
+				_freq[neuronIndex] -= betafreq;
+				_bias[neuronIndex] += (betafreq << _gammashift);
+			}
+			
+			// TODO: what do _freq and _bias represent?
+			_freq[closestNeuronIndex] += _beta;
+			_bias[closestNeuronIndex] -= _betagamma;
+			return bestBiasNeuronIndex;
+		}
+		#endregion
+		
+		#region private static ManhattanDistance method
+		/// <summary>
+		/// Calculates how close the colour represented by the supplied red,
+		/// green and blue values is to the colour held in the supplied neuron.
+		/// </summary>
+		/// <param name="neuron">
+		/// A neuron with blue, green and red values held in its first three
+		/// elements.
+		/// </param>
+		/// <param name="red">The red intensity of the supplied colour</param>
+		/// <param name="green">The green intensity of the supplied colour</param>
+		/// <param name="blue">The blue intensity of the supplied colour</param>
+		/// <returns>The distance between the two colours</returns>
+		private static int ManhattanDistance( int[] neuron, int red, int green, int blue )
+		{
+			int distance 
+				= Math.Abs( neuron[0] - blue )
+				+ Math.Abs( neuron[1] - green )
+				+ Math.Abs( neuron[2] - red );
+			return distance;
+		}
+		#endregion
+		
+		#endregion
+		
+		#region private MoveNeuron method
+		/// <summary>
+		/// Moves the neuron at the supplied index in the neural network closer
+		/// to the target colour by a factor of alpha.
+		/// </summary>
+		/// <param name="alpha">
+		/// The greater this parameter, the more the neuron will be moved in
+		/// the direction of the target colour.
+		/// </param>
+		/// <param name="neuronIndex">
+		/// Index in the neural network of the neuron to be moved.
+		/// </param>
+		/// <param name="blue">The blue component of the target colour</param>
+		/// <param name="green">The green component of the target colour</param>
+		/// <param name="red">The red component of the target colour</param>
+		/// <remarks>This method was originally called Altersingle</remarks>
+		private void MoveNeuron( int alpha, 
+		                         int neuronIndex,
+		                         int blue,
+		                         int green,
+		                         int red )
+		{
+			int[] thisNeuron = _network[neuronIndex];
+			thisNeuron[0] -= (alpha * (thisNeuron[0] - blue)) / _initialAlpha;
+			thisNeuron[1] -= (alpha * (thisNeuron[1] - green)) / _initialAlpha;
+			thisNeuron[2] -= (alpha * (thisNeuron[2] - red)) / _initialAlpha;
+		}
+		#endregion
 	
+		#region private MoveNeighbouringNeurons method
+		/// <summary>
+		/// Moves neighbours of the neuron at the supplied index in the network
+		/// closer to the supplied target colour.
+		/// </summary>
+		/// <param name="neighbourhoodSize">
+		/// Size of the neighbourhood which makes up the neurons to be moved.
+		/// For example, if this parameter is set to 3 then the 2 neurons before
+		/// and the 2 after the supplied neuron index will be moved.
+		/// </param>
+		/// <param name="neuronIndex">
+		/// The index in the network of the neuron whose neighbours need moving.
+		/// </param>
+		/// <param name="blue">
+		/// The blue component of the target colour.
+		/// </param>
+		/// <param name="green">
+		/// The green component of the target colour.
+		/// </param>
+		/// <param name="red">
+		/// The red component of the target colour.
+		/// </param>
+		/// <remarks>This method was originally called Alterneigh.</remarks>
+		private void MoveNeighbouringNeurons( int neighbourhoodSize, 
+		                                      int neuronIndex,
+		                                      int blue,
+		                                      int green,
+		                                      int red )
+		{
+			int lowNeuronIndexLimit = neuronIndex - neighbourhoodSize;
+			if( lowNeuronIndexLimit < -1 )
+			{
+				// lowNeuronIndexLimit cannot be less than -1 as it is the lower 
+				// limit for an array index.
+				lowNeuronIndexLimit = -1;
+			}
+			int highNeuronIndexLimit = neuronIndex + neighbourhoodSize;
+			if( highNeuronIndexLimit > _neuronCount )
+			{
+				// highNeuronIndexLimit cannot be more than the size of the array 
+				// being accessed.
+				highNeuronIndexLimit = _neuronCount;
+			}
+
+			int highNeuronIndex = neuronIndex + 1;
+			int lowNeuronIndex = neuronIndex - 1;
+			int neighbourAlphaIndex = 1;
+			
+			// Loop through the neighbouring neurons, starting with those 
+			// on either side of the supplied neuron, moving them closer to the
+			// target colour.
+			while( (highNeuronIndex < highNeuronIndexLimit) || (lowNeuronIndex > lowNeuronIndexLimit) ) 
+			{
+				int neighbourAlpha = _neighbourhoodAlphas[neighbourAlphaIndex++];
+				if( highNeuronIndex < highNeuronIndexLimit ) 
+				{
+					MoveNeighbour( highNeuronIndex++, neighbourAlpha, blue, green, red );
+				}
+				if( lowNeuronIndex > lowNeuronIndexLimit ) 
+				{
+					MoveNeighbour( lowNeuronIndex--, neighbourAlpha, blue, green, red );
+				}
+			}
+		}
+		#endregion
+		
+		#region private MoveNeighbour method
+		/// <summary>
+		/// Moves an individual neighbouring neuron closer to the supplied 
+		/// target colour by a factor of alpha.
+		/// </summary>
+		/// <param name="neuronIndex">
+		/// The index in the network of the neighbour to be moved.
+		/// </param>
+		/// <param name="alpha">
+		/// Controls how far towards the target colour the neuron is to be moved.
+		/// </param>
+		/// <param name="blue">The blue component of the target colour.</param>
+		/// <param name="green">The green component of the target colour.</param>
+		/// <param name="red">The red component of the target colour.</param>
+		private void MoveNeighbour( int neuronIndex, int alpha, int blue, int green, int red )
+		{
+			int[] thisNeuron = _network[neuronIndex];
+			thisNeuron[0] -= (alpha * (thisNeuron[0] - blue)) / _alpharadbias;
+			thisNeuron[1] -= (alpha * (thisNeuron[1] - green)) / _alpharadbias;
+			thisNeuron[2] -= (alpha * (thisNeuron[2] - red)) / _alpharadbias;
+		}
+		#endregion
+		
+		#endregion
+		
 		#region UnbiasNetwork method
 		/// <summary>
 		/// Unbias network to give byte values 0..255 and record position i to 
@@ -399,16 +848,26 @@ namespace GifComponents.Tools
 		                 MessageId = "Unbias")]
 		private void UnbiasNetwork() 
 		{
+			// Allows a ResponsiveForm to track the progress of this method
 			string unbiasCounterText = "Neural net quantizer - unbiasing network";
-			AddCounter( unbiasCounterText, _netsize );
-			for( int i = 0; i < _netsize; i++ ) 
+			AddCounter( unbiasCounterText, _neuronCount );
+			for( int thisNeuronIndex = 0; thisNeuronIndex < _neuronCount; thisNeuronIndex++ ) 
 			{
-				MyProgressCounters[unbiasCounterText].Value = i;
-				_network[i][0] >>= _netbiasshift;
-				_network[i][1] >>= _netbiasshift;
-				_network[i][2] >>= _netbiasshift;
-				_network[i][3] = i; /* record colour no */
+				// Update the progress counter for the benefit of the UI
+				MyProgressCounters[unbiasCounterText].Value = thisNeuronIndex;
+				
+				// Shift the values of this neuron's r, g, b values right by the value of _netbiasshift
+				// TODO: what is _netbiasshift?
+				_network[thisNeuronIndex][0] >>= _netbiasshift;
+				_network[thisNeuronIndex][1] >>= _netbiasshift;
+				_network[thisNeuronIndex][2] >>= _netbiasshift;
+				
+				// Record this neuron's index in the third element of its array
+				// TODO: why does this neuron need to know its own index now?
+				_network[thisNeuronIndex][3] = thisNeuronIndex; /* record colour no */
 			}
+			
+			// This method has finished so remove its progress counter
 			RemoveCounter( unbiasCounterText );
 		}
 		#endregion
@@ -417,216 +876,89 @@ namespace GifComponents.Tools
 		/// <summary>
 		/// Insertion sort of network and building of netindex[0..255] (to do 
 		/// after unbias)
+		/// TODO: better description for BuildIndex method
+		/// TODO: would this be better as a .net collection sort?
 		/// </summary>
 		private void BuildIndex() 
 		{
+			// Allows a ResponsiveForm to track the progress of this method
 			string buildIndexCounterText = "Neural net quantizer - building index";
-			AddCounter( buildIndexCounterText, _netsize );
+			AddCounter( buildIndexCounterText, _neuronCount );
 
-			int i, j, smallpos, smallval;
-			int[] p;
-			int[] q;
-			int previouscol, startpos;
+			int otherNeuronIndex, smallpos, smallval;
+			int[] thisNeuron;
+			int[] otherNeuron;
 
-			previouscol = 0;
-			startpos = 0;
-			for (i = 0; i < _netsize; i++) 
+			int previouscol = 0;
+			int startpos = 0;
+			for( int thisNeuronIndex = 0; 
+			     thisNeuronIndex < _neuronCount; 
+			     thisNeuronIndex++ )
 			{
-				MyProgressCounters[buildIndexCounterText].Value = i;
-				p = _network[i];
-				smallpos = i;
-				smallval = p[1]; /* index on g */
+				// Update the progress counter for the benefit of the UI
+				MyProgressCounters[buildIndexCounterText].Value = thisNeuronIndex;
+				
+				thisNeuron = _network[thisNeuronIndex];
+				smallpos = thisNeuronIndex;
+				smallval = thisNeuron[1]; /* index on g */
 				/* find smallest in i..netsize-1 */
-				for (j = i + 1; j < _netsize; j++) 
+				for( otherNeuronIndex = thisNeuronIndex + 1; 
+				     otherNeuronIndex < _neuronCount; 
+				     otherNeuronIndex++ )
 				{
-					q = _network[j];
-					if (q[1] < smallval) 
+					otherNeuron = _network[otherNeuronIndex];
+					if (otherNeuron[1] < smallval) 
 					{ /* index on g */
-						smallpos = j;
-						smallval = q[1]; /* index on g */
+						smallpos = otherNeuronIndex;
+						smallval = otherNeuron[1]; /* index on g */
 					}
 				}
-				q = _network[smallpos];
+				otherNeuron = _network[smallpos];
+				// TODO: this is apparently where the two neurons swap places
 				/* swap p (i) and q (smallpos) entries */
-				if (i != smallpos) 
+				if (thisNeuronIndex != smallpos) 
 				{
-					j = q[0];
-					q[0] = p[0];
-					p[0] = j;
-					j = q[1];
-					q[1] = p[1];
-					p[1] = j;
-					j = q[2];
-					q[2] = p[2];
-					p[2] = j;
-					j = q[3];
-					q[3] = p[3];
-					p[3] = j;
+					otherNeuronIndex	= otherNeuron[0];
+					otherNeuron[0]		= thisNeuron[0];
+					thisNeuron[0]		= otherNeuronIndex;
+					otherNeuronIndex	= otherNeuron[1];
+					otherNeuron[1]		= thisNeuron[1];
+					thisNeuron[1]		= otherNeuronIndex;
+					otherNeuronIndex	= otherNeuron[2];
+					otherNeuron[2]		= thisNeuron[2];
+					thisNeuron[2]		= otherNeuronIndex;
+					otherNeuronIndex	= otherNeuron[3];
+					otherNeuron[3]		= thisNeuron[3];
+					thisNeuron[3]		= otherNeuronIndex;
 				}
 				/* smallval entry is now in position i */
+				// TODO: examine this loop - what are smallval and previouscol?
 				if (smallval != previouscol) 
 				{
-					_netindex[previouscol] = (startpos + i) >> 1;
-					for (j = previouscol + 1; j < smallval; j++)
-						_netindex[j] = i;
+					_netindex[previouscol] = (startpos + thisNeuronIndex) >> 1;
+					for (otherNeuronIndex = previouscol + 1; otherNeuronIndex < smallval; otherNeuronIndex++)
+						_netindex[otherNeuronIndex] = thisNeuronIndex;
 					previouscol = smallval;
-					startpos = i;
+					startpos = thisNeuronIndex;
 				}
 			}
-			_netindex[previouscol] = (startpos + _maxnetpos) >> 1;
-			for (j = previouscol + 1; j < 256; j++)
-				_netindex[j] = _maxnetpos; /* really 256 */
+			
+			// TODO: why are we updating _netindex[previouscol] here?
+			_netindex[previouscol] = (startpos + _highestNeuronIndex) >> 1;
+			
+			// TODO: use a new variable instead of otherNeuronIndex here?
+			for( otherNeuronIndex = previouscol + 1; 
+			     otherNeuronIndex < 256; 
+			     otherNeuronIndex++)
+			{
+				_netindex[otherNeuronIndex] = _highestNeuronIndex; /* really 256 */
+			}
+
+			// This method has finished so remove its progress counter
 			RemoveCounter( buildIndexCounterText );
 		}
 		#endregion
 	
-		#region private Alterneigh method
-		/// <summary>
-		/// Move adjacent neurons by precomputed alpha*(1-((i-j)^2/[r]^2)) in 
-		/// radpower[|i-j|]
-		/// </summary>
-		/// <param name="rad"></param>
-		/// <param name="i"></param>
-		/// <param name="b"></param>
-		/// <param name="g"></param>
-		/// <param name="r"></param>
-		private void Alterneigh(int rad, int i, int b, int g, int r) 
-		{
-
-			int j, k, lo, hi, a, m;
-			int[] p;
-
-			lo = i - rad;
-			if (lo < -1)
-				lo = -1;
-			hi = i + rad;
-			if (hi > _netsize)
-				hi = _netsize;
-
-			j = i + 1;
-			k = i - 1;
-			m = 1;
-			while ((j < hi) || (k > lo)) 
-			{
-				a = _radpower[m++];
-				if (j < hi) 
-				{
-					p = _network[j++];
-					try 
-					{
-						p[0] -= (a * (p[0] - b)) / _alpharadbias;
-						p[1] -= (a * (p[1] - g)) / _alpharadbias;
-						p[2] -= (a * (p[2] - r)) / _alpharadbias;
-					} 
-					catch( Exception ex ) 
-					{
-						// FXCOP: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
-						// REDUNDANT: is this exception handling needed?
-						Utils.Handle( ex );
-						throw;
-					} // prevents 1.3 miscompilation
-				}
-				if (k > lo) 
-				{
-					p = _network[k--];
-					try 
-					{
-						p[0] -= (a * (p[0] - b)) / _alpharadbias;
-						p[1] -= (a * (p[1] - g)) / _alpharadbias;
-						p[2] -= (a * (p[2] - r)) / _alpharadbias;
-					} 
-					catch( Exception ex ) 
-					{
-						// FXCOP: Modify 'NeuQuant.Alterneigh(Int32, Int32, Int32, Int32, Int32):Void' to catch a more specific exception than 'System.Exception' or rethrow the exception. (CA1031)
-						// REDUNDANT: is this exception handling needed?
-						Utils.Handle( ex );
-						throw;
-					}
-				}
-			}
-		}
-		#endregion
-	
-		#region private Altersingle method
-		/// <summary>
-		/// Move neuron i towards biased (b,g,r) by factor alpha
-		/// </summary>
-		/// <param name="alpha"></param>
-		/// <param name="i"></param>
-		/// <param name="b"></param>
-		/// <param name="g"></param>
-		/// <param name="r"></param>
-		private void Altersingle(int alpha, int i, int b, int g, int r) 
-		{
-
-			/* alter hit neuron */
-			int[] n = _network[i];
-			n[0] -= (alpha * (n[0] - b)) / _initalpha;
-			n[1] -= (alpha * (n[1] - g)) / _initalpha;
-			n[2] -= (alpha * (n[2] - r)) / _initalpha;
-		}
-		#endregion
-	
-		#region private Contest method
-		/// <summary>
-		/// Search for biased BGR values
-		/// </summary>
-		/// <param name="b"></param>
-		/// <param name="g"></param>
-		/// <param name="r"></param>
-		/// <returns></returns>
-		private int Contest(int b, int g, int r) 
-		{
-
-			/* finds closest neuron (min dist) and updates freq */
-			/* finds best neuron (min dist-bias) and returns position */
-			/* for frequently chosen neurons, freq[i] is high and bias[i] is negative */
-			/* bias[i] = gamma*((1/netsize)-freq[i]) */
-
-			int i, dist, a, biasdist, betafreq;
-			int bestpos, bestbiaspos, bestd, bestbiasd;
-			int[] n;
-
-			bestd = ~(((int) 1) << 31);
-			bestbiasd = bestd;
-			bestpos = -1;
-			bestbiaspos = bestpos;
-
-			for (i = 0; i < _netsize; i++) 
-			{
-				n = _network[i];
-				dist = n[0] - b;
-				if (dist < 0)
-					dist = -dist;
-				a = n[1] - g;
-				if (a < 0)
-					a = -a;
-				dist += a;
-				a = n[2] - r;
-				if (a < 0)
-					a = -a;
-				dist += a;
-				if (dist < bestd) 
-				{
-					bestd = dist;
-					bestpos = i;
-				}
-				biasdist = dist - ((_bias[i]) >> (_intbiasshift - _netbiasshift));
-				if (biasdist < bestbiasd) 
-				{
-					bestbiasd = biasdist;
-					bestbiaspos = i;
-				}
-				betafreq = (_freq[i] >> _betashift);
-				_freq[i] -= betafreq;
-				_bias[i] += (betafreq << _gammashift);
-			}
-			_freq[bestpos] += _beta;
-			_bias[bestpos] -= _betagamma;
-			return (bestbiaspos);
-		}
-		#endregion
-
 		#region private ColorMap method
 		/// <summary>
 		/// ColorMap method.
@@ -638,12 +970,12 @@ namespace GifComponents.Tools
 		private ColourTable ColourMap()
 		{
 			ColourTable map = new ColourTable();
-			int[] index = new int[_netsize];
-			for( int i = 0; i < _netsize; i++ )
+			int[] index = new int[_neuronCount];
+			for( int i = 0; i < _neuronCount; i++ )
 			{
 				index[_network[i][3]] = i;
 			}
-			for( int i = 0; i < _netsize; i++ ) 
+			for( int i = 0; i < _neuronCount; i++ ) 
 			{
 				int j = index[i];
 				map.Add( Color.FromArgb( 255, 

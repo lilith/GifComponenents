@@ -28,6 +28,7 @@ namespace GifComponents.Tools
 {
 	/// <summary>
 	/// Utility class containing various static methods.
+	/// TODO: remove Utils from the project.
 	/// </summary>
 	internal static class Utils
 	{

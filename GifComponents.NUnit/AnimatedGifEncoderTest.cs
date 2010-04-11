@@ -559,6 +559,31 @@ namespace GifComponents.NUnit
 		}
 		#endregion
 		
+		#region NeuQuantTest
+		/// <summary>
+		/// Encodes a GIF file with a single frame consisting of a photo with
+		/// more than 256 colours, and checks that the colours have been 
+		/// quantized as expected.
+		/// TODO: eventually belongs in NeuQuant's test fixture
+		/// </summary>
+		[Test]
+		[SuppressMessage("Microsoft.Naming", 
+		                 "CA1704:IdentifiersShouldBeSpelledCorrectly", 
+		                 MessageId = "Neu")]
+		public void NeuQuantTest()
+		{
+			_e = new AnimatedGifEncoder();
+			_e.ColourQuality = 10;
+			_e.QuantizerType = QuantizerType.NeuQuant;
+			_e.AddFrame( new GifFrame( Image.FromFile( @"images\MockOrange.jpg" ) ) );
+			_e.WriteToFile( "MockOrange.test.gif" );
+
+			Image expected = Image.FromFile( @"images\MockOrange.gif" );
+			Image actual = Image.FromFile( "MockOrange.test.gif" );
+			ImageAssert.AreEqual( expected, actual );
+		}
+		#endregion
+		
 		#region private TestUseSuppliedPalette method
 		private void TestUseSuppliedPalette( ColourTableStrategy strategy )
 		{

@@ -524,6 +524,9 @@
     <None Include="images\MinCodeSizeTooLarge.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="images\MockOrange.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="images\NoColourTable.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -630,6 +633,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="images\smiley\Smiley-windows.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="images\MockOrange.gif">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="images\wikipedia example UseLocal.gif">
