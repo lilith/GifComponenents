@@ -99,9 +99,10 @@ namespace GifComponents.Tools
 		/// Minimum size for input image.
 		/// If the image has fewer pixels than this then the learning loop will
 		/// step through its pixels 3 at a time rather than using one of the
-		/// four prime constants.
+		/// four prime constants, and the sample factor supplied to the 
+		/// constructor will be overridden by a value of 1.
 		/// </summary>
-		private const int _minpicturebytes = ( 3 * _prime4 );
+		private const int _minPictureBytes = ( 3 * _prime4 );
 
 		/* Network Definitions
 		   ------------------- */
@@ -119,7 +120,8 @@ namespace GifComponents.Tools
 		private const int _netbiasshift = 4; /* bias for colour values */
 		
 		/// <summary>
-		/// Number of learning cycles.
+		/// Number of learning cycles. The greater this value, the more often
+		/// the alpha values used to move neurons will be decremented.
 		/// </summary>
 		private const int _numberOfLearningCycles = 100; /* no. of learning cycles */
 
@@ -144,13 +146,38 @@ namespace GifComponents.Tools
 			(_intbias << (_gammashift - _betashift));
 		#endregion
 
-		#region constants for decreasing radius factor
-		/* defs for decreasing radius factor */
-		private const int _initrad = (_neuronCount >> 3); /* for 256 cols, radius starts */
-		private const int _radiusbiasshift = 6; /* at 32.0 biased by 6 bits */
-		private const int _radiusbias = (((int) 1) << _radiusbiasshift);
-		private const int _initradius = (_initrad * _radiusbias); /* and decreases by a */
-		private const int _radiusdec = 30; /* factor of 1/30 each cycle */
+		#region constants controlling radius factor / neighbourhood size
+		/// <summary>
+		/// Initial radius.
+		/// The initial unbiased neuron neighbourhood size is set to this 
+		/// multiplied by the neighbourhood size bias.
+		/// This is also the size of the array of alphas for shifting 
+		/// neighbouring neurons.
+		/// </summary>
+		private const int _initialRadius = (_neuronCount >> 3);
+		
+		/// <summary>
+		/// The neuron neighbourhood size is set by shifting the unbiased 
+		/// neighbourhood size this many bits to the right.
+		/// </summary>
+		private const int _neighbourhoodSizeBiasShift = 6; /* at 32.0 biased by 6 bits */
+		
+		/// <summary>
+		/// Raduis bias.
+		/// The initial unbiased neuron neighbourhood size is set to this
+		/// multiplied by the initial radius.
+		/// </summary>
+		private const int _radiusBias = (((int) 1) << _neighbourhoodSizeBiasShift);
+		
+		/// <summary>
+		/// The initial value for the unbiased size of a neuron neighbourhood.
+		/// </summary>
+		private const int _initialUnbiasedNeighbourhoodSize = (_initialRadius * _radiusBias); /* and decreases by a */
+
+		/// <summary>
+		/// Factor for reducing the unbiased neighbourhood size.
+		/// </summary>
+		private const int _unbiasedNeighbourhoodSizeDecrement = 30;
 		#endregion
 
 		#region constants for decreasing alpha factor
@@ -201,11 +228,14 @@ namespace GifComponents.Tools
 		private int _pixelCount; /* lengthcount = H*W*3 */
 
 		/// <summary>
-		/// Sampling factor 1-30. Supplied to constructor unless input image is
-		/// very small.
-		/// The larger _samplingFactor is, the slower the value of alpha will 
-		/// be reduced during the learning loop.
-		/// TODO: comment on _samplingFactor impact on samplepixels.
+		/// Sampling factor. Minimum of 1.
+		/// Lower values mean more of the pixels of the image will be examined
+		/// hence better image quality but slower processing.
+		/// Higher values mean fewer of the pixels will be examined, so poorer
+		/// image quality but faster processing.
+		/// The larger _samplingFactor is, the fewer of the pixels in the input
+		/// image will be examined, and the slower the value of alpha will be 
+		/// reduced during the learning loop.
 		/// </summary>
 		private int _samplingFactor;
 
@@ -241,7 +271,7 @@ namespace GifComponents.Tools
 		/// Alpha values controlling how far towards a target colour any 
 		/// neighbouring are moved.
 		/// </summary>
-		private int[] _neighbourhoodAlphas = new int[_initrad];
+		private int[] _neighbourhoodAlphas = new int[_initialRadius];
 		
 		#endregion
 
@@ -249,15 +279,18 @@ namespace GifComponents.Tools
 		/// <summary>
 		/// Constructor.
 		/// Initialise network in range (0,0,0) to (255,255,255) and set parameters
-		/// TODO: consider accepting a collection / array of Colors instead of
-		/// a byte array.
+		/// TODO: consider accepting a collection / array of Colors instead of a byte array.
 		/// </summary>
 		/// <param name="thePicture">
 		/// A collection of byte colour intensities, in the order red, green, 
 		/// blue, representing the colours of each of the pixels in an image.
 		/// </param>
 		/// <param name="sample">
-		/// Image quantization quality.
+		/// Sampling factor. Minimum of 1.
+		/// Lower values mean more of the pixels of the image will be examined
+		/// hence better image quality but slower processing.
+		/// Higher values mean fewer of the pixels will be examined, so poorer
+		/// image quality but faster processing.
 		/// </param>
 		public NeuQuant( byte[] thePicture, int sample )
 		{
@@ -295,7 +328,7 @@ namespace GifComponents.Tools
 				
 				// Set the frequency of this neuron to _intbias divided by the
 				// number of neurons.
-				// TODO: better explanation of this step.
+				// TODO: why set _freq[neuronIndex] to this?
 				_freq[neuronIndex] = _intbias / _neuronCount; /* 1/netsize */
 				
 				// Set the bias of this neuron to zero.
@@ -430,12 +463,9 @@ namespace GifComponents.Tools
 		private void Learn() 
 		{
 			int closestNeuronIndex, blue, green, red;
-			int radius, delta, samplepixels;
 			byte[] p;
-			int pixelIndex, lim;
 
-			// TODO: what is _minpicturebytes and why do we set the sampling factor to 1 if we have fewer pixels than that?
-			if( _pixelCount < _minpicturebytes )
+			if( _pixelCount < _minPictureBytes )
 			{
 				_samplingFactor = 1;
 			}
@@ -446,35 +476,39 @@ namespace GifComponents.Tools
 			// aplha will be reduced.
 			_alphaDecrement = 30 + ((_samplingFactor - 1) / 3);
 			
-			// TODO: why take a local copy of _thePicture?
 			p = _thePicture;
 			
-			// TODO: what is pix?
-			pixelIndex = 0;
+			int pixelIndex = 0;
 			
-			// TODO: why make a local copy of _pixelCount?
-			lim = _pixelCount;
-			
-			// TODO: why set samplepixels to _pixelCount / (3*_samplingFactor)?
-			samplepixels = _pixelCount / (3 * _samplingFactor);
+			// Set the number of pixels in the image to be examined during
+			// the learning loop. 
+			// If _sampleFactor is 1 then one third of the pixels will be 
+			// examined. 
+			// If _sampleFactor is 10 then one thirtieth of the pixels will be 
+			// examined.
+			// TODO: why set pixelsToExamine to _pixelCount / (3*_samplingFactor)?
+			// _samplingFactor of 1 means only 1/3 of the pixels will be examined
+			// rather than 1 - remove the 3?
+			int pixelsToExamine = _pixelCount / (3 * _samplingFactor);
 			
 			// Allows a ResponsiveForm to track the progress of this method
 			string learnCounterText = "Neural net quantizer - learning";
-			AddCounter( learnCounterText, samplepixels );
+			AddCounter( learnCounterText, pixelsToExamine );
 			
-			// TODO: what is delta and why is it set to this?
-			delta = samplepixels / _numberOfLearningCycles;
+			// Set how often the alpha value for shifting neurons is updated.
+			// 1 means it is updated once per pixel examined, 10 means it is 
+			// updated every 10 pixels, and so on.
+			int alphaUpdateFrequency = pixelsToExamine / _numberOfLearningCycles;
 			
 			// Alpha is a factor which controls how far neurons are moved during
 			// the learning loop, and it decreases as learning proceeds.
 			int alpha = _initialAlpha;
 			
-			// TODO: what is radius?
-			radius = _initradius;
-
 			// Set the size of the neighbourhood which makes up the neighbouring
 			// neurons which also need to be moved when a neuron is moved.
-			int neighbourhoodSize = radius >> _radiusbiasshift;
+			int unbiasedNeighbourhoodSize = _initialUnbiasedNeighbourhoodSize;
+			int neighbourhoodSize 
+				= unbiasedNeighbourhoodSize >> _neighbourhoodSizeBiasShift;
 			if( neighbourhoodSize <= 1 )
 			{
 				neighbourhoodSize = 0; // TESTME: Learn - neighbourhoodSize <= 1
@@ -486,12 +520,11 @@ namespace GifComponents.Tools
 			int step = GetPixelIndexIncrement();
 
 			int pixelsExamined = 0;
-			while( pixelsExamined < samplepixels ) 
+			while( pixelsExamined < pixelsToExamine ) 
 			{
 				// Update the progress counter for the benefit of the UI
 				MyProgressCounters[learnCounterText].Value = pixelsExamined;
 				
-				// TODO: what is pix?
 				blue = (p[pixelIndex + 0] & 0xff) << _netbiasshift;
 				green = (p[pixelIndex + 1] & 0xff) << _netbiasshift;
 				red = (p[pixelIndex + 2] & 0xff) << _netbiasshift;
@@ -515,7 +548,7 @@ namespace GifComponents.Tools
 
 				// Move on to the next pixel to be examined
 				pixelIndex += step;
-				if( pixelIndex >= lim )
+				if( pixelIndex >= _pixelCount )
 				{
 					// We've gone past the end of the image, so wrap round to
 					// the start again
@@ -525,23 +558,23 @@ namespace GifComponents.Tools
 				// Keep track of how many pixels have been examined so far
 				pixelsExamined++;
 				
-				if( delta == 0 )
+				if( alphaUpdateFrequency == 0 )
 				{
-					// TODO: why does delta need to be 1 instead of 0?
-					delta = 1;
+					// Ensure delta is greater than zero to avoid a 
+					// divide-by-zero error.
+					alphaUpdateFrequency = 1;
 				}
 				
-				if( pixelsExamined % delta == 0 ) 
+				// Is it time to update the alpha values for moving neurons?
+				if( pixelsExamined % alphaUpdateFrequency == 0 ) 
 				{
-					// pixelsExamined is divisible by delta
-					// TODO: what is delta? better names/comments needed
 					alpha -= alpha / _alphaDecrement;
-					radius -= radius / _radiusdec;
-					neighbourhoodSize = radius >> _radiusbiasshift;
+					unbiasedNeighbourhoodSize -= unbiasedNeighbourhoodSize / _unbiasedNeighbourhoodSizeDecrement;
+					neighbourhoodSize 
+						= unbiasedNeighbourhoodSize >> _neighbourhoodSizeBiasShift;
 					
 					if( neighbourhoodSize <= 1 )
 					{
-						// TODO: why does rad need to be zero or greater?
 						neighbourhoodSize = 0;
 					}
 					
@@ -598,7 +631,7 @@ namespace GifComponents.Tools
 		private int GetPixelIndexIncrement()
 		{
 			int step;
-			if( _pixelCount < _minpicturebytes )
+			if( _pixelCount < _minPictureBytes )
 			{
 				step = 3;
 			}
@@ -885,7 +918,7 @@ namespace GifComponents.Tools
 			string buildIndexCounterText = "Neural net quantizer - building index";
 			AddCounter( buildIndexCounterText, _neuronCount );
 
-			int otherNeuronIndex, smallpos, smallval;
+			int otherNeuronIndex, indexOfLeastGreenNeuron, greenValueOfLeastGreenNeuron;
 			int[] thisNeuron;
 			int[] otherNeuron;
 
@@ -899,25 +932,42 @@ namespace GifComponents.Tools
 				MyProgressCounters[buildIndexCounterText].Value = thisNeuronIndex;
 				
 				thisNeuron = _network[thisNeuronIndex];
-				smallpos = thisNeuronIndex;
-				smallval = thisNeuron[1]; /* index on g */
+				// TODO: comment this loop (find smallest neuron?)
 				/* find smallest in i..netsize-1 */
+				// Find the neuron with the lowest green value, and store its
+				// index in the network in smallpos, and store its green value
+				// in smallval.
+				
+				// Start with the current neuron, its index and green value.
+				indexOfLeastGreenNeuron = thisNeuronIndex;
+				greenValueOfLeastGreenNeuron = thisNeuron[1]; /* index on g */
+				
+				// And compare it with the remaining neurons.
 				for( otherNeuronIndex = thisNeuronIndex + 1; 
 				     otherNeuronIndex < _neuronCount; 
 				     otherNeuronIndex++ )
 				{
 					otherNeuron = _network[otherNeuronIndex];
-					if (otherNeuron[1] < smallval) 
+					// TODO: there's a case here for making neuron a separate class
+					if (otherNeuron[1] < greenValueOfLeastGreenNeuron) 
 					{ /* index on g */
-						smallpos = otherNeuronIndex;
-						smallval = otherNeuron[1]; /* index on g */
+						// The green value of otherNeuron is lower than that of 
+						// the least green neuron seen so far, so otherNeuron
+						// becomes the least green.
+						indexOfLeastGreenNeuron = otherNeuronIndex;
+						greenValueOfLeastGreenNeuron = otherNeuron[1]; /* index on g */
 					}
 				}
-				otherNeuron = _network[smallpos];
+				
+				// TODO: declare a new variable here - not otherNeuron
+				otherNeuron = _network[indexOfLeastGreenNeuron];
 				// TODO: this is apparently where the two neurons swap places
 				/* swap p (i) and q (smallpos) entries */
-				if (thisNeuronIndex != smallpos) 
+				if (thisNeuronIndex != indexOfLeastGreenNeuron) 
 				{
+					// TODO: use a different variable to otherNeuronIndex here
+					// it's just a temp holding place for one of the rgb values while they are swapped
+					// TODO: new private method(s) for swapping the positions of two neurons
 					otherNeuronIndex	= otherNeuron[0];
 					otherNeuron[0]		= thisNeuron[0];
 					thisNeuron[0]		= otherNeuronIndex;
@@ -933,12 +983,12 @@ namespace GifComponents.Tools
 				}
 				/* smallval entry is now in position i */
 				// TODO: examine this loop - what are smallval and previouscol?
-				if (smallval != previouscol) 
+				if (greenValueOfLeastGreenNeuron != previouscol) 
 				{
 					_netindex[previouscol] = (startpos + thisNeuronIndex) >> 1;
-					for (otherNeuronIndex = previouscol + 1; otherNeuronIndex < smallval; otherNeuronIndex++)
+					for (otherNeuronIndex = previouscol + 1; otherNeuronIndex < greenValueOfLeastGreenNeuron; otherNeuronIndex++)
 						_netindex[otherNeuronIndex] = thisNeuronIndex;
-					previouscol = smallval;
+					previouscol = greenValueOfLeastGreenNeuron;
 					startpos = thisNeuronIndex;
 				}
 			}
@@ -961,7 +1011,7 @@ namespace GifComponents.Tools
 	
 		#region private ColorMap method
 		/// <summary>
-		/// ColorMap method.
+		/// ColorMap method. TODO: better description of ColorMap, rename to ColourMap?
 		/// </summary>
 		/// <returns>
 		/// A colour table containing up to 256 colours, being the colours of
@@ -973,6 +1023,7 @@ namespace GifComponents.Tools
 			int[] index = new int[_neuronCount];
 			for( int i = 0; i < _neuronCount; i++ )
 			{
+				// TODO: why index[_network[i][3]] = i; ?
 				index[_network[i][3]] = i;
 			}
 			for( int i = 0; i < _neuronCount; i++ ) 
