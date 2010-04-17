@@ -45,6 +45,27 @@ namespace GifComponents.NUnit.Tools
 		private byte[] _rgb;
 		private ColourTable _table;
 		
+		#region ConstructorNullArgument
+		/// <summary>
+		/// Checks that the correct exception is thrown when the constructor
+		/// is passed null image data.
+		/// </summary>
+		[Test]
+		[ExpectedException( typeof( ArgumentNullException ) )]
+		public void ConstructorNullArgument()
+		{
+			try
+			{
+				_nq = new NeuQuant( null, 10 );
+			}
+			catch( ArgumentNullException ex )
+			{
+				Assert.AreEqual( "thePicture", ex.ParamName );
+				throw;
+			}
+		}
+		#endregion
+		
 		#region OneBlackPixel
 		/// <summary>
 		/// Tests with an image consisting of a single black pixel.
