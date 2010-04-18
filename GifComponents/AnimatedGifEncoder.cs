@@ -226,25 +226,26 @@ namespace GifComponents
 		}
 		#endregion
 		
-		#region ColourQuality property
+		#region SamplingFactor property
 		/// <summary>
-		/// Sets quality of color quantization (conversion of images
-		/// to the maximum 256 colors allowed by the GIF specification).
-		/// Lower values (minimum = 1) produce better colors, but slow
-		/// processing significantly.  10 is the default, and produces
-		/// good color mapping at reasonable speeds.  Values greater
-		/// than 20 do not yield significant improvements in speed.
-		/// Defaults to 1 if less than 1.
+		/// Sets the proportion of pixels in the input image to be examined
+		/// when quantizing the image.
+		/// Set to 1 to examine every pixel for better colour quality but slow
+		/// processing.
+		/// Set to 10 to examine one in 10 of the pixels for faster processing
+		/// but poorer image quality.
+		/// Only applicable if input image has more than 256 colours and the
+		/// QuantizerType is set to NeuQuant.
 		/// </summary>
-		[Description( "Sets quality of color quantization (conversion of " +
-		              "images to the maximum 256 colors allowed by the GIF " +
-		              "specification). Lower values (minimum = 1) produce " +
-		              "better colors, but slow processing significantly. " +
-		              "10 is the default, and produces good color mapping " +
-		              "at reasonable speeds. Values greater than 20 do not " +
-		              "yield significant improvements in speed. Defaults to " +
-		              "1 if less than 1." )]
-		public int ColourQuality
+		[Description( "Sets the proportion of pixels in the input image to be " +
+		              "examined when quantizing the image. " +
+		              "Set to 1 to examine every pixel for better colour " +
+		              "quality but slow processing. " +
+		              "Set to 10 to examine one in 10 of the pixels for faster " +
+		              "processing but poorer image quality." +
+		              "Only applicable if input image has more than 256 " + 
+		              "colours and QuantizerType is set to NeuQuant.")]
+		public int SamplingFactor
 		{
 			get { return _quality; }
 			set
