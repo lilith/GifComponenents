@@ -42,8 +42,6 @@ namespace GifComponents.NUnit.Tools
 	public class NeuQuantTest : TestFixtureBase
 	{
 		private NeuQuant _nq;
-		private byte[] _rgb;
-		private ColourTable _table;
 		
 		#region ConstructorNullArgument
 		/// <summary>
