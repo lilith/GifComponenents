@@ -30,8 +30,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using NUnit.Framework;
 using NUnit.Extensions;
+using CommonForms.Responsiveness;
 using GifComponents.Components;
 using GifComponents.NUnit.Components;
 using GifComponents.NUnit.Tools;
@@ -348,8 +350,8 @@ namespace GifComponents.NUnit
 		{
 			ReportStart();
 			_e = new AnimatedGifEncoder();
-			_e.ColourQuality = 0;
-			Assert.AreEqual( 1, _e.ColourQuality );
+			_e.SamplingFactor = 0;
+			Assert.AreEqual( 1, _e.SamplingFactor );
 			ReportEnd();
 		}
 		#endregion
@@ -411,7 +413,7 @@ namespace GifComponents.NUnit
 			{
 				_e = new AnimatedGifEncoder();
 				_e.QuantizerType = QuantizerType.NeuQuant;
-				_e.ColourQuality = q;
+				_e.SamplingFactor = q;
 				_e.AddFrame( new GifFrame( b ) );
 				fileName = TestFixtureName + "." + TestCaseName + ".NeuQuant." + q + ".gif";
 				startTime = DateTime.Now;
@@ -572,15 +574,34 @@ namespace GifComponents.NUnit
 		                 MessageId = "Neu")]
 		public void NeuQuantTest()
 		{
+			ReportStart();
 			_e = new AnimatedGifEncoder();
-			_e.ColourQuality = 10;
+			_e.SamplingFactor = 10;
 			_e.QuantizerType = QuantizerType.NeuQuant;
 			_e.AddFrame( new GifFrame( Image.FromFile( @"images\MockOrange.jpg" ) ) );
-			_e.WriteToFile( "MockOrange.test.gif" );
+			
+			// TODO: add something to NUnit.Extensions to run LongRunningProcesses on a background thread
+			Thread t = new Thread( DoEncode );
+			t.IsBackground = true;
+			t.Start();
+			while( t.IsAlive )
+			{
+				foreach( ProgressCounter c in _e.AllProgressCounters.Values )
+				{
+					WriteMessage( c.ToString() );
+				}
+				Thread.Sleep( 1000 );
+			}
 
 			Image expected = Image.FromFile( @"images\MockOrange.gif" );
 			Image actual = Image.FromFile( "MockOrange.test.gif" );
 			ImageAssert.AreEqual( expected, actual );
+			ReportEnd();
+		}
+		
+		private void DoEncode()
+		{
+			_e.WriteToFile( "MockOrange.test.gif" );
 		}
 		#endregion
 		
@@ -708,14 +729,14 @@ namespace GifComponents.NUnit
 			                 _e.ColourTableStrategy, 
 			                 "Colour table strategy set by constructor" );
 			Assert.AreEqual( 10, 
-			                 _e.ColourQuality, 
+			                 _e.SamplingFactor, 
 			                 "Colour quantization quality set by constructor" );
 			Assert.AreEqual( Size.Empty, 
 			                 _e.LogicalScreenSize, 
 			                 "Logical screen size set by constructor" );
 			
 			_e.ColourTableStrategy = strategy;
-			_e.ColourQuality = colourQuality;
+			_e.SamplingFactor = colourQuality;
 			_e.LogicalScreenSize = logicalScreenSize;
 			
 			// Check property set/gets
@@ -723,7 +744,7 @@ namespace GifComponents.NUnit
 			                 _e.ColourTableStrategy, 
 			                 "Colour table strategy property set/get" );
 			Assert.AreEqual( colourQuality, 
-			                 _e.ColourQuality, 
+			                 _e.SamplingFactor, 
 			                 "Colour quantization quality property set/get" );
 			Assert.AreEqual( logicalScreenSize, 
 			                 _e.LogicalScreenSize, 
